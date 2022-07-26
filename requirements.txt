@@ -1,0 +1,10 @@
+torch
+torchvision
+numpy
+pandas
+Shapely
+scikit-image
+opencv-python
+tqdm
+scikit-learn
+imgaug
