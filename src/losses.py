@@ -3,13 +3,10 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 from torch.autograd import Variable
-
-try:
-    from itertools import ifilterfalse
-except ImportError:  # py3k
-    from itertools import filterfalse
+from itertools import filterfalse
 
 eps = 1e-6
+
 
 def dice_round(preds, trues):
     preds = preds.float()
@@ -189,7 +186,7 @@ def lovasz_sigmoid(probas, labels, per_image=False, ignore=None):
     """
     if per_image:
         loss = mean(lovasz_sigmoid_flat(*flatten_binary_scores(prob.unsqueeze(0), lab.unsqueeze(0), ignore))
-                          for prob, lab in zip(probas, labels))
+                    for prob, lab in zip(probas, labels))
     else:
         loss = lovasz_sigmoid_flat(*flatten_binary_scores(probas, labels, ignore))
     return loss
@@ -217,7 +214,7 @@ def mean(l, ignore_nan=False, empty=0):
     """
     l = iter(l)
     if ignore_nan:
-        l = ifilterfalse(np.isnan, l)
+        l = filterfalse(np.isnan, l)
     try:
         n = 1
         acc = next(l)
