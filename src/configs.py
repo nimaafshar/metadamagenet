@@ -13,5 +13,9 @@ TRAIN_DIRS = (
     pathlib.Path('./tier3')
 )
 
+TEST_DIR = pathlib.Path('./test/images')
+
+MODELS_FOLDER = pathlib.Path('./weights')
+
 # masks directory name
 MASKS_DIR = 'masks'

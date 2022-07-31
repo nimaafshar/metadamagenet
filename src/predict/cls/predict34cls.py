@@ -1,32 +1,22 @@
-import os
-
 from os import path, makedirs, listdir
 import sys
 import numpy as np
-np.random.seed(1)
-import random
-random.seed(1)
-
 import torch
 from torch import nn
-from torch.backends import cudnn
-
 from torch.autograd import Variable
 
-import pandas as pd
 from tqdm import tqdm
 import timeit
 import cv2
 
 from zoo.models import Res34_Unet_Double
 
-from utils import *
+from src.utils import preprocess_inputs
+from setup import set_random_seeds
 
+set_random_seeds()
 cv2.setNumThreads(0)
 cv2.ocl.setUseOpenCL(False)
-
-test_dir = 'test/images'
-models_folder = 'weights'
 
 if __name__ == '__main__':
     t0 = timeit.default_timer()
@@ -57,10 +47,9 @@ if __name__ == '__main__':
     loaded_dict = sd
     model.load_state_dict(loaded_dict)
     print("loaded checkpoint '{}' (epoch {}, best_score {})"
-            .format(snap_to_load, checkpoint['epoch'], checkpoint['best_score']))
+          .format(snap_to_load, checkpoint['epoch'], checkpoint['best_score']))
     model.eval()
     models.append(model)
-    
 
     with torch.no_grad():
         for f in tqdm(sorted(listdir(test_dir))):
@@ -87,18 +76,20 @@ if __name__ == '__main__':
                     msk = model(inp)
                     msk = torch.sigmoid(msk)
                     msk = msk.cpu().numpy()
-                    
+
                     pred.append(msk[0, ...])
                     pred.append(msk[1, :, ::-1, :])
                     pred.append(msk[2, :, :, ::-1])
                     pred.append(msk[3, :, ::-1, ::-1])
 
                 pred_full = np.asarray(pred).mean(axis=0)
-                
+
                 msk = pred_full * 255
                 msk = msk.astype('uint8').transpose(1, 2, 0)
-                cv2.imwrite(path.join(pred_folder, '{0}.png'.format(f.replace('.png', '_part1.png'))), msk[..., :3], [cv2.IMWRITE_PNG_COMPRESSION, 9])
-                cv2.imwrite(path.join(pred_folder, '{0}.png'.format(f.replace('.png', '_part2.png'))), msk[..., 2:], [cv2.IMWRITE_PNG_COMPRESSION, 9])
+                cv2.imwrite(path.join(pred_folder, '{0}.png'.format(f.replace('.png', '_part1.png'))), msk[..., :3],
+                            [cv2.IMWRITE_PNG_COMPRESSION, 9])
+                cv2.imwrite(path.join(pred_folder, '{0}.png'.format(f.replace('.png', '_part2.png'))), msk[..., 2:],
+                            [cv2.IMWRITE_PNG_COMPRESSION, 9])
 
     elapsed = timeit.default_timer() - t0
     print('Time: {:.3f} min'.format(elapsed / 60))
