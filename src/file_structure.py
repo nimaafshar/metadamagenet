@@ -6,6 +6,7 @@ import pathlib
 import enum
 from shapely.geometry import Polygon
 from shapely import wkt
+
 from configs import DamageType, damage_to_damage_type
 
 
