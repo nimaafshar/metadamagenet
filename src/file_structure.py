@@ -1,7 +1,12 @@
 import dataclasses
-from typing import List, Dict, Iterator
+import json
+import typing
+from typing import List, Dict, Iterator, Tuple
 import pathlib
 import enum
+from shapely.geometry import Polygon
+from shapely import wkt
+from configs import DamageType
 
 
 class DataTime(enum.Enum):
@@ -33,6 +38,28 @@ class ImageData:
     def target(self, time: DataTime = DataTime.PRE) -> pathlib.Path:
         return self.base / 'target' / f'{self.disaster}_{self.identifier}_{time.value}_disaster.png'
 
+    def polygons(self, time: DataTime = DataTime.PRE) -> List[Tuple[Polygon, DamageType]]:
+        """
+        list of image polygons and their subtypes
+        for per disaster images it returns
+        """
+        with open(self.label(time)) as json_file:
+            json_data = json.load(json_file)
+
+        polygons: List[Tuple[Polygon, DamageType]] = []
+        for feat in json_data['features']['xy']:
+            polygon: Polygon = wkt.loads(feat['wkt'])
+            subtype: DamageType = feat.get('properties', {}).get('subtype', DamageType.UN_CLASSIFIED)
+            polygons.append((polygon, subtype))
+
+        return polygons
+
+    def name(self, time: DataTime = DataTime.PRE):
+        """
+        returns filename (without extension)
+        """
+        return f'{self.disaster}_{self.identifier}_{time.value}_disaster'
+
 
 class Dataset:
     """
@@ -51,6 +78,10 @@ class Dataset:
             for file_path in train_directory.glob('*_pre_disaster.png'):
                 disaster, identifier, time, _ = file_path.name.split('_')
                 self._data[identifier] = ImageData(train_directory, identifier, disaster)
+
+    @property
+    def images(self) -> typing.Dict.values:
+        return self._data.values()
 
     def __getitem__(self, item) -> ImageData:
         return self._data[item]

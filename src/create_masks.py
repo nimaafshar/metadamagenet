@@ -1,23 +1,24 @@
+import emoji
 import numpy as np
 
 import cv2
 import timeit
-from os import path, makedirs, listdir
 import sys
 from multiprocessing import Pool
-from shapely import wkt
 
-import json
+import shapely.geometry
+from shapely.geometry import Polygon
 
-from configs import damage_dict, TRAIN_DIRS, MASKS_DIR
+import configs
 from setup import single_thread_numpy, set_random_seeds
+from file_structure import Dataset, ImageData, DataTime
 
 single_thread_numpy()
 set_random_seeds()
 sys.setrecursionlimit(10000)
 
 
-def mask_for_polygon(poly, im_size=(1024, 1024)):
+def mask_for_polygon(poly: shapely.geometry.Polygon, im_size=(1024, 1024)):
     """
     creates a binary mask from a polygon
     """
@@ -33,45 +34,41 @@ def mask_for_polygon(poly, im_size=(1024, 1024)):
     return img_mask
 
 
-def process_image(json_file):
+def create_masks(image_data: ImageData):
     """
     creates a polygon and a damage mask from image labels and saves them to `masks` folder
     """
-    js1 = json.load(open(json_file))
-    js2 = json.load(open(json_file.replace('_pre_disaster', '_post_disaster')))
+    polygons_mask = np.zeros((1024, 1024), dtype='uint8')  # a mask-image including polygons
+    damages_mask = np.zeros((1024, 1024), dtype='uint8')  # a mask-image with damage levels
 
-    msk = np.zeros((1024, 1024), dtype='uint8')
-    msk_damage = np.zeros((1024, 1024), dtype='uint8')
+    for polygon, _ in image_data.polygons(DataTime.PRE):
+        _msk = mask_for_polygon(polygon)
+        polygons_mask[_msk > 0] = 255
 
-    for feat in js1['features']['xy']:
-        poly = wkt.loads(feat['wkt'])
-        _msk = mask_for_polygon(poly)
-        msk[_msk > 0] = 255
+    for polygon, damage_type in image_data.polygons(DataTime.POST):
+        _msk = mask_for_polygon(polygon)
+        damages_mask[_msk > 0] = damage_type
 
-    for feat in js2['features']['xy']:
-        poly = wkt.loads(feat['wkt'])
-        subtype = feat['properties']['subtype']
-        _msk = mask_for_polygon(poly)
-        msk_damage[_msk > 0] = damage_dict[subtype]
-
-    cv2.imwrite(json_file.replace('/labels/', '/masks/').replace('_pre_disaster.json', '_pre_disaster.png'), msk,
+    cv2.imwrite(image_data.base / 'masks' / f'{image_data.name(DataTime.PRE)}.png',
+                polygons_mask,
                 [cv2.IMWRITE_PNG_COMPRESSION, 9])
-    cv2.imwrite(json_file.replace('/labels/', '/masks/').replace('_pre_disaster.json', '_post_disaster.png'),
-                msk_damage, [cv2.IMWRITE_PNG_COMPRESSION, 9])
+
+    cv2.imwrite(image_data.base / 'masks' / f'{image_data.name(DataTime.POST)}.png',
+                damages_mask, [cv2.IMWRITE_PNG_COMPRESSION, 9])
 
 
 if __name__ == '__main__':
     t0 = timeit.default_timer()
 
-    all_files = []
-    for d in TRAIN_DIRS:
-        makedirs(d / MASKS_DIR, exist_ok=True)
-        for f in sorted(listdir(path.join(d, 'images'))):
-            if '_pre_disaster.png' in f:
-                all_files.append(path.join(d, 'labels', f.replace('_pre_disaster.png', '_pre_disaster.json')))
+    train_dataset = Dataset(configs.TRAIN_DIRS)
+    train_dataset.discover()
+
+    # create mask directories
+    for train_dir in configs.TRAIN_DIRS:
+        (train_dir / 'masks').mkdir(exist_ok=True)
 
     with Pool() as pool:
-        _ = pool.map(process_image, all_files)
+        _ = pool.map(create_masks, train_dataset.images)
 
     elapsed = timeit.default_timer() - t0
-    print('Time: {:.3f} min'.format(elapsed / 60))
+    print(emoji.emojize(':hourglass: : {:.3f} min'.format(elapsed / 60)))
