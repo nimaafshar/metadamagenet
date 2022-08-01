@@ -7,7 +7,6 @@ import sys
 from multiprocessing import Pool
 
 import shapely.geometry
-from shapely.geometry import Polygon
 
 import configs
 from setup import single_thread_numpy, set_random_seeds
@@ -49,11 +48,11 @@ def create_masks(image_data: ImageData):
         _msk = mask_for_polygon(polygon)
         damages_mask[_msk > 0] = damage_type
 
-    cv2.imwrite(image_data.base / 'masks' / f'{image_data.name(DataTime.PRE)}.png',
+    cv2.imwrite(str(image_data.base / 'masks' / f'{image_data.name(DataTime.PRE)}.png'),
                 polygons_mask,
                 [cv2.IMWRITE_PNG_COMPRESSION, 9])
 
-    cv2.imwrite(image_data.base / 'masks' / f'{image_data.name(DataTime.POST)}.png',
+    cv2.imwrite(str(image_data.base / 'masks' / f'{image_data.name(DataTime.POST)}.png'),
                 damages_mask, [cv2.IMWRITE_PNG_COMPRESSION, 9])
 
 
@@ -71,4 +70,4 @@ if __name__ == '__main__':
         _ = pool.map(create_masks, train_dataset.images)
 
     elapsed = timeit.default_timer() - t0
-    print(emoji.emojize(':hourglass: : {:.3f} min'.format(elapsed / 60)))
+    print(emoji.emojize(':hourglass: : {:.3f} min'.format(elapsed / 60), language='alias'))

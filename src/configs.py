@@ -10,6 +10,14 @@ class DamageType:
     UN_CLASSIFIED = 1
 
 
+damage_to_damage_type = {
+    "no-damage": DamageType.NO_DAMAGE,
+    "minor-damage": DamageType.MINOR_DAMAGE,
+    "major-damage": DamageType.MAJOR_DAMAGE,
+    "destroyed": DamageType.DESTROYED,
+    "un-classified": DamageType.UN_CLASSIFIED
+}
+
 damage_dict = {
     "no-damage": 1,
     "minor-damage": 2,

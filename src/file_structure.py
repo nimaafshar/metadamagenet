@@ -6,7 +6,7 @@ import pathlib
 import enum
 from shapely.geometry import Polygon
 from shapely import wkt
-from configs import DamageType
+from configs import DamageType, damage_to_damage_type
 
 
 class DataTime(enum.Enum):
@@ -50,6 +50,8 @@ class ImageData:
         for feat in json_data['features']['xy']:
             polygon: Polygon = wkt.loads(feat['wkt'])
             subtype: DamageType = feat.get('properties', {}).get('subtype', DamageType.UN_CLASSIFIED)
+            if isinstance(subtype, str):
+                subtype = damage_to_damage_type[subtype]
             polygons.append((polygon, subtype))
 
         return polygons
@@ -75,7 +77,7 @@ class Dataset:
         discover directories
         """
         for train_directory in self._base_directories:
-            for file_path in train_directory.glob('*_pre_disaster.png'):
+            for file_path in (train_directory / 'images').glob('*_pre_disaster.png'):
                 disaster, identifier, time, _ = file_path.name.split('_')
                 self._data[identifier] = ImageData(train_directory, identifier, disaster)
 
