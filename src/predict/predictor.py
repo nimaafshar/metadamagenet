@@ -1,2 +1,4 @@
 class Predictor:
-    pass
+
+    def run(self):
+        pass

@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.typing as npt
 
 
 class AverageMeter(object):
@@ -20,14 +21,16 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 
-def preprocess_inputs(x):
-    x = np.asarray(x, dtype='float32')
+def normalize_colors(x: npt.ArrayLike) -> npt.NDArray[np.float32]:
+    """normalizes array values range from [0,255] to [-1,1]"""
+
+    x: npt.NDArray[np.float32] = np.asarray(x, dtype='float32')
     x /= 127
     x -= 1
     return x
 
 
-def dice(im1, im2, empty_score=1.0):
+def dice(im1: npt.ArrayLike, im2: npt.ArrayLike, empty_score: float = 1.0):
     """
     Computes the Dice coefficient, a measure of set similarity.
     Parameters
