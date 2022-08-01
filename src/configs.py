@@ -1,4 +1,14 @@
 import pathlib
+import enum
+
+
+class DamageType:
+    NO_DAMAGE = 1
+    MINOR_DAMAGE = 2
+    MAJOR_DAMAGE = 3
+    DESTROYED = 4
+    UN_CLASSIFIED = 1
+
 
 damage_dict = {
     "no-damage": 1,
@@ -9,8 +19,8 @@ damage_dict = {
 }
 
 TRAIN_DIRS = (
-    pathlib.Path('./train'),
-    pathlib.Path('./tier3')
+    pathlib.Path('./data/train'),
+    pathlib.Path('./data/tier3')
 )
 
 TEST_DIR = pathlib.Path('./test/images')
