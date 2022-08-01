@@ -9,19 +9,17 @@ from tqdm import tqdm
 import timeit
 import cv2
 
-from zoo.models import Res34_Unet_Double
-
-from src.utils import preprocess_inputs
-from setup import set_random_seeds
+from src.configs import MODELS_WEIGHTS_FOLDER
+from src.setup import set_random_seeds
+from src.util.utils import normalize_colors
+from src.zoo.models import Res34_Unet_Double
 
 set_random_seeds()
 cv2.setNumThreads(0)
 cv2.ocl.setUseOpenCL(False)
 
-if __name__ == '__main__':
-    t0 = timeit.default_timer()
 
-    seed = int(sys.argv[1])
+def predict(seed: int):
     # vis_dev = sys.argv[2]
 
     # os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
@@ -38,7 +36,7 @@ if __name__ == '__main__':
     model = Res34_Unet_Double().cuda()
     model = nn.DataParallel(model).cuda()
     print("=> loading checkpoint '{}'".format(snap_to_load))
-    checkpoint = torch.load(path.join(models_folder, snap_to_load), map_location='cpu')
+    checkpoint = torch.load(MODELS_WEIGHTS_FOLDER / snap_to_load, map_location='cpu')
     loaded_dict = checkpoint['state_dict']
     sd = model.state_dict()
     for k in model.state_dict():
@@ -60,7 +58,7 @@ if __name__ == '__main__':
                 img2 = cv2.imread(fn.replace('_pre_', '_post_'), cv2.IMREAD_COLOR)
 
                 img = np.concatenate([img, img2], axis=2)
-                img = preprocess_inputs(img)
+                img = normalize_colors(img)
 
                 inp = []
                 inp.append(img)
@@ -90,6 +88,11 @@ if __name__ == '__main__':
                             [cv2.IMWRITE_PNG_COMPRESSION, 9])
                 cv2.imwrite(path.join(pred_folder, '{0}.png'.format(f.replace('.png', '_part2.png'))), msk[..., 2:],
                             [cv2.IMWRITE_PNG_COMPRESSION, 9])
+
+
+if __name__ == '__main__':
+    t0 = timeit.default_timer()
+    predict(int(sys.argv[1]))
 
     elapsed = timeit.default_timer() - t0
     print('Time: {:.3f} min'.format(elapsed / 60))

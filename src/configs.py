@@ -23,17 +23,21 @@ damage_dict = {
     "minor-damage": 2,
     "major-damage": 3,
     "destroyed": 4,
-    "un-classified": 1  # ?
+    "un-classified": 1
 }
+
+# DIRECTORY SETTINGS
 
 TRAIN_DIRS = (
     pathlib.Path('./data/train'),
     pathlib.Path('./data/tier3')
 )
 
-TEST_DIR = pathlib.Path('./test/images')
+TEST_DIR = pathlib.Path('./data/test/images')
 
-MODELS_FOLDER = pathlib.Path('./weights')
+MODELS_WEIGHTS_FOLDER = pathlib.Path('./data/weights')
+
+SUBMISSIONS_DIR = pathlib.Path('./data/submissions/')
 
 # masks directory name
 MASKS_DIR = 'masks'
