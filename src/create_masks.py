@@ -11,6 +11,7 @@ import shapely.geometry
 import configs
 from setup import single_thread_numpy, set_random_seeds
 from file_structure import Dataset, ImageData, DataTime
+from src.logs import log
 
 single_thread_numpy()
 set_random_seeds()
@@ -53,7 +54,8 @@ def create_masks(image_data: ImageData):
                 [cv2.IMWRITE_PNG_COMPRESSION, 9])
 
     cv2.imwrite(str(image_data.base / 'masks' / f'{image_data.name(DataTime.POST)}.png'),
-                damages_mask, [cv2.IMWRITE_PNG_COMPRESSION, 9])
+                damages_mask,
+                [cv2.IMWRITE_PNG_COMPRESSION, 9])
 
 
 if __name__ == '__main__':
@@ -70,4 +72,4 @@ if __name__ == '__main__':
         _ = pool.map(create_masks, train_dataset.images)
 
     elapsed = timeit.default_timer() - t0
-    print(emoji.emojize(':hourglass: : {:.3f} min'.format(elapsed / 60), language='alias'))
+    log(':hourglass: : {:.3f} min'.format(elapsed / 60))
