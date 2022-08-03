@@ -6,6 +6,7 @@ import pathlib
 import enum
 from shapely.geometry import Polygon
 from shapely import wkt
+from logs import log
 
 from configs import DamageType, damage_to_damage_type
 
@@ -82,10 +83,13 @@ class Dataset:
         """
         discover directories
         """
-        for train_directory in self._base_directories:
-            for file_path in (train_directory / 'images').glob('*_pre_disaster.png'):
+        for base_directory in self._base_directories:
+            log(f":mag: discovering {base_directory.absolute()}...")
+            for file_path in (base_directory / 'images').glob('*_pre_disaster.png'):
                 disaster, identifier, time, _ = file_path.name.split('_')
-                self._data[identifier] = ImageData(train_directory, identifier, disaster)
+                self._data[identifier] = ImageData(base_directory, identifier, disaster)
+
+        log(f":file_folder: {len(self)} files found.")
         self._is_discovered = True
 
     def _assert_discovered(self):
