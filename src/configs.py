@@ -33,7 +33,9 @@ TRAIN_DIRS = (
     pathlib.Path('./data/tier3')
 )
 
-TEST_DIR = pathlib.Path('./data/test/images')
+TEST_DIR: pathlib.Path = pathlib.Path('./data/test/images')
+
+PREDICTIONS_DIRECTORY = pathlib.Path('./data/pred/')
 
 MODELS_WEIGHTS_FOLDER = pathlib.Path('./data/weights')
 
