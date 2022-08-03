@@ -1,3 +1,5 @@
+from abc import ABC
+
 import numpy as np
 import numpy.typing as npt
 import torch
@@ -8,7 +10,7 @@ from src.file_structure import ImageData, DataTime
 from src.util.utils import normalize_colors
 
 
-class ClassificationPredictor(Predictor):
+class ClassificationPredictor(Predictor, ABC):
     def setup(self):
         pass
 
@@ -27,6 +29,8 @@ class ClassificationPredictor(Predictor):
                                       dtype='float')  # flip along both x and y-axis (180 rotation)
         return torch.from_numpy(inp.transpose((0, 3, 1, 2))).float().cuda()
 
+
+class SigmoidClassificationPredictor(ClassificationPredictor):
     def _process_output(self, model_output: torch.Tensor) -> npt.NDArray:
         msk: npt.NDArray = torch.sigmoid(model_output).cpu().numpy()
 
@@ -36,4 +40,20 @@ class ClassificationPredictor(Predictor):
                            msk[3, :, ::-1, ::-1])).mean(axis=0)  # left-right and RGB to BRG flip
 
         msk = pred * 255
+        return msk.astype('uint8').transpose(1, 2, 0)
+
+
+class SoftmaxClassificationPredictor(ClassificationPredictor):
+    def _process_output(self, model_output: torch.Tensor) -> npt.NDArray:
+        msk: npt.NDArray = torch.softmax(model_output[:, :, ...], dim=1).cpu().numpy()
+
+        # FIXME: what is this line for
+        msk[:, 0, ...] = 1 - msk[:, 0, ...]
+
+        pred_full = np.asarray((msk[0, ...],
+                                msk[1, :, ::-1, :],
+                                msk[2, :, :, ::-1],
+                                msk[3, :, ::-1, ::-1])).mean(axis=0)
+
+        msk = pred_full * 255
         return msk.astype('uint8').transpose(1, 2, 0)
