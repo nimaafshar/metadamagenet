@@ -1,18 +1,14 @@
-from os import path, makedirs, listdir
 import sys
-
-import emoji
 import numpy as np
 import numpy.typing as npt
 import torch
 from torch import nn
-from torch.autograd import Variable
 
 from tqdm import tqdm
 import timeit
 import cv2
 
-from src.configs import MODELS_WEIGHTS_FOLDER, TEST_DIR
+from src.configs import TEST_DIR
 from src.setup import set_random_seeds
 from src.util.utils import normalize_colors
 from src.zoo.models import Res34_Unet_Double
