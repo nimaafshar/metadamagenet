@@ -8,11 +8,21 @@ import cv2
 from .predictor import Predictor
 from src.file_structure import ImageData, DataTime
 from src.util.utils import normalize_colors
+from src.logs import log
 
 
 class ClassificationPredictor(Predictor, ABC):
-    def setup(self):
-        pass
+    """
+    predictor for classification models
+    """
+
+    def _load_model(self):
+        log('=> loading best model...')
+        self._model: torch.nn.Module = self._model_config.load_best_model()
+        self._model.eval()
+
+    def _make_prediction(self, inp: torch.Tensor) -> torch.Tensor:
+        return self._model(inp)
 
     def _process_input(self, image_data: ImageData) -> torch.Tensor:
         pre_image: npt.NDArray = cv2.imread(image_data.image(DataTime.PRE), cv2.IMREAD_COLOR)
