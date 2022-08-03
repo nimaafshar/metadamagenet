@@ -16,6 +16,9 @@ class ClassificationPredictor(Predictor, ABC):
     predictor for classification models
     """
 
+    def setup(self):
+        pass
+
     def _load_model(self):
         log('=> loading best model...')
         self._model: torch.nn.Module = self._model_config.load_best_model()
