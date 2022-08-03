@@ -1,7 +1,7 @@
 import dataclasses
 import json
 import typing
-from typing import List, Dict, Iterator, Tuple
+from typing import List, Dict, Iterator, Tuple, Iterable
 import pathlib
 import enum
 from shapely.geometry import Polygon
@@ -57,7 +57,7 @@ class ImageData:
 
         return polygons
 
-    def name(self, time: DataTime = DataTime.PRE):
+    def name(self, time: DataTime = DataTime.PRE) -> str:
         """
         returns filename (without extension)
         """
@@ -69,11 +69,11 @@ class Dataset:
     Dataset of ImageDatas
     """
 
-    def __init__(self, train_directories: List[pathlib.Path]):
-        self._base_directories: List[pathlib.Path] = train_directories
+    def __init__(self, base_directories: Iterable[pathlib.Path]):
+        self._base_directories: Iterable[pathlib.Path] = base_directories
         self._data: Dict[str, ImageData] = {}  # a mapping from identifier to ImageData instance
 
-    def discover(self):
+    def discover(self) -> None:
         """
         discover directories
         """
