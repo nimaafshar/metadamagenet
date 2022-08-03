@@ -64,6 +64,10 @@ class ImageData:
         return f'{self.disaster}_{self.identifier}_{time.value}_disaster'
 
 
+class DatasetNotDiscovered(Exception):
+    """when a dataset is not discovered this error is raised"""
+
+
 class Dataset:
     """
     Dataset of ImageDatas
@@ -72,6 +76,7 @@ class Dataset:
     def __init__(self, base_directories: Iterable[pathlib.Path]):
         self._base_directories: Iterable[pathlib.Path] = base_directories
         self._data: Dict[str, ImageData] = {}  # a mapping from identifier to ImageData instance
+        self._is_discovered: bool = False
 
     def discover(self) -> None:
         """
@@ -81,16 +86,25 @@ class Dataset:
             for file_path in (train_directory / 'images').glob('*_pre_disaster.png'):
                 disaster, identifier, time, _ = file_path.name.split('_')
                 self._data[identifier] = ImageData(train_directory, identifier, disaster)
+        self._is_discovered = True
+
+    def _assert_discovered(self):
+        if not self._is_discovered:
+            raise DatasetNotDiscovered()
 
     @property
     def images(self) -> typing.Dict.values:
+        self._assert_discovered()
         return self._data.values()
 
     def __getitem__(self, item) -> ImageData:
+        self._assert_discovered()
         return self._data[item]
 
     def __iter__(self) -> Iterator[str]:
+        self._assert_discovered()
         return iter(self._data)
 
     def __len__(self) -> int:
+        self._assert_discovered()
         return len(self._data)
