@@ -18,6 +18,7 @@ from src.util.utils import normalize_colors
 from src.zoo.models import Res34_Unet_Double
 from src.file_structure import Dataset, ImageData, DataTime
 from src.logs import log
+from src.model_config import ModelConfig
 
 set_random_seeds()
 cv2.setNumThreads(0)
@@ -29,26 +30,35 @@ def predict(seed: int):
 
     # os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
     # os.environ["CUDA_VISIBLE_DEVICES"] = vis_dev
-
-    pred_folder = 'res34cls2_{}_tuned'.format(seed)
-    makedirs(pred_folder, exist_ok=True)
-
     # cudnn.benchmark = True
 
-    snap_to_load = 'res34_cls2_{}_tuned_best'.format(seed)
-    model = Res34_Unet_Double().cuda()
+    model_config = ModelConfig(
+        name='res34cls2',
+        model_type=Res34_Unet_Double,
+        seed=seed,
+        tuned=True
+    )
+
+    model_config.pred_directory.mkdir(parents=False, exist_ok=True)
+    log(f':file_folder: directory {model_config.pred_directory} created to save predictions')
+
+    model = model_config.model_type().cuda()
     model = nn.DataParallel(model).cuda()
-    print("=> loading checkpoint '{}'".format(snap_to_load))
-    checkpoint = torch.load(MODELS_WEIGHTS_FOLDER / snap_to_load, map_location='cpu')
+
+    log(f":arrow_up: loading checkpoint '{model_config.best_snap_path}'")
+    checkpoint = torch.load(model_config.best_snap_path, map_location='cpu')
     loaded_dict = checkpoint['state_dict']
     sd = model.state_dict()
-    for k in model.state_dict():
+
+    # loading parts of the state dict that are saved in the checkpoint
+    for k in sd:
         if k in loaded_dict and sd[k].size() == loaded_dict[k].size():
             sd[k] = loaded_dict[k]
     loaded_dict = sd
     model.load_state_dict(loaded_dict)
-    print("loaded checkpoint '{}' (epoch {}, best_score {})"
-          .format(snap_to_load, checkpoint['epoch'], checkpoint['best_score']))
+    log(f":white_check_mark: loaded checkpoint '{model_config.best_snap_path}' "
+        f"[epoch={checkpoint['epoch']}, best_score={checkpoint['best_score']}]")
+
     model.eval()
 
     test_dataset = Dataset((TEST_DIR,))
@@ -66,10 +76,11 @@ def predict(seed: int):
             img = np.concatenate((pre_image, post_image), axis=2)
             img = normalize_colors(img)
 
-            inp = np.asarray((img,
-                              img[::-1, ...],
-                              img[:, ::-1, ...],
-                              img[::-1, ::-1, ...]), dtype='float')
+            # test-time augmentations
+            inp = np.asarray((img,  # original
+                              img[::-1, ...],  # flip up-down
+                              img[:, ::-1, ...],  # flip left-right
+                              img[::-1, ::-1, ...]), dtype='float')  # flip along both x and y-axis (180 rotation)
             inp = torch.from_numpy(inp.transpose((0, 3, 1, 2))).float()
             inp = inp.cuda()
 
@@ -78,16 +89,24 @@ def predict(seed: int):
             msk = msk.cpu().numpy()
 
             pred = np.asarray((msk[0, ...],
-                               msk[1, :, ::-1, :],
-                               msk[2, :, :, ::-1],
-                               msk[3, :, ::-1, ::-1])).mean(axis=0)
+                               msk[1, :, ::-1, :],  # flip left-right
+                               msk[2, :, :, ::-1],  # flip from BRG to RGB
+                               msk[3, :, ::-1, ::-1])).mean(axis=0)  # left-right and RGB to BRG flip
 
             msk = pred * 255
             msk = msk.astype('uint8').transpose(1, 2, 0)
-            cv2.imwrite(path.join(pred_folder, '{0}.png'.format(f.replace('.png', '_part1.png'))), msk[..., :3],
+
+            # write predictions to file
+
+            cv2.imwrite(model_config.pred_directory / f'{image_data.name(DataTime.PRE)}_part1.png',
+                        msk[..., :3],
                         [cv2.IMWRITE_PNG_COMPRESSION, 9])
-            cv2.imwrite(path.join(pred_folder, '{0}.png'.format(f.replace('.png', '_part2.png'))), msk[..., 2:],
+
+            cv2.imwrite(model_config.pred_directory / f'{image_data.name(DataTime.PRE)}_part2.png',
+                        msk[..., 2:],
                         [cv2.IMWRITE_PNG_COMPRESSION, 9])
+
+            # FIXME: what is part1 and part2?
 
 
 if __name__ == '__main__':
