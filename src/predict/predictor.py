@@ -29,6 +29,16 @@ class Predictor(abc.ABC):
         pass
 
     @abc.abstractmethod
+    def _load_model(self):
+        """load needed model or models"""
+        pass
+
+    @abc.abstractmethod
+    def _make_prediction(self, inp: torch.Tensor) -> torch.Tensor:
+        """make prediction for an instance"""
+        pass
+
+    @abc.abstractmethod
     def _process_output(self, model_output: torch.Tensor) -> npt.NDArray:
         pass
 
@@ -46,9 +56,7 @@ class Predictor(abc.ABC):
     def predict(self) -> None:
         self._make_predictions_dir()
 
-        log('=> loading best model...')
-        model: nn.Module = self._model_config.load_best_model()
-        model.eval()
+        self._load_model()
 
         log('=> discovering dataset...')
         self._dataset.discover()
@@ -59,7 +67,7 @@ class Predictor(abc.ABC):
             for image_data in tqdm(self._dataset.images):
                 inp: torch.Tensor = self._process_input(image_data)
 
-                output: torch.Tensor = model(inp)
+                output: torch.Tensor = self._make_prediction(inp)
 
                 msk: npt.NDArray = self._process_output(output)
                 self._save_output(msk, image_data)
