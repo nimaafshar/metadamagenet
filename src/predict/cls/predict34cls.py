@@ -8,7 +8,7 @@ from src.zoo.models import Res34_Unet_Double
 from src.file_structure import Dataset
 from src.logs import log
 from src.model_config import ModelConfig
-from src.predict.cls import ClassificationPredictor
+from src.predict.cls import SigmoidClassificationPredictor
 
 set_random_seeds()
 cv2.setNumThreads(0)
@@ -32,7 +32,7 @@ if __name__ == '__main__':
     )
 
     test_dataset = Dataset((TEST_DIR,))
-    predictor: ClassificationPredictor = ClassificationPredictor(model_config, test_dataset)
+    predictor: SigmoidClassificationPredictor = SigmoidClassificationPredictor(model_config, test_dataset)
     predictor.predict()
 
     elapsed = timeit.default_timer() - t0
