@@ -48,16 +48,9 @@ class Predictor(abc.ABC):
     def _process_output(self, model_output: torch.Tensor) -> npt.NDArray:
         pass
 
+    @abc.abstractmethod
     def _save_output(self, output_mask: npt.NDArray, image_data: ImageData) -> None:
-        # write predictions to file
-        # FIXME: what is part1 and part2?
-        cv2.imwrite(str(self._pred_directory / f'{image_data.name(DataTime.PRE)}_part1.png'),
-                    output_mask[..., :3],
-                    [cv2.IMWRITE_PNG_COMPRESSION, 9])
-
-        cv2.imwrite(str(self._pred_directory / f'{image_data.name(DataTime.PRE)}_part2.png'),
-                    output_mask[..., 2:],
-                    [cv2.IMWRITE_PNG_COMPRESSION, 9])
+        pass
 
     def predict(self) -> None:
         self.setup()
