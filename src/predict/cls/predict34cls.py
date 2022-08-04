@@ -18,12 +18,6 @@ if __name__ == '__main__':
     t0 = timeit.default_timer()
     seed = int(sys.argv[1])
 
-    # vis_dev = sys.argv[2]
-
-    # os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-    # os.environ["CUDA_VISIBLE_DEVICES"] = vis_dev
-    # cudnn.benchmark = True
-
     model_config = ModelConfig(
         name='res34cls2',
         model_type=Res34_Unet_Double,
