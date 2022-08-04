@@ -5,27 +5,25 @@ import numpy.typing as npt
 import torch
 import cv2
 
-from .predictor import Predictor
+from .predictor import SingleModelPredictor
 from src.file_structure import ImageData, DataTime
 from src.util.utils import normalize_colors
+from src.util.augmentations import test_time_augment
 from src.logs import log
 
 
-class ClassificationPredictor(Predictor, ABC):
+class ClassificationPredictor(SingleModelPredictor, ABC):
     """
     predictor for classification models
     """
 
     def setup(self):
+        # vis_dev = sys.argv[2]
+
+        # os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
+        # os.environ["CUDA_VISIBLE_DEVICES"] = vis_dev
+        # cudnn.benchmark = True
         pass
-
-    def _load_model(self):
-        log('=> loading best model...')
-        self._model: torch.nn.Module = self._model_config.load_best_model()
-        self._model.eval()
-
-    def _make_prediction(self, inp: torch.Tensor) -> torch.Tensor:
-        return self._model(inp)
 
     def _process_input(self, image_data: ImageData) -> torch.Tensor:
         pre_image: npt.NDArray = cv2.imread(image_data.image(DataTime.PRE), cv2.IMREAD_COLOR)
@@ -33,14 +31,9 @@ class ClassificationPredictor(Predictor, ABC):
 
         img: npt.NDArray = np.concatenate((pre_image, post_image), axis=2)
         img = normalize_colors(img)
+        inp = test_time_augment(img)
 
-        # test-time augmentations
-        inp: npt.NDArray = np.asarray((img,  # original
-                                       img[::-1, ...],  # flip up-down
-                                       img[:, ::-1, ...],  # flip left-right
-                                       img[::-1, ::-1, ...]),
-                                      dtype='float')  # flip along both x and y-axis (180 rotation)
-        return torch.from_numpy(inp.transpose((0, 3, 1, 2))).float().cuda()
+        return torch.from_numpy(inp).float().cuda()
 
 
 class SigmoidClassificationPredictor(ClassificationPredictor):
