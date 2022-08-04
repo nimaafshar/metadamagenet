@@ -1,6 +1,6 @@
 import dataclasses
 import pathlib
-from typing import Type
+from typing import Type, Tuple
 
 from torch import nn
 import torch
@@ -14,7 +14,7 @@ class ModelConfig:
     name: str
     model_type: Type[nn.Module]
     tuned: bool
-    seed: int
+    seed: Tuple[int]
 
     @property
     def pred_directory(self) -> pathlib.Path:
