@@ -14,7 +14,7 @@ class ModelConfig:
     name: str
     model_type: Type[nn.Module]
     tuned: bool
-    seed: Tuple[int]
+    seeds: Tuple[int]
 
     @property
     def pred_directory(self) -> pathlib.Path:
@@ -48,3 +48,7 @@ class ModelConfig:
             f"[epoch={checkpoint['epoch']}, best_score={checkpoint['best_score']}]")
 
         return model
+
+    @property
+    def single_seed(self) -> bool:
+        return len(self.seeds) == 1
