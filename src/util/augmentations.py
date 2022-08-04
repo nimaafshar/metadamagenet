@@ -1,5 +1,16 @@
 import numpy as np
+import numpy.typing as npt
 import cv2
+
+
+def test_time_augment(img: npt.NDArray) -> npt.NDArray:
+    return np.asarray(
+        (img,  # original
+         img[::-1, ...],  # flip up-down
+         img[:, ::-1, ...],  # flip left-right
+         img[::-1, ::-1, ...]  # flip along both x and y-axis (180 rotation)
+         ), dtype='float') \
+        .transpose((0, 3, 1, 2))
 
 
 def shift_image(img, shift_pnt):
