@@ -107,7 +107,9 @@ class MultipleModelPredictor(Predictor, ABC):
     def _load_models(self):
         for model_config in self._model_configs:
             log(f"==> loading model {model_config.name} [seed={model_config.seed},tuned={model_config.tuned}]")
-            self._models.append(model_config.load_best_model())
+            model = model_config.load_best_model()
+            model.eval()
+            self._models.append(model)
 
     def _load(self):
         self._load_models()
