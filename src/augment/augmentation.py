@@ -7,6 +7,7 @@ import numpy.typing as npt
 
 class AugmentationInterface(abc.ABC):
     """augmentation which can be applied to an image, and it's corresponding mask"""
+
     @abc.abstractmethod
     def apply(self, img: npt.NDArray, msk: npt.NDArray) -> (npt.NDArray, npt.NDArray, bool):
         """
@@ -19,6 +20,7 @@ class AugmentationInterface(abc.ABC):
 
 class Augmentation(AugmentationInterface, abc.ABC):
     """augmentation which can be applied to an image, and it's corresponding mask with a certain change"""
+
     def __init__(self, probability: float):
         """
         :param probability: 1 - probability of the augmentation being applied
@@ -53,6 +55,8 @@ class OneOf(AugmentationInterface):
         :param probability: 1 - probability of this set of augmentations being applied
         """
         self._augmentations: Sequence[AugmentationInterface] = augmentations
+        if not 0 <= probability < 1:
+            raise TypeError("probability of augmentation should be in [0,1)")
         self._probability = probability
 
     def apply(self, img: npt.NDArray, msk: npt.NDArray) -> (npt.NDArray, npt.NDArray, bool):
