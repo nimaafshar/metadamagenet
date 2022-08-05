@@ -67,3 +67,16 @@ class OneOf(AugmentationInterface):
                     break
             return img, msk, True
         return img, msk, False
+
+
+class Pipeline(AugmentationInterface):
+    def __init__(self, augmentations: Sequence[AugmentationInterface]):
+        """
+        :param augmentations: sequence of Augmentation Interface to be applied in order
+        """
+        self._augmentations: Sequence[AugmentationInterface] = augmentations
+
+    def apply(self, img: npt.NDArray, msk: npt.NDArray) -> Tuple[npt.NDArray, npt.NDArray, bool]:
+        for augmentation in self._augmentations:
+            img, msk, _ = augmentation.apply(img, msk)
+        return img, msk, True
