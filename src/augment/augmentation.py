@@ -1,6 +1,6 @@
 import abc
 import random
-from typing import Sequence
+from typing import Sequence, Tuple
 
 import numpy.typing as npt
 
@@ -9,7 +9,7 @@ class AugmentationInterface(abc.ABC):
     """augmentation which can be applied to an image, and it's corresponding mask"""
 
     @abc.abstractmethod
-    def apply(self, img: npt.NDArray, msk: npt.NDArray) -> (npt.NDArray, npt.NDArray, bool):
+    def apply(self, img: npt.NDArray, msk: npt.NDArray) -> Tuple[npt.NDArray, npt.NDArray, bool]:
         """
         :param img: image h*w*3
         :param msk: mask h*w*1
@@ -31,7 +31,7 @@ class Augmentation(AugmentationInterface, abc.ABC):
         self._probability: float = probability
 
     @abc.abstractmethod
-    def _apply(self, img: npt.NDArray, msk: npt.NDArray) -> (npt.NDArray, npt.NDArray):
+    def _apply(self, img: npt.NDArray, msk: npt.NDArray) -> Tuple[npt.NDArray, npt.NDArray]:
         """
         :param img: image h*w*3
         :param msk: mask h*w*1
@@ -39,7 +39,7 @@ class Augmentation(AugmentationInterface, abc.ABC):
         """
         pass
 
-    def apply(self, img: npt.NDArray, msk: npt.NDArray) -> (npt.NDArray, npt.NDArray, bool):
+    def apply(self, img: npt.NDArray, msk: npt.NDArray) -> Tuple[npt.NDArray, npt.NDArray, bool]:
         if random.random() > self._probability:
             img, msk = self._apply(img, msk)
             return img, msk, True
@@ -59,7 +59,7 @@ class OneOf(AugmentationInterface):
             raise TypeError("probability of augmentation should be in [0,1)")
         self._probability = probability
 
-    def apply(self, img: npt.NDArray, msk: npt.NDArray) -> (npt.NDArray, npt.NDArray, bool):
+    def apply(self, img: npt.NDArray, msk: npt.NDArray) -> Tuple[npt.NDArray, npt.NDArray, bool]:
         if random.random() > self._probability:
             for augmentation in self._augmentations:
                 img, msk, applied = augmentation.apply(img, msk)
