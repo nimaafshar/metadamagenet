@@ -8,7 +8,13 @@ from shapely.geometry import Polygon
 from shapely import wkt
 from logs import log
 
-from configs import DamageType, damage_to_damage_type
+from configs import (
+    DamageType,
+    damage_to_damage_type,
+    IMAGES_DIRECTORY,
+    LABELS_DIRECTORY,
+    MASKS_DIRECTORY
+)
 
 
 class DataTime(enum.Enum):
@@ -28,17 +34,34 @@ class ImageData:
     identifier: str
     disaster: str
 
+    def name(self, time: DataTime = DataTime.PRE) -> str:
+        """
+        returns filename (without extension)
+        """
+        return f'{self.disaster}_{self.identifier}_{time.value}_disaster'
+
     def image(self, time: DataTime = DataTime.PRE) -> pathlib.Path:
         """
-        path to pre/post disaster image
+        :param time: pre/post-disaster version
+        :return: path to image file
         """
-        return self.base / 'images' / f'{self.disaster}_{self.identifier}_{time.value}_disaster.png'
+        return self.base / IMAGES_DIRECTORY / f'{self.name(time)}.png'
 
     def label(self, time: DataTime = DataTime.PRE) -> pathlib.Path:
-        return self.base / 'labels' / f'{self.disaster}_{self.identifier}_{time.value}_disaster.json'
+        """
+        :param time: pre/post-disaster version
+        :return: path to json label file
+        """
+        return self.base / LABELS_DIRECTORY / f'{self.name(time)}.json'
 
-    def target(self, time: DataTime = DataTime.PRE) -> pathlib.Path:
-        return self.base / 'target' / f'{self.disaster}_{self.identifier}_{time.value}_disaster.png'
+    def mask(self, time: DataTime = DataTime.PRE) -> pathlib.Path:
+        """
+        pre-disaster masks contain only black and white pixels
+        post-disaster masks contain pixels with 0-4 values indicating damage level
+        :param time: pre/post-disaster version
+        :return: path to mask image file
+        """
+        return self.base / MASKS_DIRECTORY / f'{self.name(time)}_disaster.png'
 
     def polygons(self, time: DataTime = DataTime.PRE) -> List[Tuple[Polygon, DamageType]]:
         """
@@ -57,12 +80,6 @@ class ImageData:
             polygons.append((polygon, subtype))
 
         return polygons
-
-    def name(self, time: DataTime = DataTime.PRE) -> str:
-        """
-        returns filename (without extension)
-        """
-        return f'{self.disaster}_{self.identifier}_{time.value}_disaster'
 
 
 class DatasetNotDiscovered(Exception):
