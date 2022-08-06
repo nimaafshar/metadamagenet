@@ -1,5 +1,5 @@
-from augmentation import Pipeline, OneOf
-from train import (
+from .augmentation import Pipeline, OneOf
+from .train import (
     TopDownFlip,
     Rotation90Degree,
     Shift,
