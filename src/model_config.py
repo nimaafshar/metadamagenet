@@ -1,6 +1,6 @@
 import dataclasses
 import pathlib
-from typing import Type, Tuple
+from typing import Type
 
 from torch import nn
 import torch
@@ -13,7 +13,7 @@ from src.logs import log
 class ModelConfig:
     name: str
     model_type: Type[nn.Module]
-    tuned: bool
+    version: str
     seed: int
 
     @property
@@ -22,11 +22,11 @@ class ModelConfig:
         predictions directory path
         this method does not guarantee the directory to exist
         """
-        return PREDICTIONS_DIRECTORY / f'{self.name}_{self.seed}_{"tuned" if self.tuned else ""}'
+        return PREDICTIONS_DIRECTORY / f'{self.name}_{self.seed}_{self.version}'
 
     @property
     def best_snap_path(self) -> pathlib.Path:
-        return MODELS_WEIGHTS_FOLDER / f'{self.name}_{self.seed}_{"tuned" if self.tuned else ""}_best'
+        return MODELS_WEIGHTS_FOLDER / f'{self.name}_{self.seed}ـ{self.version}_best'
 
     def load_best_model(self) -> nn.Module:
         model: nn.Module = self.model_type().cuda()
