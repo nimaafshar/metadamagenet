@@ -17,16 +17,20 @@ class ModelConfig:
     seed: int
 
     @property
+    def full_name(self) -> str:
+        return f'{self.name}_{self.seed}_{self.version}'
+
+    @property
     def pred_directory(self) -> pathlib.Path:
         """
         predictions directory path
         this method does not guarantee the directory to exist
         """
-        return PREDICTIONS_DIRECTORY / f'{self.name}_{self.seed}_{self.version}'
+        return PREDICTIONS_DIRECTORY / self.full_name
 
     @property
     def best_snap_path(self) -> pathlib.Path:
-        return MODELS_WEIGHTS_FOLDER / f'{self.name}_{self.seed}ـ{self.version}_best'
+        return MODELS_WEIGHTS_FOLDER / f'{self.full_name}_best'
 
     def load_best_model(self) -> nn.Module:
         model: nn.Module = self.model_type().cuda()
