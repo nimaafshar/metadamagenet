@@ -6,9 +6,10 @@ import pathlib
 import enum
 from shapely.geometry import Polygon
 from shapely import wkt
-from logs import log
 
-from configs import (
+from src.logs import log
+
+from src.configs import (
     DamageType,
     damage_to_damage_type,
     IMAGES_DIRECTORY,
@@ -61,7 +62,7 @@ class ImageData:
         :param time: pre/post-disaster version
         :return: path to mask image file
         """
-        return self.base / MASKS_DIRECTORY / f'{self.name(time)}_disaster.png'
+        return self.base / MASKS_DIRECTORY / f'{self.name(time)}.png'
 
     def polygons(self, time: DataTime = DataTime.PRE) -> List[Tuple[Polygon, DamageType]]:
         """
@@ -93,7 +94,7 @@ class Dataset:
 
     def __init__(self, base_directories: Iterable[pathlib.Path]):
         self._base_directories: Iterable[pathlib.Path] = base_directories
-        self._data: Dict[str, ImageData] = {}  # a mapping from identifier to ImageData instance
+        self._data: List[ImageData] = []
         self._is_discovered: bool = False
 
     def discover(self) -> None:
@@ -104,25 +105,25 @@ class Dataset:
             log(f":mag: discovering {base_directory.absolute()}...")
             for file_path in (base_directory / 'images').glob('*_pre_disaster.png'):
                 disaster, identifier, time, _ = file_path.name.split('_')
-                self._data[identifier] = ImageData(base_directory, identifier, disaster)
+                self._data.append(ImageData(base_directory, identifier, disaster))
 
-        log(f":file_folder: {len(self)} files found.")
         self._is_discovered = True
+        log(f":file_folder: {len(self)} files found.")
 
-    def _assert_discovered(self):
+    def _assert_discovered(self) -> None:
         if not self._is_discovered:
             raise DatasetNotDiscovered()
 
     @property
-    def images(self) -> typing.Dict.values:
+    def images(self) -> List[ImageData]:
         self._assert_discovered()
-        return self._data.values()
+        return self._data
 
     def __getitem__(self, item) -> ImageData:
         self._assert_discovered()
         return self._data[item]
 
-    def __iter__(self) -> Iterator[str]:
+    def __iter__(self) -> Iterator[ImageData]:
         self._assert_discovered()
         return iter(self._data)
 
