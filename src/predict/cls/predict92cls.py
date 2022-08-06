@@ -23,7 +23,7 @@ if __name__ == '__main__':
         name='dpn92_cls_cce',
         model_type=Dpn92_Unet_Double,
         seed=seed,
-        tuned=True
+        version="tuned"
     )
 
     test_dataset = Dataset((TEST_DIR,))

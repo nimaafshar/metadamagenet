@@ -23,7 +23,7 @@ if __name__ == '__main__':
         name='se154_cls_cce',
         model_type=SeNet154_Unet_Double,
         seed=seed,
-        tuned=True
+        version="tuned"
     )
 
     test_dataset = Dataset((TEST_DIR,))
