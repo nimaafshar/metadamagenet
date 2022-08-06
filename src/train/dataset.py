@@ -34,7 +34,7 @@ class Dataset(TorchDataset):
     def __len__(self) -> int:
         return len(self._image_dataset)
 
-    def __getitem__(self, identifier: str) -> Tuple[npt.NDArray, npt.NDArray, ImageData]:
+    def __getitem__(self, identifier: int) -> Tuple[npt.NDArray, npt.NDArray]:
         image_data: ImageData = self._image_dataset[identifier]
 
         img: npt.NDArray
@@ -61,4 +61,4 @@ class Dataset(TorchDataset):
         img = torch.from_numpy(img.transpose((2, 0, 1))).float()
         msk = torch.from_numpy(msk.transpose((2, 0, 1))).long()
 
-        return img, msk, image_data
+        return img, msk
