@@ -20,19 +20,19 @@ if __name__ == '__main__':
         ModelConfig(
             name="se154_loc",
             model_type=SeNet154_Unet_Loc,
-            tuned=False,
+            version="1",
             seed=0
         ),
         ModelConfig(
             name="se154_loc",
             model_type=SeNet154_Unet_Loc,
-            tuned=False,
+            version="1",
             seed=1
         ),
         ModelConfig(
             name="se154_loc",
             model_type=SeNet154_Unet_Loc,
-            tuned=False,
+            version="1",
             seed=2
         )
     )

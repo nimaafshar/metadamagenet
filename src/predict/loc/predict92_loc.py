@@ -20,19 +20,19 @@ if __name__ == '__main__':
         ModelConfig(
             name="dpn92_loc",
             model_type=Dpn92_Unet_Loc,
-            tuned=True,
+            version="tuned",
             seed=0
         ),
         ModelConfig(
             name="dpn92_loc",
             model_type=Dpn92_Unet_Loc,
-            tuned=True,
+            version="tuned",
             seed=1
         ),
         ModelConfig(
             name="dpn92_loc",
             model_type=Dpn92_Unet_Loc,
-            tuned=True,
+            version="tuned",
             seed=2
         )
     )

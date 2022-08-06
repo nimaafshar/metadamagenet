@@ -20,19 +20,19 @@ if __name__ == '__main__':
         ModelConfig(
             name="res34_loc",
             model_type=Res34_Unet_Loc,
-            tuned=True,
+            version='1',
             seed=0
         ),
         ModelConfig(
             name="res34_loc",
             model_type=Res34_Unet_Loc,
-            tuned=True,
+            version='1',
             seed=1
         ),
         ModelConfig(
             name="res34_loc",
             model_type=Res34_Unet_Loc,
-            tuned=True,
+            version='1',
             seed=2
         )
     )
