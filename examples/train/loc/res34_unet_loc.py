@@ -3,13 +3,13 @@ import sys
 import timeit
 import random
 
-
 import numpy as np
 import cv2
 import torch
 from torch import nn
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import MultiStepLR
+from torch.utils.data import DataLoader
 
 from src.zoo.models import Res34_Unet_Loc
 
@@ -59,6 +59,20 @@ class Resnet34UnetLocTrainer(LocalizationTrainer):
         super(Resnet34UnetLocTrainer, self)._setup()
         np.random.seed(self._config.model_config.seed + 545)
         random.seed(self._config.model_config.seed + 454)
+
+    def _get_dataloaders(self) -> (DataLoader, DataLoader):
+        return (DataLoader(self._config.train_dataset,
+                           batch_size=self._config.batch_size,
+                           num_workers=6,
+                           shuffle=True,
+                           pin_memory=False,
+                           drop_last=True),
+
+                DataLoader(self._config.validation_dataset,
+                           batch_size=self._config.val_batch_size,
+                           num_workers=6,
+                           shuffle=False,
+                           pin_memory=False))
 
     def _get_requirements(self) -> LocalizationRequirements:
         model: nn.Module = self._get_model()
