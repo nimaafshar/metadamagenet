@@ -73,7 +73,7 @@ class SEResNext50UnetLocTrainer(LocalizationTrainer):
                            pin_memory=False))
 
     def _get_requirements(self) -> LocalizationRequirements:
-        model = self._get_model()
+        model = self._get_model().cuda()
         optimizer: Optimizer = AdamW(model.parameters(),
                                      lr=0.00015,
                                      weight_decay=1e-6)
