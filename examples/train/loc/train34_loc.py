@@ -3,10 +3,6 @@ import sys
 import numpy as np
 
 import random
-import torch
-from torch.utils.data import Dataset
-
-from tqdm import tqdm
 import timeit
 import cv2
 
@@ -37,6 +33,7 @@ from src.augment import (
     Contrast
 )
 from src import configs
+from src.logs import log
 
 random.seed(1)
 np.random.seed(1)
