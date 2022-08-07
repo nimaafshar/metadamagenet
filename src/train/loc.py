@@ -34,6 +34,11 @@ class LocalizationTrainer(Trainer):
 
     def _setup(self):
         super(LocalizationTrainer, self)._setup()
+        # vis_dev = sys.argv[2]
+
+        # os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
+        # os.environ["CUDA_VISIBLE_DEVICES"] = vis_dev
+
         cudnn.benchmark = True
         np.random.seed(self._config.model_config.seed + 545)
         random.seed(self._config.model_config.seed + 454)
@@ -122,4 +127,4 @@ class LocalizationTrainer(Trainer):
 
         self._lr_scheduler.step(epoch)
 
-        print(f"epoch: {epoch}; lr {self._lr_scheduler.get_lr()[-1]:.7f}; Loss {losses.avg:.4f}; Dice {dices.avg:.4f}")
+        log(f"epoch: {epoch}; lr {self._lr_scheduler.get_lr()[-1]:.7f}; Loss {losses.avg:.4f}; Dice {dices.avg:.4f}")
