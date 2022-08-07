@@ -3,7 +3,6 @@ from typing import Tuple, Union
 import abc
 
 import torch
-from torch.backends import cudnn
 from torch import nn
 from torch.utils.data import DataLoader
 
@@ -44,7 +43,6 @@ class Trainer(abc.ABC):
 
     def _setup(self):
         configs.MODELS_WEIGHTS_FOLDER.mkdir(parents=False, exist_ok=True)
-        cudnn.benchmark = True
 
     def _get_model(self) -> nn.Module:
         """
