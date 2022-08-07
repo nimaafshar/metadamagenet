@@ -35,6 +35,9 @@ TRAIN_DIRS = (
 
 TEST_DIR: pathlib.Path = pathlib.Path('./data/test/images')
 
+TRAIN_SPLIT: pathlib.Path = pathlib.Path('./data/split/train/')
+VALIDATION_SPLIT: pathlib.Path = pathlib.Path('./data/split/train/')
+
 IMAGES_DIRECTORY = 'images'
 LABELS_DIRECTORY = 'labels'
 MASKS_DIRECTORY = 'masks'
