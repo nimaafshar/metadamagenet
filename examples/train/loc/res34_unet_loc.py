@@ -1,15 +1,19 @@
 import os
 import sys
-import numpy as np
-
-import random
 import timeit
+
 import cv2
+import torch
+from torch import nn
+from torch.optim import Optimizer
+from torch.optim.lr_scheduler import MultiStepLR
 
 from src.zoo.models import Res34_Unet_Loc
 
+from src.optim import AdamW
+from src.losses import ComboLoss
 from src.train.dataset import Dataset
-from src.train.loc import LocalizationTrainer
+from src.train.loc import LocalizationRequirements, LocalizationTrainer
 from src.train.trainer import TrainingConfig
 from src.model_config import ModelConfig
 from src.file_structure import Dataset as ImageDataset
@@ -33,10 +37,10 @@ from src.augment import (
     Contrast
 )
 from src import configs
+from src.setup import set_random_seeds
 from src.logs import log
 
-random.seed(1)
-np.random.seed(1)
+set_random_seeds()
 
 cv2.setNumThreads(0)
 cv2.ocl.setUseOpenCL(False)
@@ -45,7 +49,34 @@ os.environ["MKL_NUM_THREADS"] = "2"
 os.environ["NUMEXPR_NUM_THREADS"] = "2"
 os.environ["OMP_NUM_THREADS"] = "2"
 
-input_shape = (736, 736)
+
+class Resnet34UnetLocTrainer(LocalizationTrainer):
+
+    def _get_requirements(self) -> LocalizationRequirements:
+        model: nn.Module = self._get_model()
+        optimizer: Optimizer = AdamW(model.parameters(),
+                                     lr=0.00015,
+                                     weight_decay=1e-6)
+        lr_scheduler: MultiStepLR = MultiStepLR(self._optimizer,
+                                                milestones=[5, 11, 17, 25, 33, 47, 50,
+                                                            60, 70, 90, 110, 130, 150,
+                                                            170, 180, 190],
+                                                gamma=0.5)
+        model: nn.Module = nn.DataParallel(model).cuda()
+        seg_loss: ComboLoss = ComboLoss({'dice': 1.0, 'focal': 10.0}, per_image=False).cuda()
+        return LocalizationRequirements(
+            model,
+            optimizer,
+            lr_scheduler,
+            seg_loss
+        )
+
+    def _update_weights(self, loss: torch.Tensor) -> None:
+        self._optimizer.zero_grad()
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(self._model.parameters(), 0.999)
+        self._optimizer.step()
+
 
 if __name__ == '__main__':
     t0 = timeit.default_timer()
@@ -132,7 +163,7 @@ if __name__ == '__main__':
         evaluation_interval=2
     )
 
-    trainer = LocalizationTrainer(config)
+    trainer = Resnet34UnetLocTrainer(config)
 
     trainer.train()
 
