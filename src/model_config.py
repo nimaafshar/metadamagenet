@@ -1,4 +1,5 @@
 import dataclasses
+import gc
 import pathlib
 from typing import Type
 
@@ -34,7 +35,6 @@ class ModelConfig:
 
     def load_best_model(self) -> nn.Module:
         model: nn.Module = self.model_type().cuda()
-        model = nn.DataParallel(model).cuda()
 
         log(f":arrow_up: loading checkpoint '{self.best_snap_path}'")
         checkpoint: dict = torch.load(self.best_snap_path, map_location='cpu')
@@ -51,4 +51,9 @@ class ModelConfig:
         log(f":white_check_mark: loaded checkpoint '{self.best_snap_path}' "
             f"[epoch={checkpoint['epoch']}, best_score={checkpoint['best_score']}]")
 
+        del loaded_dict
+        del sd
+        del checkpoint
+        gc.collect()
+        torch.cuda.empty_cache()
         return model
