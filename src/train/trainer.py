@@ -57,7 +57,7 @@ class Trainer(abc.ABC):
             return self._config.model_config.model_type()
 
     @abc.abstractmethod
-    def _save_model(self, score: float, best_score: Union[float, None]) -> bool:
+    def _save_model(self, epoch: int, score: float, best_score: Union[float, None]) -> bool:
         pass
 
     @abc.abstractmethod
@@ -87,5 +87,5 @@ class Trainer(abc.ABC):
                 evaluation_round += 1
                 torch.cuda.empty_cache()
                 score: float = self._evaluate(evaluation_round)
-                self._save_model(score, best_score)
+                self._save_model(epoch, score, best_score)
                 best_score = self._update_best_score(score, best_score)
