@@ -1,47 +1,54 @@
-import random
+import abc
 from typing import Union
+import dataclasses
 
 import numpy as np
 from torch import nn
 import torch
+from torch.optim import Optimizer
 from torch.optim.lr_scheduler import MultiStepLR
 from torch.backends import cudnn
 from tqdm import tqdm
 
 from .trainer import Trainer, TrainingConfig
-from src.optim import AdamW
 from src.util.utils import AverageMeter, dice
 from src.losses import dice_round, ComboLoss
 from src.logs import log
+
+
+@dataclasses.dataclass
+class LocalizationRequirements:
+    model: nn.Module
+    optimizer: Optimizer
+    lr_scheduler: MultiStepLR
+    seg_loss: ComboLoss
 
 
 class LocalizationTrainer(Trainer):
 
     def __init__(self, config: TrainingConfig):
         super().__init__(config)
-        self._model: nn.Module = self._get_model()
-        self._optimizer: torch.optim.Optimizer = AdamW(self._model.parameters(),
-                                                       lr=0.00015,
-                                                       weight_decay=1e-6)
-        self._lr_scheduler: torch.optim.lr_scheduler.MultiStepLR = MultiStepLR(self._optimizer,
-                                                                               milestones=[5, 11, 17, 25, 33, 47, 50,
-                                                                                           60, 70, 90, 110, 130, 150,
-                                                                                           170, 180, 190],
-                                                                               gamma=0.5)
-        self._model: nn.Module = nn.DataParallel(self._model).cuda()
-        self._seg_loss: ComboLoss = ComboLoss({'dice': 1.0, 'focal': 10.0}, per_image=False).cuda()
+        requirements: LocalizationRequirements = self._get_requirements()
+        self._model: nn.Module = requirements.model
+        self._optimizer: Optimizer = requirements.optimizer
+        self._lr_scheduler: MultiStepLR = requirements.lr_scheduler
+        self._seg_loss: ComboLoss = requirements.seg_loss
         self._evaluation_dice_thr: float = 0.5
+
+    @abc.abstractmethod
+    def _get_requirements(self) -> LocalizationRequirements:
+        pass
+
+    @abc.abstractmethod
+    def _update_weights(self, loss: torch.Tensor) -> None:
+        pass
 
     def _setup(self):
         super(LocalizationTrainer, self)._setup()
         # vis_dev = sys.argv[2]
-
         # os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
         # os.environ["CUDA_VISIBLE_DEVICES"] = vis_dev
-
         cudnn.benchmark = True
-        np.random.seed(self._config.model_config.seed + 545)
-        random.seed(self._config.model_config.seed + 454)
 
     def _evaluate(self, number: int) -> float:
 
@@ -90,41 +97,40 @@ class LocalizationTrainer(Trainer):
             return best_score
 
     def _train_epoch(self, epoch: int):
-        losses: AverageMeter = AverageMeter()
-        dices: AverageMeter = AverageMeter()
+        losses_meter: AverageMeter = AverageMeter()
+        dices_meter: AverageMeter = AverageMeter()
 
         self._model.train()
 
         iterator = tqdm(self._train_data_loader)
 
         for i, (img_batch, msk_batch) in enumerate(iterator):
-            img_batch = img_batch.cuda(non_blocking=True)
-            msk_batch = msk_batch.cuda(non_blocking=True)
+            img_batch: torch.Tensor = img_batch.cuda(non_blocking=True)
+            msk_batch: torch.Tensor = msk_batch.cuda(non_blocking=True)
 
-            out = self._model(img_batch)
+            out: torch.Tensor = self._model(img_batch)
 
-            loss = self._seg_loss(out, msk_batch)
+            loss: torch.Tensor = self._seg_loss(out, msk_batch)
 
             with torch.no_grad():
                 _probs = torch.sigmoid(out[:, 0, ...])
                 dice_sc = 1 - dice_round(_probs, msk_batch[:, 0, ...])
 
-            losses.update(loss.item(), img_batch.size(0))
+            losses_meter.update(loss.item(), img_batch.size(0))
 
-            dices.update(dice_sc, img_batch.size(0))
+            dices_meter.update(dice_sc, img_batch.size(0))
 
             # TODO: test get_lr() method
             iterator.set_description(
                 f"epoch: {epoch};'"
                 f" lr {self._lr_scheduler.get_lr()[-1]:.7f};"
-                f" Loss {losses.val:.4f} ({loss.avg:.4f});"
-                f" Dice {dices.val:.4f} ({dices.avg:.4f})")
+                f" Loss {losses_meter.val:.4f} ({losses_meter.avg:.4f});"
+                f" Dice {dices_meter.val:.4f} ({dices_meter.avg:.4f})")
 
-            self._optimizer.zero_grad()
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(self._model.parameters(), 0.999)
-            self._optimizer.step()
+            self._update_weights(loss)
 
         self._lr_scheduler.step(epoch)
 
-        log(f"epoch: {epoch}; lr {self._lr_scheduler.get_lr()[-1]:.7f}; Loss {losses.avg:.4f}; Dice {dices.avg:.4f}")
+        log(f"epoch: {epoch}; lr {self._lr_scheduler.get_lr()[-1]:.7f}; Loss {losses_meter.avg:.4f}; Dice {dices_meter.avg:.4f}")
+
+
