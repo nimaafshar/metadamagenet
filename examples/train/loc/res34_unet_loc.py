@@ -107,8 +107,11 @@ if __name__ == '__main__':
 
     input_shape = (736, 736)
 
-    train_image_dataset = ImageDataset(configs.TRAIN_DIRS)
+    train_image_dataset = ImageDataset((configs.TRAIN_SPLIT,))
     train_image_dataset.discover()
+
+    valid_image_data = ImageDataset((configs.VALIDATION_SPLIT,))
+    valid_image_data.discover()
 
     train_data = Dataset(
         image_dataset=train_image_dataset,
@@ -157,9 +160,6 @@ if __name__ == '__main__':
                 ElasticTransformation(0.97)
             ))
     )
-
-    valid_image_data = ImageDataset((configs.TEST_DIR,))
-    valid_image_data.discover()
 
     vali_data = Dataset(
         image_dataset=valid_image_data,
