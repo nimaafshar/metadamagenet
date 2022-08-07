@@ -29,20 +29,19 @@ class Trainer(abc.ABC):
         self._config: TrainingConfig = config
         self._steps_per_epoch: int = len(self._config.train_dataset) // self._config.batch_size
         self._validation_steps: int = len(self._config.validation_dataset) // self._config.val_batch_size
-        self._train_data_loader: DataLoader = DataLoader(self._config.train_dataset,
-                                                         batch_size=self._config.batch_size,
-                                                         num_workers=6,
-                                                         shuffle=True,
-                                                         pin_memory=False,
-                                                         drop_last=True)
-        self._val_data_loader: DataLoader = DataLoader(self._config.validation_dataset,
-                                                       batch_size=self._config.val_batch_size,
-                                                       num_workers=6,
-                                                       shuffle=False,
-                                                       pin_memory=False)
+        self._train_data_loader: DataLoader
+        self._val_data_loader: DataLoader
+        self._train_data_loader, self._val_data_loader = self._get_dataloaders()
 
     def _setup(self):
         configs.MODELS_WEIGHTS_FOLDER.mkdir(parents=False, exist_ok=True)
+
+    @abc.abstractmethod
+    def _get_dataloaders(self) -> (DataLoader, DataLoader):
+        """
+        :return: (train_data_loader, valid_data_loader)
+        """
+        pass
 
     def _get_model(self) -> nn.Module:
         """
