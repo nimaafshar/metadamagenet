@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Tuple, Union
+from typing import Tuple, Union, Optional
 import abc
 
 import torch
@@ -22,6 +22,7 @@ class TrainingConfig:
     train_dataset: Dataset
     validation_dataset: Dataset
     evaluation_interval: int = 1
+    start_checkpoint: Optional[ModelConfig] = None
 
 
 class Trainer(abc.ABC):
@@ -48,12 +49,20 @@ class Trainer(abc.ABC):
         loading model from model_config. start from best snap if available. otherwise, just return an instance of the model
         :return: model instance
         """
-        if self._config.model_config.best_snap_path.exists():
-            log(":eyes: model snap for best version exists. loading from snap...")
-            return self._config.model_config.load_best_model()
+        if self._config.start_checkpoint is None:
+            if self._config.model_config.best_snap_path.exists():
+                log(":eyes: model snap for your original exists. loading from snap...")
+                return self._config.model_config.load_best_model().cuda()
+            else:
+                log(":poop: no model snap found. starting from scratch")
+                return self._config.model_config.model_type().cuda()
         else:
-            log(":poop: no model snap found. starting from scratch")
-            return self._config.model_config.model_type()
+            log(":watch: model snap for your start checkpoint exists. loading from snap...")
+            return self._config.start_checkpoint.load_best_model().cuda()
+
+
+
+
 
     @abc.abstractmethod
     def _save_model(self, epoch: int, score: float, best_score: Union[float, None]) -> bool:
