@@ -1,7 +1,10 @@
 import os
 import sys
 import timeit
+import random
 
+
+import numpy as np
 import cv2
 import torch
 from torch import nn
@@ -51,6 +54,11 @@ os.environ["OMP_NUM_THREADS"] = "2"
 
 
 class Resnet34UnetLocTrainer(LocalizationTrainer):
+
+    def _setup(self):
+        super(Resnet34UnetLocTrainer, self)._setup()
+        np.random.seed(self._config.model_config.seed + 545)
+        random.seed(self._config.model_config.seed + 454)
 
     def _get_requirements(self) -> LocalizationRequirements:
         model: nn.Module = self._get_model()
