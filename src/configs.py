@@ -41,6 +41,7 @@ VALIDATION_SPLIT: pathlib.Path = pathlib.Path('./data/split/train/')
 IMAGES_DIRECTORY = 'images'
 LABELS_DIRECTORY = 'labels'
 MASKS_DIRECTORY = 'masks'
+LOCALIZATION_PREDICTION_MASKS_DIRECTORY = 'pred_loc_val'
 
 PREDICTIONS_DIRECTORY = pathlib.Path('./data/pred/')
 
