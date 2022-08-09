@@ -15,7 +15,7 @@ from src.zoo.models import Res34_Unet_Loc
 
 from src.optim import AdamW
 from src.losses import ComboLoss
-from src.train.dataset import Dataset
+from src.train.dataset import LocalizationDataset
 from src.train.loc import LocalizationRequirements, LocalizationTrainer
 from src.train.trainer import TrainingConfig
 from src.model_config import ModelConfig
@@ -113,7 +113,7 @@ if __name__ == '__main__':
     valid_image_data = ImageDataset((configs.VALIDATION_SPLIT,))
     valid_image_data.discover()
 
-    train_data = Dataset(
+    train_data = LocalizationDataset(
         image_dataset=train_image_dataset,
         augmentations=Pipeline(
             (
@@ -161,7 +161,7 @@ if __name__ == '__main__':
             ))
     )
 
-    vali_data = Dataset(
+    vali_data = LocalizationDataset(
         image_dataset=valid_image_data,
         augmentations=None,
         post_version_prob=1
