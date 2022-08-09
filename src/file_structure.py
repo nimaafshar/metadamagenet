@@ -14,7 +14,8 @@ from src.configs import (
     damage_to_damage_type,
     IMAGES_DIRECTORY,
     LABELS_DIRECTORY,
-    MASKS_DIRECTORY
+    MASKS_DIRECTORY,
+    LOCALIZATION_PREDICTION_MASKS_DIRECTORY
 )
 
 
@@ -63,6 +64,13 @@ class ImageData:
         :return: path to mask image file
         """
         return self.base / MASKS_DIRECTORY / f'{self.name(time)}.png'
+
+    @property
+    def localization_mask(self) -> pathlib.Path:
+        """
+        :return: predicted localization msk for this image
+        """
+        return self.base / LOCALIZATION_PREDICTION_MASKS_DIRECTORY / f'{self.name(DataTime.PRE)}_part1.png'
 
     def polygons(self, time: DataTime = DataTime.PRE) -> List[Tuple[Polygon, DamageType]]:
         """
