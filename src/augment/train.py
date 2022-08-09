@@ -407,6 +407,10 @@ class GaussianNoise(Augmentation):
 class Blur(Augmentation):
     ParamType = Any
 
+
+    def __init__(self, probability: float, apply_to: Optional[Sequence[str]] = None):
+        super().__init__(probability, apply_to)
+
     def _determine_params(self) -> ParamType:
         return None
 
