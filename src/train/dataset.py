@@ -1,5 +1,5 @@
 import random
-from typing import Tuple, Union, Optional,Dict
+from typing import Tuple, Union, Optional, Dict
 
 import numpy as np
 import numpy.typing as npt
@@ -14,7 +14,24 @@ from src.augment import Pipeline
 from src.util.utils import normalize_colors
 
 
-class LocalizationDataset(TorchDataset):
+class Dataset(TorchDataset):
+    def __init__(self,
+                 image_dataset: ImageDataset,
+                 augmentations: Optional[Pipeline] = None):
+        """
+        Train Dataset
+        :param image_dataset: dataset of images
+        :param augmentations: pipeline of augmentations
+        """
+        super().__init__()
+        self._image_dataset: ImageDataset = image_dataset
+        self._augments: Union[Pipeline, None] = augmentations
+
+    def __len__(self) -> int:
+        return len(self._image_dataset)
+
+
+class LocalizationDataset(Dataset):
     def __init__(self,
                  image_dataset: ImageDataset,
                  augmentations: Optional[Pipeline] = None,
@@ -25,9 +42,7 @@ class LocalizationDataset(TorchDataset):
         :param augmentations: pipeline of augmentations
         :param post_version_prob: 1 - probability of replacing the image with its post version
         """
-        super().__init__()
-        self._image_dataset: ImageDataset = image_dataset
-        self._augments: Union[Pipeline, None] = augmentations
+        super(LocalizationDataset, self).__init__(image_dataset, augmentations)
         if not 0 <= post_version_prob <= 1:
             raise TypeError("post_version_prob should be in [0,1]")
         self._post_version_prob: float = post_version_prob
@@ -65,21 +80,7 @@ class LocalizationDataset(TorchDataset):
         return img, msk
 
 
-class ClassificationDataset(TorchDataset):
-    def __init__(self,
-                 image_dataset: ImageDataset,
-                 augmentations: Optional[Pipeline] = None):
-        """
-        Train Dataset
-        :param image_dataset: dataset of images
-        :param augmentations: pipeline of augmentations
-        """
-        super().__init__()
-        self._image_dataset: ImageDataset = image_dataset
-        self._augments: Union[Pipeline, None] = augmentations
-
-    def __len__(self) -> int:
-        return len(self._image_dataset)
+class ClassificationDataset(Dataset):
 
     def __getitem__(self, identifier: int) -> Dict[str, npt.NDArray]:
         """
