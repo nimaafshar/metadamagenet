@@ -26,6 +26,9 @@ class TopDownFlip(Augmentation):
     """image top-down flip"""
     ParamType = Any
 
+    def __init__(self, probability: float, apply_to: Optional[Sequence[str]] = None):
+        super().__init__(probability, apply_to)
+
     def _determine_params(self) -> ParamType:
         return None
 
@@ -39,6 +42,9 @@ class TopDownFlip(Augmentation):
 class Rotation90Degree(Augmentation):
     """rotates image 90 degrees randomly between 0-3 times """
     ParamType: Type = int
+
+    def __init__(self, probability: float, apply_to: Optional[Sequence[str]] = None):
+        super().__init__(probability, apply_to)
 
     def _determine_params(self) -> ParamType:
         return random.randrange(4)
@@ -366,9 +372,11 @@ class RandomCrop(AugmentationInterface):
         return img_batch, True
 
 
-
 class Clahe(Augmentation):
     ParamType = Any
+
+    def __init__(self, probability: float, apply_to: Optional[Sequence[str]] = None):
+        super().__init__(probability, apply_to)
 
     def _determine_params(self) -> ParamType:
         return None
@@ -382,6 +390,9 @@ class Clahe(Augmentation):
 
 class GaussianNoise(Augmentation):
     ParamType = Any
+
+    def __init__(self, probability: float, apply_to: Optional[Sequence[str]] = None):
+        super().__init__(probability, apply_to)
 
     def _determine_params(self) -> ParamType:
         return None
