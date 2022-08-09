@@ -14,7 +14,7 @@ from apex import amp
 
 from src.zoo.models import SeNet154_Unet_Loc
 
-from src.train.dataset import Dataset
+from src.train.dataset import LocalizationDataset
 from src.optim import AdamW
 from src.train.loc import LocalizationTrainer, LocalizationRequirements
 from src.train.trainer import TrainingConfig
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     valid_image_data = ImageDataset((configs.VALIDATION_SPLIT,))
     valid_image_data.discover()
 
-    train_data = Dataset(
+    train_data = LocalizationDataset(
         image_dataset=train_image_dataset,
         augmentations=Pipeline(
             (
@@ -161,7 +161,7 @@ if __name__ == '__main__':
         post_version_prob=0.96
     )
 
-    vali_data = Dataset(
+    vali_data = LocalizationDataset(
         image_dataset=valid_image_data,
         augmentations=None,
         post_version_prob=1
