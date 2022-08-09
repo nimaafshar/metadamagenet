@@ -1,3 +1,4 @@
+import abc
 import random
 from typing import Tuple, Union, Optional, Dict
 
@@ -14,7 +15,7 @@ from src.augment import Pipeline
 from src.util.utils import normalize_colors
 
 
-class Dataset(TorchDataset):
+class Dataset(TorchDataset, abc.ABC):
     def __init__(self,
                  image_dataset: ImageDataset,
                  augmentations: Optional[Pipeline] = None):
@@ -81,6 +82,16 @@ class LocalizationDataset(Dataset):
 
 
 class ClassificationDataset(Dataset):
+    def __init__(self, image_dataset: ImageDataset, do_dilation: bool = False,
+                 augmentations: Optional[Pipeline] = None):
+        """
+        Train Dataset
+        :param do_dilation: do morphological dilation to image or not
+        :param image_dataset: dataset of images
+        :param augmentations: pipeline of augmentations
+        """
+        self._do_dilation: bool = do_dilation
+        super().__init__(image_dataset, augmentations)
 
     def __getitem__(self, identifier: int) -> Dict[str, npt.NDArray]:
         """
@@ -114,26 +125,24 @@ class ClassificationDataset(Dataset):
         msk3[label_msk == 3] = 255
         msk4[label_msk == 4] = 255
 
-        img_batch = {
-            'img_pre': img_pre,  # pre-disaster image
-            'img_post': img_post,  # post-disaster image
-            'msk0': msk0,  # mask for pre-disaster building localization
-            'msk1': msk1,  # damage level 1
-            'msk2': msk2,  # damage level 2
-            'msk3': msk3,  # damage level 3
-            'msk4': msk4  # damage level 4
-        }
-
         if self._augments is not None:
+            img_batch = {
+                'img_pre': img_pre,  # pre-disaster image
+                'img_post': img_post,  # post-disaster image
+                'msk0': msk0,  # mask for pre-disaster building localization
+                'msk1': msk1,  # damage level 1
+                'msk2': msk2,  # damage level 2
+                'msk3': msk3,  # damage level 3
+                'msk4': msk4  # damage level 4
+            }
             img_batch, _ = self._augments.apply_batch(img_batch)
-
-        img_pre = img_batch['img_pre']
-        img_post = img_batch['img_post']
-        msk0 = img_batch['msk0']
-        msk1 = img_batch['msk1']
-        msk2 = img_batch['msk2']
-        msk3 = img_batch['msk3']
-        msk4 = img_batch['msk4']
+            img_pre = img_batch['img_pre']
+            img_post = img_batch['img_post']
+            msk0 = img_batch['msk0']
+            msk1 = img_batch['msk1']
+            msk2 = img_batch['msk2']
+            msk3 = img_batch['msk3']
+            msk4 = img_batch['msk4']
 
         msk0 = msk0[..., np.newaxis]
         msk1 = msk1[..., np.newaxis]
@@ -144,16 +153,18 @@ class ClassificationDataset(Dataset):
         msk = np.concatenate([msk0, msk1, msk2, msk3, msk4], axis=2)
         msk = (msk > 127)
 
-        msk[..., 0] = False
-        msk[..., 1] = dilation(msk[..., 1], square(5))
-        msk[..., 2] = dilation(msk[..., 2], square(5))
-        msk[..., 3] = dilation(msk[..., 3], square(5))
-        msk[..., 4] = dilation(msk[..., 4], square(5))
-        msk[..., 1][msk[..., 2:].max(axis=2)] = False
-        msk[..., 3][msk[..., 2]] = False
-        msk[..., 4][msk[..., 2]] = False
-        msk[..., 4][msk[..., 3]] = False
-        msk[..., 0][msk[..., 1:].max(axis=2)] = True
+        if self._do_dilation:
+            msk[..., 0] = False
+            msk[..., 1] = dilation(msk[..., 1], square(5))
+            msk[..., 2] = dilation(msk[..., 2], square(5))
+            msk[..., 3] = dilation(msk[..., 3], square(5))
+            msk[..., 4] = dilation(msk[..., 4], square(5))
+            msk[..., 1][msk[..., 2:].max(axis=2)] = False
+            msk[..., 3][msk[..., 2]] = False
+            msk[..., 4][msk[..., 2]] = False
+            msk[..., 4][msk[..., 3]] = False
+            msk[..., 0][msk[..., 1:].max(axis=2)] = True
+
         msk = msk * 1
 
         label_msk = msk.argmax(axis=2)
@@ -169,3 +180,23 @@ class ClassificationDataset(Dataset):
             'msk': msk,
             'label_msk': label_msk
         }
+
+
+class ClassificationValidationDataset(ClassificationDataset):
+    """
+    Validation Dataset for classification
+    """
+
+    def __init__(self, image_dataset: ImageDataset,
+                 augmentations: Optional[Pipeline] = None):
+        """
+        :param image_dataset: dataset of images
+        :param augmentations: pipeline of augmentations
+        """
+        super().__init__(image_dataset, False, augmentations)
+
+    def __getitem__(self, identifier: int):
+        image_data: ImageData = self._image_dataset[identifier]
+        data: dict = super(ClassificationValidationDataset, self).__getitem__(identifier)
+        data['msk_loc'] = cv2.imread(str(image_data.localization_mask), cv2.IMREAD_UNCHANGED)
+        return data
