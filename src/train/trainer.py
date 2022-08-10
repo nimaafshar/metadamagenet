@@ -58,11 +58,8 @@ class Trainer(abc.ABC):
                 return self._config.model_config.model_type().cuda()
         else:
             log(":watch: model snap for your start checkpoint exists. loading from snap...")
+            # TODO: load starting checkpoint model weights into model_config model
             return self._config.start_checkpoint.load_best_model().cuda()
-
-
-
-
 
     @abc.abstractmethod
     def _save_model(self, epoch: int, score: float, best_score: Union[float, None]) -> bool:
