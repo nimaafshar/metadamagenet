@@ -1,0 +1,182 @@
+import abc
+from typing import Union, List
+import dataclasses
+
+import torch
+import numpy as np
+import numpy.typing as npt
+from torch.backends import cudnn
+from torch import nn
+from torch.optim.optimizer import Optimizer
+from torch.optim.lr_scheduler import MultiStepLR
+from tqdm import tqdm
+
+from src.util.utils import AverageMeter
+from .trainer import Trainer, TrainingConfig
+from src.losses import ComboLoss, dice_round
+from src.logs import log
+from src.util.utils import dice
+
+
+@dataclasses.dataclass
+class ClassificationRequirements:
+    model: nn.Module
+    optimizer: Optimizer
+    lr_scheduler: MultiStepLR
+    seg_loss: ComboLoss
+    ce_loss: nn.CrossEntropyLoss
+    label_loss_weights: npt.NDArray  # with size 5
+
+
+class ClassificationTrainer(Trainer, abc.ABC):
+
+    def _setup(self):
+        super(ClassificationTrainer, self)._setup()
+        # vis_dev = sys.argv[2]
+        # os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
+        # os.environ["CUDA_VISIBLE_DEVICES"] = vis_dev
+        cudnn.benchmark = True
+
+    def __init__(self, config: TrainingConfig):
+        super().__init__(config)
+        requirements: ClassificationRequirements = self._get_requirements()
+        self._model: nn.Module = requirements.model
+        self._optimizer: Optimizer = requirements.optimizer
+        self._lr_scheduler: MultiStepLR = requirements.lr_scheduler
+        self._seg_loss: ComboLoss = requirements.seg_loss
+        self._ce_loss: nn.CrossEntropyLoss = requirements.ce_loss
+        self._label_loss_weights: torch.Tensor = torch.from_numpy(requirements.label_loss_weights)
+        self._evaluation_dice_thr: float = 0.3
+
+    @abc.abstractmethod
+    def _get_requirements(self) -> ClassificationRequirements:
+        pass
+
+    @abc.abstractmethod
+    def _update_weights(self, loss: torch.Tensor) -> None:
+        pass
+
+    def _evaluate(self, number: int) -> float:
+
+        dices0 = []
+
+        tp = np.zeros((4,))
+        fp = np.zeros((4,))
+        fn = np.zeros((4,))
+
+        self._model.eval()
+        with torch.no_grad():
+            for i, valid_data_batch in enumerate(tqdm(self._val_data_loader)):
+                msk_batch: torch.Tensor = valid_data_batch['msk'].numpy()
+                label_mask_batch: torch.Tensor = valid_data_batch['label_msk'].numpy()
+                img_batch: torch.Tensor = valid_data_batch['img'].cuda(non_blocking=True)
+                loc_mask_batch: torch.Tensor = valid_data_batch['msk_loc'].numpy() * 1
+
+                out_batch = self._model(img_batch)
+
+                msk_loc_pred = loc_mask_batch
+                msk_damage_pred = torch.sigmoid(out_batch).cpu().numpy()[:, 1:, ...]
+
+                for j in range(msk_batch.shape[0]):
+                    dices0.append(dice(msk_batch[j, 0], msk_loc_pred[j] > self._evaluation_dice_thr))
+
+                    targ = label_mask_batch[j][msk_batch[j, 0] > 0]
+                    pred = msk_damage_pred[j].argmax(axis=0)
+                    pred = pred * (msk_loc_pred[j] > self._evaluation_dice_thr)
+                    pred = pred[msk_batch[j, 0] > 0]
+
+                    for c in range(4):
+                        tp[c] += np.logical_and(pred == c, targ == c).sum()
+                        fn[c] += np.logical_and(pred != c, targ == c).sum()
+                        fp[c] += np.logical_and(pred == c, targ != c).sum()
+
+        d0: float = np.mean(dices0)
+
+        f1_scores = np.zeros((4,))
+        for c in range(4):
+            f1_scores[c] = 2 * tp[c] / (2 * tp[c] + fp[c] + fn[c])
+
+        f1_final = 4 / np.sum(1.0 / (f1_scores + 1e-6))
+
+        score = 0.3 * d0 + 0.7 * f1_final
+
+        log(f"Validation set Score: {score:.6f}, Dice: {d0:.6f}, F1: {f1_final}, F1_0: {f1_scores[0]}, F1_1: {f1_scores[1]}, F1_2: {f1_scores[2]}, F1_3: {f1_scores[3]}")
+        return score
+
+    def _save_model(self, epoch: int, score: float, best_score: Union[float, None]) -> bool:
+        if best_score is None or score > best_score:
+            torch.save({
+                'epoch': epoch + 1,
+                'state_dict': self._model.state_dict(),
+                'best_score': score,
+            }, self._config.model_config.best_snap_path)
+            log(f":floppy_disk: model saved at {self._config.model_config.best_snap_path}")
+            return True
+
+        return False
+
+    def _update_best_score(self, score: float, best_score: Union[float, None]) -> float:
+        if best_score is None:
+            log(f"score={score:.4f}")
+            return score
+
+        if score > best_score:
+            log(f":confetti_ball: score {best_score:.4f} --> {score:.4f}")
+            return score
+        else:
+            log(f":disappointed: score {best_score:.4f} --> {score:.4f}")
+            return best_score
+
+    def _train_epoch(self, epoch: int):
+        losses_meter: AverageMeter = AverageMeter()
+        label_losses_meter: List[AverageMeter] = [
+            AverageMeter(),
+            AverageMeter(),
+            AverageMeter(),
+            AverageMeter(),
+            AverageMeter()
+        ]
+        dices_meter: AverageMeter = AverageMeter()
+
+        self._model.train()
+
+        iterator = tqdm(self._train_data_loader)
+
+        for i, train_data_batch in enumerate(iterator):
+            img_batch: torch.Tensor = train_data_batch['img'].cuda(non_blocking=True)
+            msk_batch: torch.Tensor = train_data_batch['msk'].cuda(non_blocking=True)
+
+            out: torch.Tensor = self._model(img_batch)
+
+            label_losses = np.asarray((self._seg_loss(out[:, 0, ...], msk_batch[:, 0, ...]),
+                                       self._seg_loss(out[:, 1, ...], msk_batch[:, 1, ...]),
+                                       self._seg_loss(out[:, 2, ...], msk_batch[:, 2, ...]),
+                                       self._seg_loss(out[:, 3, ...], msk_batch[:, 3, ...]),
+                                       self._seg_loss(out[:, 4, ...], msk_batch[:, 4, ...])))
+
+            loss: torch.Tensor = np.dot(self._label_loss_weights, label_losses)
+
+            with torch.no_grad():
+                _probs = torch.sigmoid(out[:, 0, ...])
+                dice_sc = 1 - dice_round(_probs, msk_batch[:, 0, ...])
+
+            losses_meter.update(loss.item(), img_batch.size(0))
+            for j, loss_meter in enumerate(label_losses_meter):
+                loss_meter.update(label_losses[j], img_batch.size(0))
+
+            dices_meter.update(dice_sc, img_batch.size(0))
+
+            # TODO: test get_lr() method
+            iterator.set_description(
+                f"epoch: {epoch};'"
+                f" lr {self._lr_scheduler.get_lr()[-1]:.7f};"
+                f" Total Loss {losses_meter.val:.4f} ({losses_meter.avg:.4f});"
+                f" Label Losses [{','.join(l.val() for l in label_losses_meter)}]"
+                f" ([{','.join(l.avg() for l in label_losses_meter)}]);"
+                f" Dice {dices_meter.val:.4f} ({dices_meter.avg:.4f})")
+
+            self._update_weights(loss)
+
+        self._lr_scheduler.step(epoch)
+
+        log(f"epoch: {epoch}; lr {self._lr_scheduler.get_lr()[-1]:.7f}; Loss {losses_meter.avg:.4f}; Dice {dices_meter.avg:.4f}")
