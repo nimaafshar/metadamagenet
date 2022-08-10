@@ -24,7 +24,7 @@ class LocalizationRequirements:
     seg_loss: ComboLoss
 
 
-class LocalizationTrainer(Trainer):
+class LocalizationTrainer(Trainer, abc.ABC):
 
     def __init__(self, config: TrainingConfig):
         super().__init__(config)
@@ -132,5 +132,3 @@ class LocalizationTrainer(Trainer):
         self._lr_scheduler.step(epoch)
 
         log(f"epoch: {epoch}; lr {self._lr_scheduler.get_lr()[-1]:.7f}; Loss {losses_meter.avg:.4f}; Dice {dices_meter.avg:.4f}")
-
-
