@@ -34,10 +34,26 @@ class ModelConfig:
         return MODELS_WEIGHTS_FOLDER / f'{self.full_name}_best'
 
     def load_best_model(self) -> nn.Module:
-        model: nn.Module = self.model_type().cuda()
-
+        """
+        loading model from best pretrained version
+        :return: model instance
+        """
         log(f":arrow_up: loading checkpoint '{self.best_snap_path}'")
-        checkpoint: dict = torch.load(self.best_snap_path, map_location='cpu')
+        return ModelConfig.load_from_checkpoint_into_type(self.best_snap_path,self.model_type)
+
+    def init_weights_from(self, checkpoint: 'ModelConfig') -> nn.Module:
+        """
+        initializing this model data partly with another model config path
+        :param checkpoint: a model config
+        :return: model instance
+        """
+        log(f":arrow_up: loading checkpoint '{checkpoint.best_snap_path}'")
+        return ModelConfig.load_from_checkpoint_into_type(checkpoint.best_snap_path, self.model_type)
+
+    @staticmethod
+    def load_from_checkpoint_into_type(checkpoint_path: pathlib.Path, model_type: Type) -> nn.Module:
+        model = model_type().cuda()
+        checkpoint: dict = torch.load(checkpoint_path, map_location='cpu')
         loaded_dict: dict = checkpoint['state_dict']
         sd: dict = model.state_dict()
 
@@ -48,7 +64,8 @@ class ModelConfig:
 
         loaded_dict = sd
         model.load_state_dict(loaded_dict)
-        log(f":white_check_mark: loaded checkpoint '{self.best_snap_path}' "
+
+        log(f":white_check_mark: loaded checkpoint '{checkpoint_path}' "
             f"[epoch={checkpoint['epoch']}, best_score={checkpoint['best_score']}]")
 
         del loaded_dict
