@@ -1,5 +1,5 @@
 import abc
-from typing import Union, List
+from typing import Union, List, Optional
 import dataclasses
 
 import torch
@@ -16,6 +16,7 @@ from .trainer import Trainer, TrainingConfig
 from src.losses import ComboLoss, dice_round
 from src.logs import log
 from src.util.utils import dice
+from .metrics import DiceCalculator, MetricCalculator
 
 
 @dataclasses.dataclass
@@ -25,7 +26,8 @@ class ClassificationRequirements:
     lr_scheduler: MultiStepLR
     seg_loss: ComboLoss
     ce_loss: nn.CrossEntropyLoss
-    label_loss_weights: npt.NDArray  # with size 5
+    label_loss_weights: npt.NDArray  # with size 5, if using cce_loss use size 6
+    dice_metric_calculator: Optional[MetricCalculator] = None
 
 
 class ClassificationTrainer(Trainer, abc.ABC):
@@ -37,7 +39,8 @@ class ClassificationTrainer(Trainer, abc.ABC):
         # os.environ["CUDA_VISIBLE_DEVICES"] = vis_dev
         cudnn.benchmark = True
 
-    def __init__(self, config: TrainingConfig):
+    def __init__(self, config: TrainingConfig,
+                 use_cce_loss: bool = False):
         super().__init__(config)
         requirements: ClassificationRequirements = self._get_requirements()
         self._model: nn.Module = requirements.model
@@ -47,6 +50,9 @@ class ClassificationTrainer(Trainer, abc.ABC):
         self._ce_loss: nn.CrossEntropyLoss = requirements.ce_loss
         self._label_loss_weights: torch.Tensor = torch.from_numpy(requirements.label_loss_weights)
         self._evaluation_dice_thr: float = 0.3
+        self._use_cce_loss: bool = use_cce_loss
+        self._dice_metric_calculator: MetricCalculator = requirements.dice_metric_calculator if \
+            requirements.dice_metric_calculator is not None else DiceCalculator(self._evaluation_dice_thr)
 
     @abc.abstractmethod
     def _get_requirements(self) -> ClassificationRequirements:
@@ -56,9 +62,16 @@ class ClassificationTrainer(Trainer, abc.ABC):
     def _update_weights(self, loss: torch.Tensor) -> None:
         pass
 
-    def _evaluate(self, number: int) -> float:
+    @abc.abstractmethod
+    def _apply_activation(self, model_out: torch.Tensor) -> torch.Tensor:
+        """
+        :param model_out: batch of model outputs
+        :return: model outputs with activation function applied
+        """
+        pass
 
-        dices0 = []
+    def _evaluate(self, number: int) -> float:
+        self._dice_metric_calculator.reset()
 
         tp = np.zeros((4,))
         fp = np.zeros((4,))
@@ -75,10 +88,10 @@ class ClassificationTrainer(Trainer, abc.ABC):
                 out_batch = self._model(img_batch)
 
                 msk_loc_pred = loc_mask_batch
-                msk_damage_pred = torch.sigmoid(out_batch).cpu().numpy()[:, 1:, ...]
+                msk_damage_pred = self._apply_activation(out_batch).cpu().numpy()[:, 1:, ...]
 
                 for j in range(msk_batch.shape[0]):
-                    dices0.append(dice(msk_batch[j, 0], msk_loc_pred[j] > self._evaluation_dice_thr))
+                    self._dice_metric_calculator.update(msk_batch[j, 0], msk_loc_pred[j])
 
                     targ = label_mask_batch[j][msk_batch[j, 0] > 0]
                     pred = msk_damage_pred[j].argmax(axis=0)
@@ -90,7 +103,7 @@ class ClassificationTrainer(Trainer, abc.ABC):
                         fn[c] += np.logical_and(pred != c, targ == c).sum()
                         fp[c] += np.logical_and(pred == c, targ != c).sum()
 
-        d0: float = np.mean(dices0)
+        d0: float = self._dice_metric_calculator.aggregate()
 
         f1_scores = np.zeros((4,))
         for c in range(4):
@@ -129,13 +142,9 @@ class ClassificationTrainer(Trainer, abc.ABC):
 
     def _train_epoch(self, epoch: int):
         losses_meter: AverageMeter = AverageMeter()
-        label_losses_meter: List[AverageMeter] = [
-            AverageMeter(),
-            AverageMeter(),
-            AverageMeter(),
-            AverageMeter(),
-            AverageMeter()
-        ]
+        label_losses_meter: List[AverageMeter] = [AverageMeter() for _ in range(5)]
+        ce_loss_meter: AverageMeter = AverageMeter()
+
         dices_meter: AverageMeter = AverageMeter()
 
         self._model.train()
@@ -145,24 +154,36 @@ class ClassificationTrainer(Trainer, abc.ABC):
         for i, train_data_batch in enumerate(iterator):
             img_batch: torch.Tensor = train_data_batch['img'].cuda(non_blocking=True)
             msk_batch: torch.Tensor = train_data_batch['msk'].cuda(non_blocking=True)
+            label_msk_batch: torch.Tensor = train_data_batch['label_msk'].cuda(non_blocking=True)
 
             out: torch.Tensor = self._model(img_batch)
 
-            label_losses = np.asarray((self._seg_loss(out[:, 0, ...], msk_batch[:, 0, ...]),
-                                       self._seg_loss(out[:, 1, ...], msk_batch[:, 1, ...]),
-                                       self._seg_loss(out[:, 2, ...], msk_batch[:, 2, ...]),
-                                       self._seg_loss(out[:, 3, ...], msk_batch[:, 3, ...]),
-                                       self._seg_loss(out[:, 4, ...], msk_batch[:, 4, ...])))
+            label_losses: List[torch.Tensor] = [self._seg_loss(out[:, 0, ...], msk_batch[:, 0, ...]),
+                                                self._seg_loss(out[:, 1, ...], msk_batch[:, 1, ...]),
+                                                self._seg_loss(out[:, 2, ...], msk_batch[:, 2, ...]),
+                                                self._seg_loss(out[:, 3, ...], msk_batch[:, 3, ...]),
+                                                self._seg_loss(out[:, 4, ...], msk_batch[:, 4, ...])]
+            if self._use_cce_loss:
+                label_losses.append(self._ce_loss(out, label_msk_batch))
 
-            loss: torch.Tensor = np.dot(self._label_loss_weights, label_losses)
+            label_losses: torch.Tensor = torch.Tensor(label_losses)
+
+            loss: torch.Tensor = torch.dot(self._label_loss_weights, label_losses)
 
             with torch.no_grad():
-                _probs = torch.sigmoid(out[:, 0, ...])
-                dice_sc = 1 - dice_round(_probs, msk_batch[:, 0, ...])
+                if self._use_cce_loss:
+                    _probs = 1 - torch.sigmoid(out[:, 0, ...])
+                    dice_sc = 1 - dice_round(_probs, 1 - msk_batch[:, 0, ...])
+                else:
+                    _probs = torch.sigmoid(out[:, 0, ...])
+                    dice_sc = 1 - dice_round(_probs, msk_batch[:, 0, ...])
 
             losses_meter.update(loss.item(), img_batch.size(0))
             for j, loss_meter in enumerate(label_losses_meter):
                 loss_meter.update(label_losses[j], img_batch.size(0))
+
+            if self._use_cce_loss:
+                ce_loss_meter.update(label_losses[5], img_batch.size(0))
 
             dices_meter.update(dice_sc, img_batch.size(0))
 
@@ -173,10 +194,15 @@ class ClassificationTrainer(Trainer, abc.ABC):
                 f" Total Loss {losses_meter.val:.4f} ({losses_meter.avg:.4f});"
                 f" Label Losses [{','.join(l.val() for l in label_losses_meter)}]"
                 f" ([{','.join(l.avg() for l in label_losses_meter)}]);"
-                f" Dice {dices_meter.val:.4f} ({dices_meter.avg:.4f})")
+                f" Dice {dices_meter.val:.4f} ({dices_meter.avg:.4f});"
+                + (f"CCE {ce_loss_meter.val:.4f} ({ce_loss_meter.avg:.4f});" if self._use_cce_loss else ""))
 
             self._update_weights(loss)
 
         self._lr_scheduler.step(epoch)
 
-        log(f"epoch: {epoch}; lr {self._lr_scheduler.get_lr()[-1]:.7f}; Loss {losses_meter.avg:.4f}; Dice {dices_meter.avg:.4f}")
+        log(f"epoch: {epoch};"
+            f"lr {self._lr_scheduler.get_lr()[-1]:.7f};"
+            f" Loss {losses_meter.avg:.4f};"
+            f" Dice {dices_meter.avg:.4f};"
+            + (f"CCE {ce_loss_meter.avg:.4f};" if self._use_cce_loss else ""))
