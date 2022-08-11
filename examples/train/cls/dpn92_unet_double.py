@@ -54,10 +54,10 @@ cv2.setNumThreads(0)
 cv2.ocl.setUseOpenCL(False)
 
 
-class SEResnext50UnetDoubleTrainer(ClassificationTrainer):
+class Dpn92UnetDoubleTrainer(ClassificationTrainer):
 
     def _setup(self):
-        super(SEResnext50UnetDoubleTrainer, self)._setup()
+        super(Dpn92UnetDoubleTrainer, self)._setup()
         np.random.seed(self._config.model_config.seed + 54321)
         random.seed(self._config.model_config.seed + 54321)
 
