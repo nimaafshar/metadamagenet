@@ -43,7 +43,6 @@ from src.augment import (
     Contrast
 )
 
-
 os.environ["MKL_NUM_THREADS"] = "2"
 os.environ["NUMEXPR_NUM_THREADS"] = "2"
 os.environ["OMP_NUM_THREADS"] = "2"
@@ -196,6 +195,10 @@ if __name__ == '__main__':
                     GaussianNoise(
                         probability=0.985,
                         apply_to=('img_pre',)
+                    ),
+                    Blur(
+                        probability=0.985,
+                        apply_to=('img_post',)
                     )
                 ), probability=0.98
                 ),
