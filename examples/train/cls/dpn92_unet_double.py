@@ -305,7 +305,7 @@ if __name__ == '__main__':
         ),
     )
 
-    trainer = SEResnext50UnetDoubleTrainer(
+    trainer = Dpn92UnetDoubleTrainer(
         training_config,
         use_cce_loss=True
     )
