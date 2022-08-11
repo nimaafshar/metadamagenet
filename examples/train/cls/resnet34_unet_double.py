@@ -55,6 +55,9 @@ cv2.ocl.setUseOpenCL(False)
 
 class Resnet34UnetDoubleTrainer(ClassificationTrainer):
 
+    def _apply_activation(self, model_out: torch.Tensor) -> torch.Tensor:
+        return torch.sigmoid(model_out)
+
     def _setup(self):
         super(Resnet34UnetDoubleTrainer, self)._setup()
         np.random.seed(self._config.model_config.seed + 321)
@@ -298,3 +301,9 @@ if __name__ == '__main__':
             seed=seed,
         ),
     )
+
+    trainer = Resnet34UnetDoubleTrainer(training_config,
+                                        use_cce_loss=False,
+                                        inverse_msk0=False)
+
+    trainer.train()
