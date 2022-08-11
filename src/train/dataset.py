@@ -200,5 +200,5 @@ class ClassificationValidationDataset(ClassificationDataset):
     def __getitem__(self, identifier: int):
         image_data: ImageData = self._image_dataset[identifier]
         data: dict = super(ClassificationValidationDataset, self).__getitem__(identifier)
-        data['msk_loc'] = cv2.imread(str(image_data.localization_mask), cv2.IMREAD_UNCHANGED)
+        data['msk_loc'] = cv2.imread(str(image_data.localization_mask), cv2.IMREAD_UNCHANGED) > (0.3 * 255)
         return data
