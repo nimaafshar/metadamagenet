@@ -83,6 +83,7 @@ class LocalizationDataset(Dataset):
 
 class ClassificationDataset(Dataset):
     def __init__(self, image_dataset: ImageDataset, do_dilation: bool = False,
+                 inverse_msk0: bool = False,
                  augmentations: Optional[Pipeline] = None):
         """
         Train Dataset
@@ -91,6 +92,7 @@ class ClassificationDataset(Dataset):
         :param augmentations: pipeline of augmentations
         """
         self._do_dilation: bool = do_dilation
+        self._inverse_msk0: bool = inverse_msk0
         super().__init__(image_dataset, augmentations)
 
     def __getitem__(self, identifier: int) -> Dict[str, npt.NDArray]:
@@ -154,7 +156,7 @@ class ClassificationDataset(Dataset):
         msk = (msk > 127)
 
         if self._do_dilation:
-            msk[..., 0] = False
+            msk[..., 0] = self._inverse_msk0
             msk[..., 1] = dilation(msk[..., 1], square(5))
             msk[..., 2] = dilation(msk[..., 2], square(5))
             msk[..., 3] = dilation(msk[..., 3], square(5))
@@ -163,7 +165,7 @@ class ClassificationDataset(Dataset):
             msk[..., 3][msk[..., 2]] = False
             msk[..., 4][msk[..., 2]] = False
             msk[..., 4][msk[..., 3]] = False
-            msk[..., 0][msk[..., 1:].max(axis=2)] = True
+            msk[..., 0][msk[..., 1:].max(axis=2)] = not self._inverse_msk0
 
         msk = msk * 1
 
@@ -193,7 +195,7 @@ class ClassificationValidationDataset(ClassificationDataset):
         :param image_dataset: dataset of images
         :param augmentations: pipeline of augmentations
         """
-        super().__init__(image_dataset, False, augmentations)
+        super().__init__(image_dataset, False, False, augmentations)
 
     def __getitem__(self, identifier: int):
         image_data: ImageData = self._image_dataset[identifier]
