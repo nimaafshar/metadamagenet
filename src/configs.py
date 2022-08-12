@@ -40,7 +40,7 @@ VALIDATION_SPLIT: pathlib.Path = pathlib.Path('./data/split/train/')
 
 IMAGES_DIRECTORY = 'images'
 LABELS_DIRECTORY = 'labels'
-MASKS_DIRECTORY = 'masks'
+MASKS_DIRECTORY = 'targets'
 LOCALIZATION_PREDICTION_MASKS_DIRECTORY = 'pred_loc_val'
 
 PREDICTIONS_DIRECTORY = pathlib.Path('./data/pred/')
@@ -48,6 +48,3 @@ PREDICTIONS_DIRECTORY = pathlib.Path('./data/pred/')
 MODELS_WEIGHTS_FOLDER = pathlib.Path('./data/weights')
 
 SUBMISSIONS_DIR = pathlib.Path('./data/submissions/')
-
-# masks directory name
-MASKS_DIR = 'masks'
