@@ -14,7 +14,7 @@ from apex import amp
 
 from src.train.dataset import ClassificationDataset, ClassificationValidationDataset
 from src.file_structure import Dataset as ImageDataset
-from src import configs
+from src.configs import GeneralConfig
 from src.optim import AdamW
 from src.train.cls import ClassificationTrainer, ClassificationRequirements
 from src.train.trainer import TrainingConfig
@@ -116,15 +116,18 @@ class SEResnext50UnetDoubleTrainer(ClassificationTrainer):
 if __name__ == '__main__':
     t0 = timeit.default_timer()
 
+    GeneralConfig.load()
+    config = GeneralConfig.get_instance()
+
     seed = int(sys.argv[1])
 
     input_shape = (512, 512)
 
     # TODO: count images with 2,3 damage level 2 times
-    train_image_dataset = ImageDataset((configs.TRAIN_SPLIT,))
+    train_image_dataset = ImageDataset(config.train_dirs)
     train_image_dataset.discover()
 
-    valid_image_data = ImageDataset((configs.VALIDATION_SPLIT,))
+    valid_image_data = ImageDataset(config.test_dirs)
     valid_image_data.discover()
 
     train_dataset = ClassificationDataset(

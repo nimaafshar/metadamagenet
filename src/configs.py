@@ -32,17 +32,17 @@ damage_dict = {
 
 
 class GeneralConfig:
-    instance: Optional['GeneralConfig'] = None
+    _instance: Optional['GeneralConfig'] = None
 
     @classmethod
     def get_instance(cls) -> 'GeneralConfig':
-        if cls.instance is None:
+        if cls._instance is None:
             raise ValueError('config has not been loaded yet. call `load` method')
-        return cls.instance
+        return cls._instance
 
     @classmethod
     def load(cls, path: pathlib.Path = pathlib.Path('./config.yaml')) -> None:
-        cls.instance = GeneralConfig(path)
+        cls._instance = GeneralConfig(path)
 
     def __init__(self, path: pathlib.Path):
         with open(path, "r") as stream:
