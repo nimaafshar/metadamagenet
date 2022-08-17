@@ -201,7 +201,7 @@ class ClassificationTrainer(Trainer, abc.ABC):
         self._lr_scheduler.step(epoch)
 
         log(f"epoch: {epoch};"
-            f"lr {self._lr_scheduler.get_lr()[-1]:.7f};"
+            f"lr {self._lr_scheduler.get_last_lr():.7f};"
             f" Loss {losses_meter.avg:.4f};"
             f" Dice {dices_meter.avg:.4f};"
             + (f"CCE {ce_loss_meter.avg:.4f};" if self._use_cce_loss else ""))

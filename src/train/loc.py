@@ -130,4 +130,4 @@ class LocalizationTrainer(Trainer, abc.ABC):
 
         self._lr_scheduler.step(epoch)
 
-        log(f"epoch: {epoch}; lr {self._lr_scheduler.get_lr()[-1]:.7f}; Loss {losses_meter.avg:.4f}; Dice {dices_meter.avg:.4f}")
+        log(f"epoch: {epoch}; lr {self._lr_scheduler.get_last_lr():.7f}; Loss {losses_meter.avg:.4f}; Dice {dices_meter.avg:.4f}")
