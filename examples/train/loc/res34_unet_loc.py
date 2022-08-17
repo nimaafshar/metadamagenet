@@ -97,7 +97,6 @@ class Resnet34UnetLocTrainer(LocalizationTrainer):
         self._optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self._model.parameters(), 0.999)
-        log("optimizer step")
         self._optimizer.step()
 
 
