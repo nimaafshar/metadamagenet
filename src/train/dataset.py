@@ -64,7 +64,8 @@ class LocalizationDataset(Dataset):
         if random.random() > self._post_version_prob:
             # replace with post_disaster version
             img: npt.NDArray = cv2.imread(str(image_data.image(DataTime.POST)), cv2.IMREAD_COLOR)
-            msk: npt.NDArray = (cv2.imread(str(image_data.mask(DataTime.POST)), cv2.IMREAD_UNCHANGED) > 0) * 255
+            msk: npt.NDArray = ((cv2.imread(str(image_data.mask(DataTime.POST)), cv2.IMREAD_UNCHANGED) > 0) * 255) \
+                .astype(np.uint8)
             # FIXME: FIXED. tell the owner: previously pre-disaster masks were used for post-disaster images too
 
         if self._augments is not None:
