@@ -7,13 +7,12 @@ import numpy as np
 import cv2
 import torch
 from torch import nn
-from torch.optim import Optimizer
+from torch.optim import Optimizer, AdamW
 from torch.optim.lr_scheduler import MultiStepLR
 from torch.utils.data import DataLoader
 
 from src.zoo.models import Res34_Unet_Loc
 
-from src.optim import AdamW
 from src.losses import ComboLoss
 from src.train.dataset import LocalizationDataset
 from src.train.loc import LocalizationRequirements, LocalizationTrainer
