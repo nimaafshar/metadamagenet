@@ -6,8 +6,10 @@ from typing import Type
 from torch import nn
 import torch
 
-from src.configs import PREDICTIONS_DIRECTORY, MODELS_WEIGHTS_FOLDER
+from src.configs import GeneralConfig
 from src.logs import log
+
+config = GeneralConfig.get_instance()
 
 
 @dataclasses.dataclass
@@ -27,11 +29,11 @@ class ModelConfig:
         predictions directory path
         this method does not guarantee the directory to exist
         """
-        return PREDICTIONS_DIRECTORY / self.full_name
+        return config.predictions_dir / self.full_name
 
     @property
     def best_snap_path(self) -> pathlib.Path:
-        return MODELS_WEIGHTS_FOLDER / f'{self.full_name}_best'
+        return config.model_weights_dir / f'{self.full_name}_best'
 
     def load_best_model(self) -> nn.Module:
         """

@@ -61,11 +61,15 @@ def create_masks(image_data: ImageData):
 if __name__ == '__main__':
     t0 = timeit.default_timer()
 
-    train_dataset = Dataset(configs.TRAIN_DIRS)
+    configs.GeneralConfig.load()
+
+    config: configs.GeneralConfig = configs.GeneralConfig.get_instance()
+
+    train_dataset = Dataset(config.train_dirs)
     train_dataset.discover()
 
     # create mask directories
-    for train_dir in configs.TRAIN_DIRS:
+    for train_dir in config.train_dirs:
         (train_dir / 'masks').mkdir(exist_ok=True)
 
     with Pool() as pool:

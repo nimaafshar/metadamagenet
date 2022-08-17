@@ -35,7 +35,7 @@ class Trainer(abc.ABC):
         self._train_data_loader, self._val_data_loader = self._get_dataloaders()
 
     def _setup(self):
-        configs.MODELS_WEIGHTS_FOLDER.mkdir(parents=False, exist_ok=True)
+        configs.GeneralConfig.get_instance().model_weights_dir.mkdir(parents=False, exist_ok=True)
 
     @abc.abstractmethod
     def _get_dataloaders(self) -> (DataLoader, DataLoader):

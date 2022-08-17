@@ -12,10 +12,7 @@ from src.logs import log
 from src.configs import (
     DamageType,
     damage_to_damage_type,
-    IMAGES_DIRECTORY,
-    LABELS_DIRECTORY,
-    MASKS_DIRECTORY,
-    LOCALIZATION_PREDICTION_MASKS_DIRECTORY
+    GeneralConfig
 )
 
 
@@ -47,14 +44,14 @@ class ImageData:
         :param time: pre/post-disaster version
         :return: path to image file
         """
-        return self.base / IMAGES_DIRECTORY / f'{self.name(time)}.png'
+        return self.base / GeneralConfig.get_instance().images_dirname / f'{self.name(time)}.png'
 
     def label(self, time: DataTime = DataTime.PRE) -> pathlib.Path:
         """
         :param time: pre/post-disaster version
         :return: path to json label file
         """
-        return self.base / LABELS_DIRECTORY / f'{self.name(time)}.json'
+        return self.base / GeneralConfig.get_instance().labels_dirname / f'{self.name(time)}.json'
 
     def mask(self, time: DataTime = DataTime.PRE) -> pathlib.Path:
         """
@@ -63,14 +60,14 @@ class ImageData:
         :param time: pre/post-disaster version
         :return: path to mask image file
         """
-        return self.base / MASKS_DIRECTORY / f'{self.name(time)}.png'
+        return self.base / GeneralConfig.get_instance().masks_dirname / f'{self.name(time)}_{GeneralConfig.get_instance().masks_dirname}.png'
 
     @property
     def localization_mask(self) -> pathlib.Path:
         """
         :return: predicted localization msk for this image
         """
-        return self.base / LOCALIZATION_PREDICTION_MASKS_DIRECTORY / f'{self.name(DataTime.PRE)}_part1.png'
+        return self.base / GeneralConfig.get_instance().localization_dirname / f'{self.name(DataTime.PRE)}_part1.png'
 
     def polygons(self, time: DataTime = DataTime.PRE) -> List[Tuple[Polygon, DamageType]]:
         """

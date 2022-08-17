@@ -39,7 +39,7 @@ from src.augment import (
     Brightness,
     Contrast
 )
-from src import configs
+from src.configs import GeneralConfig
 from src.setup import set_random_seeds
 from src.logs import log
 
@@ -103,14 +103,18 @@ class Resnet34UnetLocTrainer(LocalizationTrainer):
 if __name__ == '__main__':
     t0 = timeit.default_timer()
 
+    GeneralConfig.load()
+
+    config = GeneralConfig.get_instance()
+
     seed = int(sys.argv[1])
 
     input_shape = (736, 736)
 
-    train_image_dataset = ImageDataset((configs.TRAIN_SPLIT,))
+    train_image_dataset = ImageDataset(config.train_dirs)
     train_image_dataset.discover()
 
-    valid_image_data = ImageDataset((configs.VALIDATION_SPLIT,))
+    valid_image_data = ImageDataset(config.test_dirs)
     valid_image_data.discover()
 
     train_data = LocalizationDataset(

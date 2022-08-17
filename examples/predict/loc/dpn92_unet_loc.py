@@ -16,6 +16,10 @@ cv2.ocl.setUseOpenCL(False)
 if __name__ == '__main__':
     t0 = timeit.default_timer()
 
+    configs.GeneralConfig.load()
+
+    config = configs.GeneralConfig.get_instance()
+
     model_configs = (
         ModelConfig(
             name="dpn92_loc",
@@ -38,8 +42,8 @@ if __name__ == '__main__':
     )
 
     LocalizationPredictor(model_configs,
-                          configs.PREDICTIONS_DIRECTORY / 'dpn92_loc_tuned',
-                          Dataset((configs.TEST_DIR,))
+                          config.predictions_dir / 'dpn92_loc_tuned',
+                          Dataset(config.test_dirs)
                           )
 
     elapsed = timeit.default_timer() - t0

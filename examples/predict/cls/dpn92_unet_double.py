@@ -2,7 +2,7 @@ import sys
 import timeit
 import cv2
 
-from src.configs import TEST_DIR
+from src.configs import GeneralConfig
 from src.setup import set_random_seeds
 from src.zoo.models import Dpn92_Unet_Double
 from src.file_structure import Dataset
@@ -17,6 +17,10 @@ cv2.ocl.setUseOpenCL(False)
 if __name__ == '__main__':
     t0 = timeit.default_timer()
 
+    GeneralConfig.load()
+    config = GeneralConfig.get_instance()
+
+
     seed = int(sys.argv[1])
 
     model_config = ModelConfig(
@@ -26,7 +30,7 @@ if __name__ == '__main__':
         version="tuned"
     )
 
-    test_dataset = Dataset((TEST_DIR,))
+    test_dataset = Dataset(config.test_dirs)
     predictor: SoftmaxClassificationPredictor = SoftmaxClassificationPredictor(model_config, test_dataset)
     predictor.predict()
 

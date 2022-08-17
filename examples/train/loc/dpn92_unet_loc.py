@@ -11,6 +11,8 @@ from torch.optim import Optimizer
 from torch.optim.lr_scheduler import MultiStepLR
 from apex import amp
 
+from src.configs import GeneralConfig
+
 from src.zoo.models import Dpn92_Unet_Loc
 
 from src.train.dataset import LocalizationDataset
@@ -39,7 +41,6 @@ from src.augment import (
     Brightness,
     Contrast
 )
-from src import configs
 from src.logs import log
 
 random.seed(1)
