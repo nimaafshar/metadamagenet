@@ -89,7 +89,7 @@ class SeResNext50_Unet_Loc(nn.Module):
 
         self._initialize_weights()
 
-        encoder = se_resnext50_32x4d(pretrained=pretrained)
+        encoder = se_resnext50_32x4d(weights=pretrained)
 
         # conv1_new = nn.Conv2d(6, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         # _w = encoder.layer0.conv1.state_dict()
@@ -166,7 +166,7 @@ class SeResNext50_Unet_Double(nn.Module):
 
         self._initialize_weights()
 
-        encoder = se_resnext50_32x4d(pretrained=pretrained)
+        encoder = se_resnext50_32x4d(weights=pretrained)
 
         # conv1_new = nn.Conv2d(6, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         # _w = encoder.layer0.conv1.state_dict()
@@ -252,7 +252,7 @@ class Dpn92_Unet_Loc(nn.Module):
         
         self._initialize_weights()
 
-        encoder = dpn92(pretrained=pretrained)
+        encoder = dpn92(weights=pretrained)
 
         # conv1_new = nn.Conv2d(6, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         # _w = encoder.blocks['conv1_1'].conv.state_dict()
@@ -337,7 +337,7 @@ class Dpn92_Unet_Double(nn.Module):
         
         self._initialize_weights()
 
-        encoder = dpn92(pretrained=pretrained)
+        encoder = dpn92(weights=pretrained)
 
         # conv1_new = nn.Conv2d(6, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         # _w = encoder.blocks['conv1_1'].conv.state_dict()
@@ -433,7 +433,7 @@ class Res34_Unet_Loc(nn.Module):
 
         self._initialize_weights()
 
-        encoder = torchvision.models.resnet34(pretrained=pretrained)
+        encoder = torchvision.models.resnet34(weights=pretrained)
         self.conv1 = nn.Sequential(
                         encoder.conv1,
                         encoder.bn1,
@@ -507,7 +507,7 @@ class Res34_Unet_Double(nn.Module):
 
         self._initialize_weights()
 
-        encoder = torchvision.models.resnet34(pretrained=pretrained)
+        encoder = torchvision.models.resnet34(weights=pretrained)
         self.conv1 = nn.Sequential(
                         encoder.conv1,
                         encoder.bn1,
@@ -587,7 +587,7 @@ class SeNet154_Unet_Loc(nn.Module):
 
         self._initialize_weights()
 
-        encoder = senet154(pretrained=pretrained)
+        encoder = senet154(weights=pretrained)
 
         # conv1_new = nn.Conv2d(9, 64, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
         # _w = encoder.layer0.conv1.state_dict()
@@ -662,7 +662,7 @@ class SeNet154_Unet_Double(nn.Module):
 
         self._initialize_weights()
 
-        encoder = senet154(pretrained=pretrained)
+        encoder = senet154(weights=pretrained)
 
         # conv1_new = nn.Conv2d(9, 64, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
         # _w = encoder.layer0.conv1.state_dict()
