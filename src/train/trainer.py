@@ -52,10 +52,10 @@ class Trainer(abc.ABC):
         """
         if self._config.start_checkpoint is None:
             if self._config.model_config.best_snap_path.exists():
-                log(":eyes: model snap for your original exists. loading from snap...")
+                log(":eyes: snap for your model config exists. loading from snap...")
                 return self._config.model_config.load_best_model().cuda()
             else:
-                log(":poop: no model snap found. starting from scratch")
+                log(":poop: no snap for your model config found. starting from scratch")
                 return self._config.model_config.model_type().cuda()
         else:
             log(":watch: model snap for your start checkpoint exists. loading from snap...")
