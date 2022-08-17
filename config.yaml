@@ -1,11 +1,11 @@
 # example config: suited for working in gradient notebooks
 
 train-dirs:
-  - /datasets/train
-  - /datasets/tier3
+  - /datasets/mini-xview2/train
+  - /datasets/mini-xview2/tier3
 
 test-dirs:
-  - /datasets/test/
+  - /datasets/mini-xview2/test/
 
 
 dir-names:
