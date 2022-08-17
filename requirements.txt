@@ -9,3 +9,4 @@ tqdm
 scikit-learn
 imgaug
 emoji
+pyyaml
