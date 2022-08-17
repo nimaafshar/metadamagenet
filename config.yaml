@@ -1,0 +1,19 @@
+# example config: suited for working in gradient notebooks
+
+train-dirs:
+  - /datasets/train
+  - /datasets/tier3
+
+test-dirs:
+  - /datasets/test/
+
+
+dir-names:
+  images: images
+  labels: labels
+  masks: targets
+  localization: pred_loc_val
+
+predictions-dir: ./data/pred/
+submissions-dir: ./data/submissions/
+model-weights-dir: ./data/weights/
