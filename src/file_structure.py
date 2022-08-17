@@ -60,7 +60,7 @@ class ImageData:
         :param time: pre/post-disaster version
         :return: path to mask image file
         """
-        return self.base / GeneralConfig.get_instance().masks_dirname / f'{self.name(time)}_{GeneralConfig.get_instance().masks_dirname}.png'
+        return self.base / GeneralConfig.get_instance().masks_dirname / f'{self.name(time)}_target.png'
 
     @property
     def localization_mask(self) -> pathlib.Path:
