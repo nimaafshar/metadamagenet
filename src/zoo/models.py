@@ -70,7 +70,7 @@ class SCSEModule(nn.Module):
 class SeResNext50_Unet_Loc(nn.Module):
     def __init__(self, pretrained='imagenet', **kwargs):
         super(SeResNext50_Unet_Loc, self).__init__()
-        
+
         encoder_filters = [64, 256, 512, 1024, 2048]
         decoder_filters = np.asarray([64, 96, 128, 256, 512]) // 2
 
@@ -83,13 +83,13 @@ class SeResNext50_Unet_Loc(nn.Module):
         self.conv9 = ConvRelu(decoder_filters[-3], decoder_filters[-4])
         self.conv9_2 = ConvRelu(decoder_filters[-4] + encoder_filters[-5], decoder_filters[-4])
         self.conv10 = ConvRelu(decoder_filters[-4], decoder_filters[-5])
-        
-        
+
+
         self.res = nn.Conv2d(decoder_filters[-5], 1, 1, stride=1, padding=0)
 
         self._initialize_weights()
 
-        encoder = se_resnext50_32x4d(weights=pretrained)
+        encoder = se_resnext50_32x4d(pretrained=pretrained)
 
         # conv1_new = nn.Conv2d(6, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         # _w = encoder.layer0.conv1.state_dict()
@@ -118,13 +118,13 @@ class SeResNext50_Unet_Loc(nn.Module):
         dec7 = self.conv7(F.interpolate(dec6, scale_factor=2))
         dec7 = self.conv7_2(torch.cat([dec7, enc3
                 ], 1))
-        
+
         dec8 = self.conv8(F.interpolate(dec7, scale_factor=2))
         dec8 = self.conv8_2(torch.cat([dec8, enc2
                 ], 1))
 
         dec9 = self.conv9(F.interpolate(dec8, scale_factor=2))
-        dec9 = self.conv9_2(torch.cat([dec9, 
+        dec9 = self.conv9_2(torch.cat([dec9,
                 enc1
                 ], 1))
 
@@ -147,7 +147,7 @@ class SeResNext50_Unet_Loc(nn.Module):
 class SeResNext50_Unet_Double(nn.Module):
     def __init__(self, pretrained='imagenet', **kwargs):
         super(SeResNext50_Unet_Double, self).__init__()
-        
+
         encoder_filters = [64, 256, 512, 1024, 2048]
         decoder_filters = np.asarray([64, 96, 128, 256, 512]) // 2
 
@@ -160,13 +160,13 @@ class SeResNext50_Unet_Double(nn.Module):
         self.conv9 = ConvRelu(decoder_filters[-3], decoder_filters[-4])
         self.conv9_2 = ConvRelu(decoder_filters[-4] + encoder_filters[-5], decoder_filters[-4])
         self.conv10 = ConvRelu(decoder_filters[-4], decoder_filters[-5])
-        
-        
+
+
         self.res = nn.Conv2d(decoder_filters[-5] * 2, 5, 1, stride=1, padding=0)
 
         self._initialize_weights()
 
-        encoder = se_resnext50_32x4d(weights=pretrained)
+        encoder = se_resnext50_32x4d(pretrained=pretrained)
 
         # conv1_new = nn.Conv2d(6, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         # _w = encoder.layer0.conv1.state_dict()
@@ -195,13 +195,13 @@ class SeResNext50_Unet_Double(nn.Module):
         dec7 = self.conv7(F.interpolate(dec6, scale_factor=2))
         dec7 = self.conv7_2(torch.cat([dec7, enc3
                 ], 1))
-        
+
         dec8 = self.conv8(F.interpolate(dec7, scale_factor=2))
         dec8 = self.conv8_2(torch.cat([dec8, enc2
                 ], 1))
 
         dec9 = self.conv9(F.interpolate(dec8, scale_factor=2))
-        dec9 = self.conv9_2(torch.cat([dec9, 
+        dec9 = self.conv9_2(torch.cat([dec9,
                 enc1
                 ], 1))
 
@@ -234,7 +234,7 @@ class SeResNext50_Unet_Double(nn.Module):
 class Dpn92_Unet_Loc(nn.Module):
     def __init__(self, pretrained='imagenet+5k', **kwargs):
         super(Dpn92_Unet_Loc, self).__init__()
-        
+
         encoder_filters = [64, 336, 704, 1552, 2688]
         decoder_filters = np.asarray([64, 96, 128, 256, 512]) // 2
 
@@ -249,16 +249,16 @@ class Dpn92_Unet_Loc(nn.Module):
         self.conv10 = ConvRelu(decoder_filters[-4] * 2, decoder_filters[-5])
 
         self.res = nn.Conv2d(decoder_filters[-5], 1, 1, stride=1, padding=0)
-        
+
         self._initialize_weights()
 
-        encoder = dpn92(weights=pretrained)
+        encoder = dpn92(pretrained=pretrained)
 
         # conv1_new = nn.Conv2d(6, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         # _w = encoder.blocks['conv1_1'].conv.state_dict()
         # _w['weight'] = torch.cat([0.5 * _w['weight'], 0.5 * _w['weight']], 1)
         # conv1_new.load_state_dict(_w)
-        
+
         self.conv1 = nn.Sequential(
                 encoder.blocks['conv1_1'].conv,  # conv
                 encoder.blocks['conv1_1'].bn,  # bn
@@ -297,7 +297,7 @@ class Dpn92_Unet_Loc(nn.Module):
         dec8 = self.conv8_2(torch.cat([dec8, enc2], 1))
 
         dec9 = self.conv9(F.interpolate(dec8, scale_factor=2))
-        dec9 = self.conv9_2(torch.cat([dec9, 
+        dec9 = self.conv9_2(torch.cat([dec9,
                 enc1], 1))
 
         dec10 = self.conv10(F.interpolate(dec9, scale_factor=2))
@@ -319,7 +319,7 @@ class Dpn92_Unet_Loc(nn.Module):
 class Dpn92_Unet_Double(nn.Module):
     def __init__(self, pretrained='imagenet+5k', **kwargs):
         super(Dpn92_Unet_Double, self).__init__()
-        
+
         encoder_filters = [64, 336, 704, 1552, 2688]
         decoder_filters = np.asarray([64, 96, 128, 256, 512]) // 2
 
@@ -334,16 +334,16 @@ class Dpn92_Unet_Double(nn.Module):
         self.conv10 = ConvRelu(decoder_filters[-4] * 2, decoder_filters[-5])
 
         self.res = nn.Conv2d(decoder_filters[-5] * 2, 5, 1, stride=1, padding=0)
-        
+
         self._initialize_weights()
 
-        encoder = dpn92(weights=pretrained)
+        encoder = dpn92(pretrained=pretrained)
 
         # conv1_new = nn.Conv2d(6, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         # _w = encoder.blocks['conv1_1'].conv.state_dict()
         # _w['weight'] = torch.cat([0.5 * _w['weight'], 0.5 * _w['weight']], 1)
         # conv1_new.load_state_dict(_w)
-        
+
         self.conv1 = nn.Sequential(
                 encoder.blocks['conv1_1'].conv,  # conv
                 encoder.blocks['conv1_1'].bn,  # bn
@@ -383,7 +383,7 @@ class Dpn92_Unet_Double(nn.Module):
         dec8 = self.conv8_2(torch.cat([dec8, enc2], 1))
 
         dec9 = self.conv9(F.interpolate(dec8, scale_factor=2))
-        dec9 = self.conv9_2(torch.cat([dec9, 
+        dec9 = self.conv9_2(torch.cat([dec9,
                 enc1], 1))
 
         dec10 = self.conv10(F.interpolate(dec9, scale_factor=2))
@@ -415,7 +415,7 @@ class Dpn92_Unet_Double(nn.Module):
 class Res34_Unet_Loc(nn.Module):
     def __init__(self, pretrained=True, **kwargs):
         super(Res34_Unet_Loc, self).__init__()
-        
+
         encoder_filters = [64, 64, 128, 256, 512]
         decoder_filters = np.asarray([48, 64, 96, 160, 320])
 
@@ -428,12 +428,14 @@ class Res34_Unet_Loc(nn.Module):
         self.conv9 = ConvRelu(decoder_filters[-3], decoder_filters[-4])
         self.conv9_2 = ConvRelu(decoder_filters[-4] + encoder_filters[-5], decoder_filters[-4])
         self.conv10 = ConvRelu(decoder_filters[-4], decoder_filters[-5])
-        
+
         self.res = nn.Conv2d(decoder_filters[-5], 1, 1, stride=1, padding=0)
 
         self._initialize_weights()
 
-        encoder = torchvision.models.resnet34(weights=pretrained)
+        encoder_weights = torchvision.models.ResNet34_Weights.DEFAULT if pretrained else None
+        encoder = torchvision.models.resnet34(weights=encoder_weights)
+
         self.conv1 = nn.Sequential(
                         encoder.conv1,
                         encoder.bn1,
@@ -461,13 +463,13 @@ class Res34_Unet_Loc(nn.Module):
         dec7 = self.conv7(F.interpolate(dec6, scale_factor=2))
         dec7 = self.conv7_2(torch.cat([dec7, enc3
                 ], 1))
-        
+
         dec8 = self.conv8(F.interpolate(dec7, scale_factor=2))
         dec8 = self.conv8_2(torch.cat([dec8, enc2
                 ], 1))
 
         dec9 = self.conv9(F.interpolate(dec8, scale_factor=2))
-        dec9 = self.conv9_2(torch.cat([dec9, 
+        dec9 = self.conv9_2(torch.cat([dec9,
                 enc1
                 ], 1))
 
@@ -489,7 +491,7 @@ class Res34_Unet_Loc(nn.Module):
 class Res34_Unet_Double(nn.Module):
     def __init__(self, pretrained=True, **kwargs):
         super(Res34_Unet_Double, self).__init__()
-        
+
         encoder_filters = [64, 64, 128, 256, 512]
         decoder_filters = np.asarray([48, 64, 96, 160, 320])
 
@@ -502,12 +504,13 @@ class Res34_Unet_Double(nn.Module):
         self.conv9 = ConvRelu(decoder_filters[-3], decoder_filters[-4])
         self.conv9_2 = ConvRelu(decoder_filters[-4] + encoder_filters[-5], decoder_filters[-4])
         self.conv10 = ConvRelu(decoder_filters[-4], decoder_filters[-5])
-        
+
         self.res = nn.Conv2d(decoder_filters[-5] * 2, 5, 1, stride=1, padding=0)
 
         self._initialize_weights()
 
-        encoder = torchvision.models.resnet34(weights=pretrained)
+        encoder_weights = torchvision.models.ResNet34_Weights.DEFAULT if pretrained else None
+        encoder = torchvision.models.resnet34(weights=encoder_weights)
         self.conv1 = nn.Sequential(
                         encoder.conv1,
                         encoder.bn1,
@@ -535,13 +538,13 @@ class Res34_Unet_Double(nn.Module):
         dec7 = self.conv7(F.interpolate(dec6, scale_factor=2))
         dec7 = self.conv7_2(torch.cat([dec7, enc3
                 ], 1))
-        
+
         dec8 = self.conv8(F.interpolate(dec7, scale_factor=2))
         dec8 = self.conv8_2(torch.cat([dec8, enc2
                 ], 1))
 
         dec9 = self.conv9(F.interpolate(dec8, scale_factor=2))
-        dec9 = self.conv9_2(torch.cat([dec9, 
+        dec9 = self.conv9_2(torch.cat([dec9,
                 enc1
                 ], 1))
 
@@ -554,7 +557,7 @@ class Res34_Unet_Double(nn.Module):
         dec10_1 = self.forward1(x[:, 3:, :, :])
         dec10 = torch.cat([dec10_0, dec10_1], 1)
         return self.res(dec10)
-        
+
     def _initialize_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d) or isinstance(m, nn.Linear):
@@ -569,7 +572,7 @@ class Res34_Unet_Double(nn.Module):
 class SeNet154_Unet_Loc(nn.Module):
     def __init__(self, pretrained='imagenet', **kwargs):
         super(SeNet154_Unet_Loc, self).__init__()
-        
+
         encoder_filters = [128, 256, 512, 1024, 2048]
         decoder_filters = np.asarray([48, 64, 96, 160, 320])
 
@@ -582,12 +585,12 @@ class SeNet154_Unet_Loc(nn.Module):
         self.conv9 = ConvRelu(decoder_filters[-3], decoder_filters[-4])
         self.conv9_2 = ConvRelu(decoder_filters[-4] + encoder_filters[-5], decoder_filters[-4])
         self.conv10 = ConvRelu(decoder_filters[-4], decoder_filters[-5])
-        
+
         self.res = nn.Conv2d(decoder_filters[-5], 1, 1, stride=1, padding=0)
 
         self._initialize_weights()
 
-        encoder = senet154(weights=pretrained)
+        encoder = senet154(pretrained=pretrained)
 
         # conv1_new = nn.Conv2d(9, 64, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
         # _w = encoder.layer0.conv1.state_dict()
@@ -616,13 +619,13 @@ class SeNet154_Unet_Loc(nn.Module):
         dec7 = self.conv7(F.interpolate(dec6, scale_factor=2))
         dec7 = self.conv7_2(torch.cat([dec7, enc3
                 ], 1))
-        
+
         dec8 = self.conv8(F.interpolate(dec7, scale_factor=2))
         dec8 = self.conv8_2(torch.cat([dec8, enc2
                 ], 1))
 
         dec9 = self.conv9(F.interpolate(dec8, scale_factor=2))
-        dec9 = self.conv9_2(torch.cat([dec9, 
+        dec9 = self.conv9_2(torch.cat([dec9,
                 enc1
                 ], 1))
 
@@ -644,7 +647,7 @@ class SeNet154_Unet_Loc(nn.Module):
 class SeNet154_Unet_Double(nn.Module):
     def __init__(self, pretrained='imagenet', **kwargs):
         super(SeNet154_Unet_Double, self).__init__()
-        
+
         encoder_filters = [128, 256, 512, 1024, 2048]
         decoder_filters = np.asarray([48, 64, 96, 160, 320])
 
@@ -657,12 +660,12 @@ class SeNet154_Unet_Double(nn.Module):
         self.conv9 = ConvRelu(decoder_filters[-3], decoder_filters[-4])
         self.conv9_2 = ConvRelu(decoder_filters[-4] + encoder_filters[-5], decoder_filters[-4])
         self.conv10 = ConvRelu(decoder_filters[-4], decoder_filters[-5])
-        
+
         self.res = nn.Conv2d(decoder_filters[-5] * 2, 5, 1, stride=1, padding=0)
 
         self._initialize_weights()
 
-        encoder = senet154(weights=pretrained)
+        encoder = senet154(pretrained=pretrained)
 
         # conv1_new = nn.Conv2d(9, 64, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
         # _w = encoder.layer0.conv1.state_dict()
@@ -690,13 +693,13 @@ class SeNet154_Unet_Double(nn.Module):
         dec7 = self.conv7(F.interpolate(dec6, scale_factor=2))
         dec7 = self.conv7_2(torch.cat([dec7, enc3
                 ], 1))
-        
+
         dec8 = self.conv8(F.interpolate(dec7, scale_factor=2))
         dec8 = self.conv8_2(torch.cat([dec8, enc2
                 ], 1))
 
         dec9 = self.conv9(F.interpolate(dec8, scale_factor=2))
-        dec9 = self.conv9_2(torch.cat([dec9, 
+        dec9 = self.conv9_2(torch.cat([dec9,
                 enc1
                 ], 1))
 
