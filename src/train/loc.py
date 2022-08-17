@@ -128,6 +128,7 @@ class LocalizationTrainer(Trainer, abc.ABC):
 
             self._update_weights(loss)
 
+        print("scheduler step")
         self._lr_scheduler.step()
 
         log(f"epoch: {epoch};"
