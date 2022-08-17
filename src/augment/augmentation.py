@@ -2,6 +2,7 @@ import abc
 import random
 from typing import Sequence, Tuple, Dict, Optional, Any, Type
 
+import numpy
 import numpy.typing as npt
 
 
@@ -58,6 +59,9 @@ class AugmentationInterface(abc.ABC):
         keys = self._apply_to if self._apply_to is not None else img_batch.keys()
 
         for key in keys:
+            if type(img_batch[key]) != numpy.ndarray:
+                print(type(img_batch[key]))
+
             img_batch[key] = self._transform(img_batch[key], params)
 
         return img_batch, True
