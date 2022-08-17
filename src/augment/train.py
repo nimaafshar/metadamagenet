@@ -173,7 +173,6 @@ class Resize(AugmentationInterface):
 
     def _transform(self, img: npt.NDArray, params: ParamType) -> npt.NDArray:
         if img.shape[0] != self._height or img.shape[1] != self._width:
-            print(img.dtype)
             img = cv2.resize(img, (self._width, self._height), interpolation=cv2.INTER_LINEAR)
         return img
 
