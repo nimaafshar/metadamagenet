@@ -94,3 +94,5 @@ class Trainer(abc.ABC):
                 score: float = self._evaluate(evaluation_round)
                 self._save_model(epoch, score, best_score)
                 best_score = self._update_best_score(score, best_score)
+
+        log(f':black_medium_square: train model {self._config.model_config.full_name} ended')
