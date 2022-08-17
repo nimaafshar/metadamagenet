@@ -49,6 +49,8 @@ class AugmentationInterface(abc.ABC):
         :param msk: mask h*w*1
         :return: (transformed image h*w*3, transformed mask h*w*1, if augmentation is applied)
         """
+        if type(img) != numpy.ndarray or type(msk) != numpy.ndarray:
+            print(type(img),type(msk))
         params = self._determine_params()
         img, msk = self._apply_tuple(img, msk, params)
         return img, msk, True
