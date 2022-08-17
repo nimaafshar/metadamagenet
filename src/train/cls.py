@@ -187,10 +187,9 @@ class ClassificationTrainer(Trainer, abc.ABC):
 
             dices_meter.update(dice_sc, img_batch.size(0))
 
-            # TODO: test get_lr() method
             iterator.set_description(
                 f"epoch: {epoch};'"
-                f" lr {self._lr_scheduler.get_lr()[-1]:.7f};"
+                f" lr {self._lr_scheduler.get_last_lr():.7f};"
                 f" Total Loss {losses_meter.val:.4f} ({losses_meter.avg:.4f});"
                 f" Label Losses [{','.join(l.val() for l in label_losses_meter)}]"
                 f" ([{','.join(l.avg() for l in label_losses_meter)}]);"
