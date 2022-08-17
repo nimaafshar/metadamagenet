@@ -53,7 +53,7 @@ class AugmentationInterface(abc.ABC):
         try:
             img, msk = self._apply_tuple(img, msk, params)
         except Exception:
-            print(type(img), type(msk))
+            print(type(img), type(msk), img.dtype, msk.dtype)
             print(img)
             print(msk)
         return img, msk, True
