@@ -49,11 +49,11 @@ def create_masks(image_data: ImageData):
         _msk = mask_for_polygon(polygon)
         damages_mask[_msk > 0] = damage_type
 
-    cv2.imwrite(str(image_data.base / 'masks' / f'{image_data.name(DataTime.PRE)}.png'),
+    cv2.imwrite(str(image_data.mask(DataTime.PRE)),
                 polygons_mask,
                 [cv2.IMWRITE_PNG_COMPRESSION, 9])
 
-    cv2.imwrite(str(image_data.base / 'masks' / f'{image_data.name(DataTime.POST)}.png'),
+    cv2.imwrite(str(image_data.mask(DataTime.POST)),
                 damages_mask,
                 [cv2.IMWRITE_PNG_COMPRESSION, 9])
 
