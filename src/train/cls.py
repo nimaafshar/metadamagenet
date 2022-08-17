@@ -189,7 +189,7 @@ class ClassificationTrainer(Trainer, abc.ABC):
 
             iterator.set_description(
                 f"epoch: {epoch};'"
-                f" lr {self._lr_scheduler.get_last_lr():.7f};"
+                f" lr {self._lr_scheduler.get_last_lr()[-1]:.7f};"
                 f" Total Loss {losses_meter.val:.4f} ({losses_meter.avg:.4f});"
                 f" Label Losses [{','.join(l.val() for l in label_losses_meter)}]"
                 f" ([{','.join(l.avg() for l in label_losses_meter)}]);"
@@ -201,7 +201,7 @@ class ClassificationTrainer(Trainer, abc.ABC):
         self._lr_scheduler.step()
 
         log(f"epoch: {epoch};"
-            f"lr {self._lr_scheduler.get_last_lr():.7f};"
+            f"lr {self._lr_scheduler.get_last_lr()[-1]:.7f};"
             f" Loss {losses_meter.avg:.4f};"
             f" Dice {dices_meter.avg:.4f};"
             + (f"CCE {ce_loss_meter.avg:.4f};" if self._use_cce_loss else ""))

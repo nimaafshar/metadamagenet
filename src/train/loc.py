@@ -122,7 +122,7 @@ class LocalizationTrainer(Trainer, abc.ABC):
 
             iterator.set_description(
                 f"epoch: {epoch};'"
-                f" lr {self._lr_scheduler.get_last_lr():.7f};"
+                f" lr {self._lr_scheduler.get_last_lr()[-1]:.7f};"
                 f" Loss {losses_meter.val:.4f} ({losses_meter.avg:.4f});"
                 f" Dice {dices_meter.val:.4f} ({dices_meter.avg:.4f})")
 
@@ -131,6 +131,6 @@ class LocalizationTrainer(Trainer, abc.ABC):
         self._lr_scheduler.step()
 
         log(f"epoch: {epoch};"
-            f"lr {self._lr_scheduler.get_last_lr():.7f};"
+            f"lr {self._lr_scheduler.get_last_lr()[-1]:.7f};"
             f"Loss {losses_meter.avg:.4f};"
             f"Dice {dices_meter.avg:.4f}")
