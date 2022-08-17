@@ -198,7 +198,7 @@ class ClassificationTrainer(Trainer, abc.ABC):
 
             self._update_weights(loss)
 
-        self._lr_scheduler.step(epoch)
+        self._lr_scheduler.step()
 
         log(f"epoch: {epoch};"
             f"lr {self._lr_scheduler.get_last_lr():.7f};"

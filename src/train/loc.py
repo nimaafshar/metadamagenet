@@ -128,6 +128,9 @@ class LocalizationTrainer(Trainer, abc.ABC):
 
             self._update_weights(loss)
 
-        self._lr_scheduler.step(epoch)
+        self._lr_scheduler.step()
 
-        log(f"epoch: {epoch}; lr {self._lr_scheduler.get_last_lr():.7f}; Loss {losses_meter.avg:.4f}; Dice {dices_meter.avg:.4f}")
+        log(f"epoch: {epoch};"
+            f"lr {self._lr_scheduler.get_last_lr():.7f};"
+            f"Loss {losses_meter.avg:.4f};"
+            f"Dice {dices_meter.avg:.4f}")
