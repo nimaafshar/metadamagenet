@@ -67,7 +67,7 @@ class LocalizationTrainer(Trainer, abc.ABC):
                 for j in range(msk_batch.shape[0]):
                     dices0.append(dice(msk_batch[j, 0], msk_pred[j] > self._evaluation_dice_thr))
 
-        d0: float = np.mean(dices0)
+        d0: float = float(np.mean(dices0))
 
         log(f"Validation set Dice: {d0:.6f}")
         return d0
