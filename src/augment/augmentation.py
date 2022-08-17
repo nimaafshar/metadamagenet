@@ -50,12 +50,7 @@ class AugmentationInterface(abc.ABC):
         :return: (transformed image h*w*3, transformed mask h*w*1, if augmentation is applied)
         """
         params = self._determine_params()
-        try:
-            img, msk = self._apply_tuple(img, msk, params)
-        except Exception:
-            print(type(img), type(msk), img.dtype, msk.dtype)
-            print(img)
-            print(msk)
+        img, msk = self._apply_tuple(img, msk, params)
         return img, msk, True
 
     def apply_batch(self, img_batch: Dict[str, npt.NDArray]) -> Tuple[Dict[str, npt.NDArray], bool]:
@@ -64,9 +59,6 @@ class AugmentationInterface(abc.ABC):
         keys = self._apply_to if self._apply_to is not None else img_batch.keys()
 
         for key in keys:
-            if type(img_batch[key]) != numpy.ndarray:
-                print(type(img_batch[key]))
-
             img_batch[key] = self._transform(img_batch[key], params)
 
         return img_batch, True
