@@ -9,8 +9,6 @@ import torch
 from src.configs import GeneralConfig
 from src.logs import log
 
-config = GeneralConfig.get_instance()
-
 
 @dataclasses.dataclass
 class ModelConfig:
@@ -29,11 +27,11 @@ class ModelConfig:
         predictions directory path
         this method does not guarantee the directory to exist
         """
-        return config.predictions_dir / self.full_name
+        return GeneralConfig.get_instance().predictions_dir / self.full_name
 
     @property
     def best_snap_path(self) -> pathlib.Path:
-        return config.model_weights_dir / f'{self.full_name}_best'
+        return GeneralConfig.get_instance().model_weights_dir / f'{self.full_name}_best'
 
     def load_best_model(self) -> nn.Module:
         """
