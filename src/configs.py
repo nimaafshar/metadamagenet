@@ -1,8 +1,12 @@
+import logging
 import pathlib
 import enum
+from typing import Optional, List
+
+import yaml
 
 
-class DamageType:
+class DamageType(enum.Enum):
     NO_DAMAGE = 1
     MINOR_DAMAGE = 2
     MAJOR_DAMAGE = 3
@@ -26,25 +30,34 @@ damage_dict = {
     "un-classified": 1
 }
 
-# DIRECTORY SETTINGS
 
-TRAIN_DIRS = (
-    pathlib.Path('./data/train'),
-    pathlib.Path('./data/tier3')
-)
+class GeneralConfig:
+    instance: Optional['GeneralConfig'] = None
 
-TEST_DIR: pathlib.Path = pathlib.Path('./data/test/images')
+    @classmethod
+    def get_instance(cls) -> 'GeneralConfig':
+        if cls.instance is None:
+            raise ValueError('config has not been loaded yet. call `load` method')
+        return cls.instance
 
-TRAIN_SPLIT: pathlib.Path = pathlib.Path('./data/split/train/')
-VALIDATION_SPLIT: pathlib.Path = pathlib.Path('./data/split/train/')
+    @classmethod
+    def load(cls, path: pathlib.Path = pathlib.Path('./config.yaml')) -> None:
+        cls.instance = GeneralConfig(path)
 
-IMAGES_DIRECTORY = 'images'
-LABELS_DIRECTORY = 'labels'
-MASKS_DIRECTORY = 'targets'
-LOCALIZATION_PREDICTION_MASKS_DIRECTORY = 'pred_loc_val'
+    def __init__(self, path: pathlib.Path):
+        with open(path, "r") as stream:
+            source: dict = yaml.safe_load(stream)
 
-PREDICTIONS_DIRECTORY = pathlib.Path('./data/pred/')
+        self.train_dirs: List[pathlib.Path] = [pathlib.Path(value) for value in source['train-dirs']]
+        self.test_dirs: List[pathlib.Path] = [pathlib.Path(value) for value in source['test-dirs']]
 
-MODELS_WEIGHTS_FOLDER = pathlib.Path('./data/weights')
+        self.images_dirname: str = source['dir-names']['images']
+        self.labels_dirname: str = source['dir-names']['labels']
+        self.masks_dirname: str = source['dir-names']['masks']
+        self.localization_dirname: str = source['dir-names']['localization']
 
-SUBMISSIONS_DIR = pathlib.Path('./data/submissions/')
+        self.predictions_dir = pathlib.Path(source['predictions-dir'])
+        self.model_weights_dir = pathlib.Path(source['model-weights-dir'])
+        self.submissions_dir = pathlib.Path(source['submissions-dir'])
+
+
