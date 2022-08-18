@@ -8,14 +8,13 @@ import cv2
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
-from torch.optim import Optimizer
+from torch.optim import Optimizer,AdamW
 from torch.optim.lr_scheduler import MultiStepLR
 from apex import amp
 
 from src.zoo.models import SeNet154_Unet_Loc
 
 from src.train.dataset import LocalizationDataset
-from src.optim import AdamW
 from src.train.loc import LocalizationTrainer, LocalizationRequirements
 from src.train.trainer import TrainingConfig
 from src.model_config import ModelConfig
