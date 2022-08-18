@@ -9,13 +9,13 @@ import torch
 from torch.utils.data import DataLoader
 from torch import nn
 from torch.optim.optimizer import Optimizer
+from torch.optim import AdamW
 from torch.optim.lr_scheduler import MultiStepLR
 from apex import amp
 
 from src.train.dataset import ClassificationDataset, ClassificationValidationDataset
 from src.file_structure import Dataset as ImageDataset
 from src.configs import GeneralConfig
-from src.optim import AdamW
 from src.train.cls import ClassificationTrainer, ClassificationRequirements
 from src.train.trainer import TrainingConfig
 from src.model_config import ModelConfig
