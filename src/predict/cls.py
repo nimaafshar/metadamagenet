@@ -9,7 +9,6 @@ from .predictor import SingleModelPredictor
 from src.file_structure import ImageData, DataTime
 from src.util.utils import normalize_colors
 from src.util.augmentations import test_time_augment, revert_augmentation
-from src.logs import log
 
 
 class ClassificationPredictor(SingleModelPredictor, ABC):
@@ -65,4 +64,4 @@ class SoftmaxClassificationPredictor(ClassificationPredictor):
 
         msk = revert_augmentation(msk) * 255
 
-        return msk.astype('uint8').transpose(1, 2, 0)
+        return msk.astype('uint8').transpose((1, 2, 0))

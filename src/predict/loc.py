@@ -1,5 +1,4 @@
 import os
-from typing import List
 
 import torch
 from numpy import typing as npt
