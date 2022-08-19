@@ -10,6 +10,7 @@ from torch import nn
 from torch.optim import Optimizer, AdamW
 from torch.optim.lr_scheduler import MultiStepLR
 from torch.utils.data import DataLoader
+from torch.cuda import amp
 
 from src.zoo.models import Res34_Unet_Loc
 
@@ -89,14 +90,17 @@ class Resnet34UnetLocTrainer(LocalizationTrainer):
             model,
             optimizer,
             lr_scheduler,
-            seg_loss
+            seg_loss,
+            amp.GradScaler()
         )
 
     def _update_weights(self, loss: torch.Tensor) -> None:
         self._optimizer.zero_grad()
-        loss.backward()
+        self._grad_scaler.scale(loss).backward()
+        self._grad_scaler.unscale_(self._optimizer)
         torch.nn.utils.clip_grad_norm_(self._model.parameters(), 0.999)
-        self._optimizer.step()
+        self._grad_scaler.step(self._optimizer)
+        self._grad_scaler.update()
 
 
 if __name__ == '__main__':
