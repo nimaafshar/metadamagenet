@@ -11,7 +11,7 @@ from torch import nn
 from torch.optim.optimizer import Optimizer
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import MultiStepLR
-from apex import amp
+from torch.cuda import amp
 
 from src.train.dataset import ClassificationDataset, ClassificationValidationDataset
 from src.file_structure import Dataset as ImageDataset
@@ -82,8 +82,6 @@ class SEResnext50UnetDoubleTrainer(ClassificationTrainer):
                                      lr=0.00001,
                                      weight_decay=1e-6)
 
-        model, optimizer = amp.initialize(model, optimizer, opt_level="O1")
-
         lr_scheduler: MultiStepLR = MultiStepLR(optimizer,
                                                 milestones=[1, 2, 3, 4, 5, 7, 9, 11, 17, 23, 29, 33, 47, 50, 60, 70, 90,
                                                             110, 130, 150, 170, 180, 190],
@@ -98,6 +96,7 @@ class SEResnext50UnetDoubleTrainer(ClassificationTrainer):
             lr_scheduler,
             seg_loss,
             ce_loss,
+            grad_scaler=amp.GradScaler(),
             label_loss_weights=np.array([0.1, 0.1, 0.3, 0.3, 0.2, 11]),
             dice_metric_calculator=F1ScoreCalculator()
         )
@@ -107,10 +106,11 @@ class SEResnext50UnetDoubleTrainer(ClassificationTrainer):
 
     def _update_weights(self, loss: torch.Tensor) -> None:
         self._optimizer.zero_grad()
-        with amp.scale_loss(loss, self._optimizer) as scaled_loss:
-            scaled_loss.backward()
-        torch.nn.utils.clip_grad_norm_(amp.master_params(self._optimizer), 0.999)
-        self._optimizer.step()
+        self._grad_scaler.scale(loss).backward()
+        self._grad_scaler.unscale_(self._optimizer)
+        torch.nn.utils.clip_grad_norm_(self._model.parameters(), 0.999)
+        self._grad_scaler.step(self._optimizer)
+        self._grad_scaler.update()
 
 
 if __name__ == '__main__':
