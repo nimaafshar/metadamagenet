@@ -41,6 +41,6 @@ class LocalizationPredictor(MultipleModelPredictor):
         return (model_output * 255).astype('uint8').transpose(1, 2, 0)
 
     def _save_output(self, output_mask: npt.NDArray, image_data: ImageData) -> None:
-        cv2.imwrite(str(self._pred_directory / f'{image_data.name(DataTime.PRE)}_part1.png'),
+        cv2.imwrite(str(image_data.mask(DataTime.PRE)),
                     output_mask[..., 0],
                     [cv2.IMWRITE_PNG_COMPRESSION, 9])
