@@ -3,13 +3,12 @@ import pathlib
 from abc import ABC
 
 import torch
-import cv2
 from tqdm import tqdm
 import numpy.typing as npt
 from typing import List, Sequence
 
 from src.model_config import ModelConfig
-from src.file_structure import Dataset, ImageData, DataTime
+from src.file_structure import Dataset, ImageData
 from src.logs import log
 
 
@@ -106,7 +105,7 @@ class MultipleModelPredictor(Predictor, ABC):
 
     def _load_models(self):
         for model_config in self._model_configs:
-            log(f"==> loading model {model_config.name} [seed={model_config.seed},tuned={model_config.tuned}]")
+            log(f"==> loading model {model_config.name} [seed={model_config.seed},version={model_config.version}]")
             model = model_config.load_best_model()
             model.eval()
             self._models.append(model)
