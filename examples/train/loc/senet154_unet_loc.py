@@ -10,7 +10,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torch.optim import Optimizer,AdamW
 from torch.optim.lr_scheduler import MultiStepLR
-from apex import amp
+from torch.cuda import amp
 
 from src.zoo.models import SeNet154_Unet_Loc
 
@@ -77,7 +77,6 @@ class SEResNext50UnetLocTrainer(LocalizationTrainer):
         optimizer: Optimizer = AdamW(model.parameters(),
                                      lr=0.00015,
                                      weight_decay=1e-6)
-        model, optimizer = amp.initialize(model, optimizer, opt_level="O1")
         lr_scheduler = MultiStepLR(optimizer,
                                    milestones=[3, 7, 11, 15, 19, 23, 27, 33, 41, 50, 60, 70, 90, 110, 130, 150, 170,
                                                180, 190],
@@ -88,16 +87,17 @@ class SEResNext50UnetLocTrainer(LocalizationTrainer):
             model,
             optimizer,
             lr_scheduler,
-            seg_loss
+            seg_loss,
+            amp.GradScaler()
         )
 
     def _update_weights(self, loss: torch.Tensor) -> None:
         self._optimizer.zero_grad()
-
-        with amp.scale_loss(loss, self._optimizer) as scaled_loss:
-            scaled_loss.backward()
-        torch.nn.utils.clip_grad_norm_(amp.master_params(self._optimizer), 0.999)
-        self._optimizer.step()
+        self._grad_scaler.scale(loss).backward()
+        self._grad_scaler.unscale_(self._optimizer)
+        torch.nn.utils.clip_grad_norm_(self._model.parameters(), 0.999)
+        self._grad_scaler.step(self._optimizer)
+        self._grad_scaler.update()
 
 
 if __name__ == '__main__':
