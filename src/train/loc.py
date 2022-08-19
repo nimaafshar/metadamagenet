@@ -1,10 +1,12 @@
 import abc
-from typing import Union
+from typing import Union,Optional
 import dataclasses
+from contextlib import nullcontext
 
 import numpy as np
 from torch import nn
 import torch
+from torch.cuda import amp
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import MultiStepLR
 from torch.backends import cudnn
@@ -22,6 +24,7 @@ class LocalizationRequirements:
     optimizer: Optimizer
     lr_scheduler: MultiStepLR
     seg_loss: ComboLoss
+    grad_scaler: Optional[amp.GradScaler] = None
 
 
 class LocalizationTrainer(Trainer, abc.ABC):
@@ -33,6 +36,7 @@ class LocalizationTrainer(Trainer, abc.ABC):
         self._optimizer: Optimizer = requirements.optimizer
         self._lr_scheduler: MultiStepLR = requirements.lr_scheduler
         self._seg_loss: ComboLoss = requirements.seg_loss
+        self._grad_scaler: Optional[amp.GradScaler] = requirements.grad_scaler
         self._evaluation_dice_thr: float = 0.5
 
     @abc.abstractmethod
@@ -108,9 +112,9 @@ class LocalizationTrainer(Trainer, abc.ABC):
             img_batch: torch.Tensor = img_batch.cuda(non_blocking=True)
             msk_batch: torch.Tensor = msk_batch.cuda(non_blocking=True)
 
-            out: torch.Tensor = self._model(img_batch)
-
-            loss: torch.Tensor = self._seg_loss(out, msk_batch)
+            with amp.autocast() if self._grad_scaler is not None else nullcontext():
+                out: torch.Tensor = self._model(img_batch)
+                loss: torch.Tensor = self._seg_loss(out, msk_batch)
 
             with torch.no_grad():
                 _probs = torch.sigmoid(out[:, 0, ...])
