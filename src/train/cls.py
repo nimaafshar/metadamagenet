@@ -1,12 +1,14 @@
 import abc
 from typing import Union, List, Optional
 import dataclasses
+from contextlib import nullcontext
 
 import torch
 import numpy as np
 import numpy.typing as npt
 from torch.backends import cudnn
 from torch import nn
+from torch.cuda import amp
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import MultiStepLR
 from tqdm import tqdm
@@ -15,7 +17,6 @@ from src.util.utils import AverageMeter
 from .trainer import Trainer, TrainingConfig
 from src.losses import ComboLoss, dice_round
 from src.logs import log
-from src.util.utils import dice
 from .metrics import DiceCalculator, MetricCalculator
 
 
@@ -27,6 +28,7 @@ class ClassificationRequirements:
     seg_loss: ComboLoss
     ce_loss: nn.CrossEntropyLoss
     label_loss_weights: npt.NDArray  # with size 5, if using cce_loss use size 6
+    grad_scaler: Optional[amp.GradScaler] = None
     dice_metric_calculator: Optional[MetricCalculator] = None
 
 
@@ -51,6 +53,7 @@ class ClassificationTrainer(Trainer, abc.ABC):
         self._label_loss_weights: torch.Tensor = torch.from_numpy(requirements.label_loss_weights)
         self._evaluation_dice_thr: float = 0.3
         self._use_cce_loss: bool = use_cce_loss
+        self._grad_scaler: Optional[amp.GradScaler] = requirements.grad_scaler
         self._dice_metric_calculator: MetricCalculator = requirements.dice_metric_calculator if \
             requirements.dice_metric_calculator is not None else DiceCalculator(self._evaluation_dice_thr)
 
@@ -113,7 +116,14 @@ class ClassificationTrainer(Trainer, abc.ABC):
 
         score = 0.3 * d0 + 0.7 * f1_final
 
-        log(f"Validation set Score: {score:.6f}, Dice: {d0:.6f}, F1: {f1_final}, F1_0: {f1_scores[0]}, F1_1: {f1_scores[1]}, F1_2: {f1_scores[2]}, F1_3: {f1_scores[3]}")
+        log(f"Validation set Score: "
+            f"{score:.6f}, "
+            f"Dice: {d0:.6f}, "
+            f"F1: {f1_final}, "
+            f"F1_0: {f1_scores[0]}, "
+            f"F1_1: {f1_scores[1]}, "
+            f"F1_2: {f1_scores[2]}, "
+            f"F1_3: {f1_scores[3]}")
         return score
 
     def _save_model(self, epoch: int, score: float, best_score: Union[float, None]) -> bool:
@@ -156,19 +166,20 @@ class ClassificationTrainer(Trainer, abc.ABC):
             msk_batch: torch.Tensor = train_data_batch['msk'].cuda(non_blocking=True)
             label_msk_batch: torch.Tensor = train_data_batch['label_msk'].cuda(non_blocking=True)
 
-            out: torch.Tensor = self._model(img_batch)
+            with amp.autocast() if self._grad_scaler is not None else nullcontext():
+                out: torch.Tensor = self._model(img_batch)
 
-            label_losses: List[torch.Tensor] = [self._seg_loss(out[:, 0, ...], msk_batch[:, 0, ...]),
-                                                self._seg_loss(out[:, 1, ...], msk_batch[:, 1, ...]),
-                                                self._seg_loss(out[:, 2, ...], msk_batch[:, 2, ...]),
-                                                self._seg_loss(out[:, 3, ...], msk_batch[:, 3, ...]),
-                                                self._seg_loss(out[:, 4, ...], msk_batch[:, 4, ...])]
-            if self._use_cce_loss:
-                label_losses.append(self._ce_loss(out, label_msk_batch))
+                label_losses: List[torch.Tensor] = [self._seg_loss(out[:, 0, ...], msk_batch[:, 0, ...]),
+                                                    self._seg_loss(out[:, 1, ...], msk_batch[:, 1, ...]),
+                                                    self._seg_loss(out[:, 2, ...], msk_batch[:, 2, ...]),
+                                                    self._seg_loss(out[:, 3, ...], msk_batch[:, 3, ...]),
+                                                    self._seg_loss(out[:, 4, ...], msk_batch[:, 4, ...])]
+                if self._use_cce_loss:
+                    label_losses.append(self._ce_loss(out, label_msk_batch))
 
-            label_losses: torch.Tensor = torch.Tensor(label_losses)
+                label_losses: torch.Tensor = torch.Tensor(label_losses)
 
-            loss: torch.Tensor = torch.dot(self._label_loss_weights, label_losses)
+                loss: torch.Tensor = torch.dot(self._label_loss_weights, label_losses)
 
             with torch.no_grad():
                 if self._use_cce_loss:
