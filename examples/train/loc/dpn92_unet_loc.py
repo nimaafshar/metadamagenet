@@ -85,7 +85,8 @@ class SEResNext50UnetLocTrainer(LocalizationTrainer):
             model,
             optimizer,
             lr_scheduler,
-            seg_loss
+            seg_loss,
+            amp.GradScaler()
         )
 
     def _update_weights(self, loss: torch.Tensor) -> None:
