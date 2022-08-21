@@ -81,7 +81,6 @@ class SEResNext50UnetLocTrainer(LocalizationTrainer):
                                    milestones=[3, 7, 11, 15, 19, 23, 27, 33, 41, 50, 60, 70, 90, 110, 130, 150, 170,
                                                180, 190],
                                    gamma=0.5)
-        model = nn.DataParallel(model).cuda()
         seg_loss = ComboLoss({'dice': 1.0, 'focal': 14.0}, per_image=False).cuda()
         return LocalizationRequirements(
             model,
@@ -171,7 +170,7 @@ if __name__ == '__main__':
 
     model_config = ModelConfig(
         name='se154_loc',
-        model_type=SeNet154_Unet_Loc,
+        empty_model=torch.nn.DataParallel(SeNet154_Unet_Loc().cuda()).cuda(),
         version='1',
         seed=seed
     )

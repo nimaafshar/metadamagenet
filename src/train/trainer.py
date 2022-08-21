@@ -56,7 +56,7 @@ class Trainer(abc.ABC):
                 return self._config.model_config.load_best_model().cuda()
             else:
                 log(":poop: no snap for your model config found. starting from scratch")
-                return self._config.model_config.model_type().cuda()
+                return self._config.model_config.empty_model
         else:
             log(":watch: model snap for your start checkpoint exists. loading from snap...")
             return self._config.model_config.init_weights_from(self._config.start_checkpoint).cuda()

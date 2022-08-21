@@ -88,7 +88,6 @@ class Resnet34UnetDoubleTrainer(ClassificationTrainer):
                                                 milestones=[1, 2, 3, 4, 5, 7, 9, 11, 17, 23, 29, 33, 47, 50, 60, 70, 90,
                                                             110, 130, 150, 170, 180, 190],
                                                 gamma=0.5)
-        model: nn.Module = nn.DataParallel(model).cuda()
 
         seg_loss: ComboLoss = ComboLoss({'dice': 1.0, 'focal': 12.0}, per_image=False).cuda()
         ce_loss: nn.CrossEntropyLoss = nn.CrossEntropyLoss().cuda()
@@ -284,7 +283,7 @@ if __name__ == '__main__':
 
     model_config: ModelConfig = ModelConfig(
         name='res34_cls2',
-        model_type=Res34_Unet_Double,
+        empty_model=torch.nn.DataParallel(Res34_Unet_Double().cuda()).cuda(),
         version='tuned',
         seed=seed
     )
@@ -300,7 +299,7 @@ if __name__ == '__main__':
         evaluation_interval=1,
         start_checkpoint=ModelConfig(
             name='res34_cls2',
-            model_type=Res34_Unet_Double,
+            empty_model=torch.nn.DataParallel(Res34_Unet_Double().cuda()).cuda(),
             version='0',
             seed=seed,
         ),

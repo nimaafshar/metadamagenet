@@ -171,14 +171,14 @@ if __name__ == '__main__':
 
     model_config = ModelConfig(
         name='res50_loc',
-        model_type=SeResNext50_Unet_Loc,
+        empty_model=SeResNext50_Unet_Loc().cuda(),
         version='tuned',
         seed=seed
     )
 
     start_checkpoint = ModelConfig(
         name='res50_loc',
-        model_type=SeResNext50_Unet_Loc,
+        empty_model=SeResNext50_Unet_Loc().cuda(),
         version='0',
         seed=0
     )

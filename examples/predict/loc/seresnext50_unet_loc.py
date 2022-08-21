@@ -23,19 +23,19 @@ if __name__ == '__main__':
     model_configs = (
         ModelConfig(
             name="res50_loc",
-            model_type=SeResNext50_Unet_Loc,
+            empty_model=SeResNext50_Unet_Loc().cuda(),
             version="tuned",
             seed=0
         ),
         ModelConfig(
             name="res50_loc",
-            model_type=SeResNext50_Unet_Loc,
+            empty_model=SeResNext50_Unet_Loc().cuda(),
             version="tuned",
             seed=1
         ),
         ModelConfig(
             name="res50_loc",
-            model_type=SeResNext50_Unet_Loc,
+            empty_model=SeResNext50_Unet_Loc().cuda(),
             version="tuned",
             seed=2
         )
