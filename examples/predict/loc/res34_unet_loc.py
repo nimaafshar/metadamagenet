@@ -20,7 +20,6 @@ if __name__ == '__main__':
 
     config = GeneralConfig.get_instance()
 
-
     model_configs = (
         ModelConfig(
             name="res34_loc",
@@ -42,10 +41,10 @@ if __name__ == '__main__':
         )
     )
 
-    LocalizationPredictor(model_configs,
-                          config.predictions_dir / 'res43_loc',
-                          Dataset(config.test_dirs)
-                          )
+    predictor: LocalizationPredictor = LocalizationPredictor(model_configs,
+                                                             config.predictions_dir / 'res43_loc',
+                                                             Dataset(config.test_dirs))
+    predictor.predict()
 
     elapsed = timeit.default_timer() - t0
     log(':hourglass: : {:.3f} min'.format(elapsed / 60))

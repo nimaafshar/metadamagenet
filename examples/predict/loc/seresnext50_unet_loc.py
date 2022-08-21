@@ -41,9 +41,10 @@ if __name__ == '__main__':
         )
     )
 
-    LocalizationPredictor(model_configs,
-                          config.predictions_dir / 'res50_loc_tuned',
-                          Dataset(config.test_dirs))
+    predictor: LocalizationPredictor = LocalizationPredictor(model_configs,
+                                                             config.predictions_dir / 'res50_loc_tuned',
+                                                             Dataset(config.test_dirs))
+    predictor.predict()
 
     elapsed = timeit.default_timer() - t0
     log(':hourglass: : {:.3f} min'.format(elapsed / 60))
