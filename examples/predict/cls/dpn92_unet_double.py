@@ -1,6 +1,7 @@
 import sys
 import timeit
 import cv2
+import torch.nn
 
 from src.configs import GeneralConfig
 from src.setup import set_random_seeds
@@ -20,12 +21,11 @@ if __name__ == '__main__':
     GeneralConfig.load()
     config = GeneralConfig.get_instance()
 
-
     seed = int(sys.argv[1])
 
     model_config = ModelConfig(
         name='dpn92_cls_cce',
-        model_type=Dpn92_Unet_Double,
+        empty_model=torch.nn.DataParallel(Dpn92_Unet_Double().cuda()).cuda(),
         seed=seed,
         version="tuned"
     )

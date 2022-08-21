@@ -171,14 +171,14 @@ if __name__ == '__main__':
 
     model_config = ModelConfig(
         name='dpn92_loc',
-        model_type=Dpn92_Unet_Loc,
+        empty_model=Dpn92_Unet_Loc().cuda(),
         version='tuned',
         seed=seed
     )
 
     start_checkpoint = ModelConfig(
         name='dpn92_loc',
-        model_type=Dpn92_Unet_Loc,
+        empty_model=Dpn92_Unet_Loc().cuda(),
         version='0',
         seed=0
     )

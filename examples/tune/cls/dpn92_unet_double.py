@@ -86,7 +86,6 @@ class Dpn92UnetDoubleTrainer(ClassificationTrainer):
                                                 milestones=[1, 2, 3, 4, 5, 7, 9, 11, 17, 23, 29, 33, 47, 50, 60, 70, 90,
                                                             110, 130, 150, 170, 180, 190],
                                                 gamma=0.5)
-        model: nn.Module = nn.DataParallel(model).cuda()
 
         seg_loss: ComboLoss = ComboLoss({'dice': 0.5, 'focal': 5.0}, per_image=False).cuda()
         ce_loss: nn.CrossEntropyLoss = nn.CrossEntropyLoss().cuda()
@@ -286,7 +285,7 @@ if __name__ == '__main__':
 
     model_config: ModelConfig = ModelConfig(
         name='dpn92_cls_cce',
-        model_type=Dpn92_Unet_Double,
+        empty_model=torch.nn.DataParallel(Dpn92_Unet_Double().cuda()).cuda(),
         version='tuned',
         seed=seed
     )
@@ -302,7 +301,7 @@ if __name__ == '__main__':
         evaluation_interval=2,
         start_checkpoint=ModelConfig(
             name='dpn92_cls_cce',
-            model_type=Dpn92_Unet_Double,
+            empty_model=torch.nn.DataParallel(Dpn92_Unet_Double().cuda()).cuda(),
             version='1',
             seed=seed
         ),

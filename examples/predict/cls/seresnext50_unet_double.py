@@ -1,6 +1,7 @@
 import sys
 import timeit
 import cv2
+import torch.nn
 
 from src.configs import GeneralConfig
 from src.setup import set_random_seeds
@@ -24,7 +25,7 @@ if __name__ == '__main__':
 
     model_config = ModelConfig(
         name='res50_cls_cce',
-        model_type=SeResNext50_Unet_Double,
+        empty_model=torch.nn.DataParallel(SeResNext50_Unet_Double().cuda()).cuda(),
         seed=seed,
         version="tuned"
     )

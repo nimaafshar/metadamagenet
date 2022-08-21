@@ -1,5 +1,6 @@
 import timeit
 import cv2
+import torch.nn
 
 from src.configs import GeneralConfig
 from src.zoo.models import SeNet154_Unet_Loc
@@ -23,19 +24,19 @@ if __name__ == '__main__':
     model_configs = (
         ModelConfig(
             name="se154_loc",
-            model_type=SeNet154_Unet_Loc,
+            empty_model=torch.nn.DataParallel(SeNet154_Unet_Loc().cuda()),
             version="1",
             seed=0
         ),
         ModelConfig(
             name="se154_loc",
-            model_type=SeNet154_Unet_Loc,
+            empty_model=torch.nn.DataParallel(SeNet154_Unet_Loc().cuda()),
             version="1",
             seed=1
         ),
         ModelConfig(
             name="se154_loc",
-            model_type=SeNet154_Unet_Loc,
+            empty_model=torch.nn.DataParallel(SeNet154_Unet_Loc().cuda()),
             version="1",
             seed=2
         )

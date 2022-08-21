@@ -23,19 +23,19 @@ if __name__ == '__main__':
     model_configs = (
         ModelConfig(
             name="dpn92_loc",
-            model_type=Dpn92_Unet_Loc,
+            empty_model=Dpn92_Unet_Loc().cuda(),
             version="tuned",
             seed=0
         ),
         ModelConfig(
             name="dpn92_loc",
-            model_type=Dpn92_Unet_Loc,
+            empty_model=Dpn92_Unet_Loc().cuda(),
             version="tuned",
             seed=1
         ),
         ModelConfig(
             name="dpn92_loc",
-            model_type=Dpn92_Unet_Loc,
+            empty_model=Dpn92_Unet_Loc().cuda(),
             version="tuned",
             seed=2
         )

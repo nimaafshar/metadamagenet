@@ -84,7 +84,6 @@ class Resnet34UnetLocTrainer(LocalizationTrainer):
                                                             60, 70, 90, 110, 130, 150,
                                                             170, 180, 190],
                                                 gamma=0.5)
-        model: nn.Module = nn.DataParallel(model).cuda()
         seg_loss: ComboLoss = ComboLoss({'dice': 1.0, 'focal': 10.0}, per_image=False).cuda()
         return LocalizationRequirements(
             model,
@@ -176,7 +175,7 @@ if __name__ == '__main__':
 
     model_config = ModelConfig(
         name='res34_loc',
-        model_type=Res34_Unet_Loc,
+        empty_model=torch.nn.DataParallel(Res34_Unet_Loc().cuda()).cuda(),
         version='1',
         seed=seed
     )

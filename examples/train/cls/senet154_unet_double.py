@@ -19,7 +19,7 @@ from src.configs import GeneralConfig
 from src.train.cls import ClassificationTrainer, ClassificationRequirements
 from src.train.trainer import TrainingConfig
 from src.model_config import ModelConfig
-from src.zoo.models import SeResNext50_Unet_Loc, SeNet154_Unet_Double
+from src.zoo.models import SeNet154_Unet_Loc, SeNet154_Unet_Double
 from src.losses import ComboLoss
 from src.setup import set_random_seeds
 from src.train.metrics import F1ScoreCalculator
@@ -86,8 +86,6 @@ class SENet154UnetDoubleTrainer(ClassificationTrainer):
                                                 milestones=[3, 5, 9, 13, 17, 21, 25, 29, 33, 47, 50, 60, 70, 90, 110,
                                                             130, 150, 170, 180, 190],
                                                 gamma=0.5)
-        # applying data-parallel before instantiating model may be better
-        model: nn.Module = nn.DataParallel(model).cuda()
 
         seg_loss: ComboLoss = ComboLoss({'dice': 0.5}, per_image=False).cuda()
         ce_loss: nn.CrossEntropyLoss = nn.CrossEntropyLoss().cuda()
@@ -287,7 +285,7 @@ if __name__ == '__main__':
 
     model_config: ModelConfig = ModelConfig(
         name='se154_cls_cce',
-        model_type=SeNet154_Unet_Double,
+        empty_model=torch.nn.DataParallel(SeNet154_Unet_Double().cuda()).cuda(),
         version='1',
         seed=seed
     )
@@ -303,7 +301,7 @@ if __name__ == '__main__':
         evaluation_interval=2,
         start_checkpoint=ModelConfig(
             name='se154_loc',
-            model_type=SeResNext50_Unet_Loc,
+            empty_model=torch.nn.DataParallel(SeNet154_Unet_Loc().cuda()),
             version='1',
             seed=seed,
         ),
