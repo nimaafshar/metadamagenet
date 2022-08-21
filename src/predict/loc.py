@@ -32,7 +32,7 @@ class LocalizationPredictor(MultipleModelPredictor):
             msk_batch = model(inp)
             msk_batch = torch.sigmoid(msk_batch).cpu().numpy()
 
-            pred.append(revert_augmentation(msk_batch))
+            pred.extend(revert_augmentation(msk_batch))
 
         # aggregating model results by calculating the mean
         return np.asarray(pred).mean(axis=0)
