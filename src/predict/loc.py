@@ -19,7 +19,7 @@ class LocalizationPredictor(MultipleModelPredictor):
         # cudnn.benchmark = True
 
     def _process_input(self, image_data: ImageData) -> torch.Tensor:
-        img: npt.NDArray = cv2.imread(image_data.image(DataTime.PRE), cv2.IMREAD_COLOR)
+        img: npt.NDArray = cv2.imread(str(image_data.image(DataTime.PRE)), cv2.IMREAD_COLOR)
 
         img = normalize_colors(img)
         inp = test_time_augment(img)
