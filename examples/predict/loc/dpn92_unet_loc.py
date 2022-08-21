@@ -42,7 +42,7 @@ if __name__ == '__main__':
     )
 
     predictor: LocalizationPredictor = LocalizationPredictor(model_configs,
-                                                             config.predictions_dir / 'dpn92_loc_tuned',
+                                                             config.predictions_dir / 'dpn92_loc_tuned/',
                                                              Dataset(config.test_dirs)
                                                              )
     predictor.predict()
