@@ -22,7 +22,7 @@ class Predictor(abc.ABC):
         pass
 
     def _make_predictions_dir(self):
-        self._pred_directory.mkdir(parents=False, exist_ok=True)
+        self._pred_directory.mkdir(parents=True, exist_ok=True)
         log(f':file_folder: directory {self._pred_directory} created to save predictions.')
 
     @abc.abstractmethod
