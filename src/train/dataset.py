@@ -51,7 +51,7 @@ class LocalizationDataset(Dataset):
     def __len__(self) -> int:
         return len(self._image_dataset)
 
-    def __getitem__(self, identifier: int) -> Tuple[npt.NDArray, npt.NDArray]:
+    def __getitem__(self, identifier: int) -> Tuple[torch.FloatTensor, torch.BoolTensor]:
         image_data: ImageData = self._image_dataset[identifier]
 
         img: npt.NDArray
@@ -66,18 +66,17 @@ class LocalizationDataset(Dataset):
             img: npt.NDArray = cv2.imread(str(image_data.image(DataTime.POST)), cv2.IMREAD_COLOR)
             msk: npt.NDArray = ((cv2.imread(str(image_data.mask(DataTime.POST)), cv2.IMREAD_UNCHANGED) > 0) * 255) \
                 .astype(np.uint8)
-            # FIXME: FIXED. tell the owner: previously pre-disaster masks were used for post-disaster images too
+            # tell the owner: previously pre-disaster masks were used for post-disaster images too
 
         if self._augments is not None:
             img, msk, _ = self._augments.apply_tuple(img, msk)
 
         msk = msk[..., np.newaxis]
-        msk = (msk > 127) * 1
 
         img = normalize_colors(img)
 
-        img = torch.from_numpy(img.transpose((2, 0, 1))).float()
-        msk = torch.from_numpy(msk.transpose((2, 0, 1))).long()
+        img: torch.FloatTensor = torch.from_numpy(img.transpose((2, 0, 1))).float()
+        msk: torch.BoolTensor = torch.from_numpy(msk.transpose((2, 0, 1))).bool()
 
         return img, msk
 
