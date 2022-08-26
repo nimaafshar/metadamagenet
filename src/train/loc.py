@@ -21,8 +21,11 @@ from src.logs import log
 class LocalizationTrainer(Trainer, abc.ABC):
 
     def __init__(self, config: TrainingConfig):
+        super().__init__(config)
+
         requirements: Requirements = self._get_requirements()
-        super().__init__(config, requirements)
+        self._set_requirements(requirements)
+
         self._evaluation_dice_thr: float = 0.5
 
     @abc.abstractmethod

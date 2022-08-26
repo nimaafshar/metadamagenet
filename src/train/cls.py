@@ -38,8 +38,10 @@ class ClassificationTrainer(Trainer, abc.ABC):
 
     def __init__(self, config: TrainingConfig,
                  use_cce_loss: bool = False):
+        super().__init__(config)
+
         requirements: ClassificationRequirements = self._get_requirements()
-        super().__init__(config, requirements)
+        self._set_requirements(requirements)
 
         assert requirements.ce_loss is not None, \
             "ce_loss shouldn't be None in ClassificationRequirements"

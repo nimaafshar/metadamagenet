@@ -41,7 +41,7 @@ class TrainingConfig:
 
 
 class Trainer(abc.ABC):
-    def __init__(self, config: TrainingConfig, requirements: Requirements):
+    def __init__(self, config: TrainingConfig):
         self._config: TrainingConfig = config
         self._steps_per_epoch: int = len(self._config.train_dataset) // self._config.batch_size
         self._validation_steps: int = len(self._config.validation_dataset) // self._config.val_batch_size
@@ -49,6 +49,7 @@ class Trainer(abc.ABC):
         self._val_data_loader: DataLoader
         self._train_data_loader, self._val_data_loader = self._get_dataloaders()
 
+    def _set_requirements(self, requirements: Requirements):
         self._model: nn.Module = requirements.model
         self._initial_best_score: Optional[float] = requirements.model_score
         self._start_epoch: int = requirements.start_epoch
