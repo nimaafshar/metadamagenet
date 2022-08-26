@@ -13,6 +13,6 @@ dir-names:
   masks: targets
   localization: pred_loc_val
 
-predictions-dir: ./root/pred/
-submissions-dir: ./root/submissions/
-model-weights-dir: ./root/weights/
+predictions-dir: /root/pred/
+submissions-dir: /root/submissions/
+model-weights-dir: /root/weights/
