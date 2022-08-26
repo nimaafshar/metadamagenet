@@ -194,7 +194,7 @@ if __name__ == '__main__':
         evaluation_interval=1
     )
 
-    trainer = SEResNext50UnetLocTrainer(config)
+    trainer = SENet154UnetLocTrainer(config)
 
     trainer.train()
 
