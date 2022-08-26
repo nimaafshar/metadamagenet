@@ -1,5 +1,5 @@
 import abc
-from typing import Union,Optional
+from typing import Union, Optional
 import dataclasses
 from contextlib import nullcontext
 
@@ -13,8 +13,8 @@ from torch.backends import cudnn
 from tqdm import tqdm
 
 from .trainer import Trainer, TrainingConfig
-from src.util.utils import AverageMeter, dice
-from src.losses import dice_round, ComboLoss
+from src.util.utils import AverageMeter
+from src.losses import dice, dice_round, ComboLoss
 from src.logs import log
 
 
