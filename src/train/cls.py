@@ -14,21 +14,15 @@ from torch.optim.lr_scheduler import MultiStepLR
 from tqdm import tqdm
 
 from src.util.utils import AverageMeter
-from .trainer import Trainer, TrainingConfig
+from .trainer import Trainer, TrainingConfig, Requirements
 from src.losses import ComboLoss, dice_round
 from src.logs import log
 from .metrics import DiceCalculator, MetricCalculator
 
 
-@dataclasses.dataclass
-class ClassificationRequirements:
-    model: nn.Module
-    optimizer: Optimizer
-    lr_scheduler: MultiStepLR
-    seg_loss: ComboLoss
+class ClassificationRequirements(Requirements):
     ce_loss: nn.CrossEntropyLoss
     label_loss_weights: npt.NDArray  # with size 5, if using cce_loss use size 6
-    grad_scaler: Optional[amp.GradScaler] = None
     dice_metric_calculator: Optional[MetricCalculator] = None
 
 
@@ -43,17 +37,12 @@ class ClassificationTrainer(Trainer, abc.ABC):
 
     def __init__(self, config: TrainingConfig,
                  use_cce_loss: bool = False):
-        super().__init__(config)
         requirements: ClassificationRequirements = self._get_requirements()
-        self._model: nn.Module = requirements.model
-        self._optimizer: Optimizer = requirements.optimizer
-        self._lr_scheduler: MultiStepLR = requirements.lr_scheduler
-        self._seg_loss: ComboLoss = requirements.seg_loss
+        super().__init__(config, requirements)
         self._ce_loss: nn.CrossEntropyLoss = requirements.ce_loss
         self._label_loss_weights: torch.Tensor = torch.from_numpy(requirements.label_loss_weights)
         self._evaluation_dice_thr: float = 0.3
         self._use_cce_loss: bool = use_cce_loss
-        self._grad_scaler: Optional[amp.GradScaler] = requirements.grad_scaler
         self._dice_metric_calculator: MetricCalculator = requirements.dice_metric_calculator if \
             requirements.dice_metric_calculator is not None else DiceCalculator(self._evaluation_dice_thr)
 
