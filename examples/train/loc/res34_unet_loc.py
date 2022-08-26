@@ -2,6 +2,7 @@ import os
 import sys
 import timeit
 import random
+from typing import Optional
 
 import numpy as np
 import cv2
@@ -16,7 +17,7 @@ from src.zoo.models import Res34_Unet_Loc
 
 from src.losses import ComboLoss
 from src.train.dataset import LocalizationDataset
-from src.train.loc import LocalizationRequirements, LocalizationTrainer
+from src.train.loc import Requirements, LocalizationTrainer
 from src.train.trainer import TrainingConfig
 from src.model_config import ModelConfig
 from src.file_structure import Dataset as ImageDataset
@@ -74,8 +75,11 @@ class Resnet34UnetLocTrainer(LocalizationTrainer):
                            shuffle=False,
                            pin_memory=True))
 
-    def _get_requirements(self) -> LocalizationRequirements:
-        model: nn.Module = self._get_model()
+    def _get_requirements(self) -> Requirements:
+        model: nn.Module
+        best_score: Optional[float]
+        start_epoch: int
+        model, best_score, start_epoch = self._get_model()
         optimizer: Optimizer = AdamW(model.parameters(),
                                      lr=0.00015,
                                      weight_decay=1e-6)
@@ -85,12 +89,14 @@ class Resnet34UnetLocTrainer(LocalizationTrainer):
                                                             170, 180, 190],
                                                 gamma=0.5)
         seg_loss: ComboLoss = ComboLoss({'dice': 1.0, 'focal': 10.0}, per_image=False).cuda()
-        return LocalizationRequirements(
-            model,
+        return Requirements(
+            model.cuda(),
             optimizer,
             lr_scheduler,
             seg_loss,
-            amp.GradScaler()
+            amp.GradScaler(),
+            model_score=best_score,
+            start_epoch=start_epoch
         )
 
     def _update_weights(self, loss: torch.Tensor) -> None:

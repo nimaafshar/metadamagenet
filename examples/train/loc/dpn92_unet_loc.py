@@ -1,22 +1,24 @@
 import os
 import sys
 import numpy as np
+from typing import Optional
 
 import random
 import timeit
 import cv2
 import torch
 from torch.utils.data import DataLoader
-from torch.optim import Optimizer,AdamW
+from torch.optim import Optimizer, AdamW
 from torch.optim.lr_scheduler import MultiStepLR
 from torch.cuda import amp
+from torch import nn
 
 from src.configs import GeneralConfig
 
 from src.zoo.models import Dpn92_Unet_Loc
 
 from src.train.dataset import LocalizationDataset
-from src.train.loc import LocalizationTrainer, LocalizationRequirements
+from src.train.loc import LocalizationTrainer, Requirements
 from src.train.trainer import TrainingConfig
 from src.model_config import ModelConfig
 from src.losses import ComboLoss
@@ -72,8 +74,12 @@ class SEResNext50UnetLocTrainer(LocalizationTrainer):
                            shuffle=False,
                            pin_memory=False))
 
-    def _get_requirements(self) -> LocalizationRequirements:
-        model = self._get_model().cuda()
+    def _get_requirements(self) -> Requirements:
+        model: nn.Module
+        best_score: Optional[float]
+        start_epoch: int
+        model, best_score, start_epoch = self._get_model()
+
         optimizer: Optimizer = AdamW(model.parameters(),
                                      lr=0.00015,
                                      weight_decay=1e-6)
@@ -81,12 +87,14 @@ class SEResNext50UnetLocTrainer(LocalizationTrainer):
                                    milestones=[15, 29, 43, 53, 65, 80, 90, 100, 110, 130, 150, 170, 180, 190],
                                    gamma=0.5)
         seg_loss = ComboLoss({'dice': 1.0, 'focal': 6.0}, per_image=False).cuda()
-        return LocalizationRequirements(
-            model,
+        return Requirements(
+            model.cuda(),
             optimizer,
             lr_scheduler,
             seg_loss,
-            amp.GradScaler()
+            amp.GradScaler(),
+            model_score=best_score,
+            start_epoch=start_epoch
         )
 
     def _update_weights(self, loss: torch.Tensor) -> None:
