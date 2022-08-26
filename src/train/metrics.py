@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 import numpy.typing as npt
 
-from src.util.utils import dice
+from src.losses import dice
 
 
 class MetricCalculator(abc.ABC):
