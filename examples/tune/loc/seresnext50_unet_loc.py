@@ -78,6 +78,9 @@ class SEResNext50UnetLocTuner(LocalizationTrainer):
         best_score: Optional[float]
         start_epoch: int
         model, best_score, start_epoch = self._get_model()
+
+        model = model.cuda()
+
         optimizer: Optimizer = AdamW(model.parameters(),
                                      lr=0.00004,
                                      weight_decay=1e-6)
@@ -88,7 +91,7 @@ class SEResNext50UnetLocTuner(LocalizationTrainer):
                                    gamma=0.5)
         seg_loss = ComboLoss({'dice': 1.0, 'focal': 10.0}, per_image=False).cuda()
         return Requirements(
-            model.cuda(),
+            model,
             optimizer,
             lr_scheduler,
             seg_loss,
