@@ -55,9 +55,9 @@ os.environ["NUMEXPR_NUM_THREADS"] = "1"
 os.environ["OMP_NUM_THREADS"] = "1"
 
 
-class SEResNext50UnetLocTrainer(LocalizationTrainer):
+class Dpn92UnetLocTrainer(LocalizationTrainer):
     def _setup(self):
-        super(SEResNext50UnetLocTrainer, self)._setup()
+        super(Dpn92UnetLocTrainer, self)._setup()
         np.random.seed(self._config.model_config.seed + 111)
         random.seed(self._config.model_config.seed + 111)
 
@@ -79,6 +79,7 @@ class SEResNext50UnetLocTrainer(LocalizationTrainer):
         best_score: Optional[float]
         start_epoch: int
         model, best_score, start_epoch = self._get_model()
+        model = model.cuda()
 
         optimizer: Optimizer = AdamW(model.parameters(),
                                      lr=0.00015,
@@ -88,7 +89,7 @@ class SEResNext50UnetLocTrainer(LocalizationTrainer):
                                    gamma=0.5)
         seg_loss = ComboLoss({'dice': 1.0, 'focal': 6.0}, per_image=False).cuda()
         return Requirements(
-            model.cuda(),
+            model,
             optimizer,
             lr_scheduler,
             seg_loss,
