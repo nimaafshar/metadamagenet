@@ -44,6 +44,31 @@ def dice(im1: torch.BoolTensor, im2: torch.BoolTensor, empty_score: float = 1.0)
     return float(2. * intersection.sum() / im_sum)
 
 
+def dice_batch(msk_batch1: torch.BoolTensor, msk_batch2: torch.BoolTensor,
+               empty_score: float = 1.0) -> torch.FloatTensor:
+    """
+    batch version of dice function
+    :param msk_batch1: torch.BoolTensor [B,H,W]
+    :param msk_batch2: torch.BoolTensor [B,H,W]
+    :param empty_score: if both masks are empty
+
+    :return dices: torch.FloatTensor [W]
+    """
+
+    if msk_batch1.shape != msk_batch2.shape:
+        raise ValueError("Shape mismatch: msk_batch1 and msk_batch2 must have the same shape.")
+
+    msk_sum_batch: torch.Tensor = msk_batch1.sum(dim=(1, 2)) + msk_batch2.sum(dim=(1, 2))
+
+    intersection_batch: torch.Tensor = torch.logical_and(msk_batch1, msk_batch2).sum(dim=(1, 2))
+
+    dices = 2 * intersection_batch / msk_sum_batch
+
+    dices[dices.isinf() | dices.isnan()] = empty_score
+
+    return dices
+
+
 def soft_dice_loss(outputs: torch.Tensor, targets: torch.Tensor, per_image=False) -> torch.Tensor:
     batch_size = outputs.size()[0]
     if not per_image:
