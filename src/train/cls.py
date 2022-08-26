@@ -20,9 +20,10 @@ from src.logs import log
 from .metrics import DiceCalculator, MetricCalculator
 
 
+@dataclasses.dataclass
 class ClassificationRequirements(Requirements):
-    ce_loss: nn.CrossEntropyLoss
-    label_loss_weights: npt.NDArray  # with size 5, if using cce_loss use size 6
+    ce_loss: Optional[nn.CrossEntropyLoss] = None
+    label_loss_weights: Optional[npt.NDArray] = None  # with size 5, if using cce_loss use size 6
     dice_metric_calculator: Optional[MetricCalculator] = None
 
 
@@ -39,6 +40,12 @@ class ClassificationTrainer(Trainer, abc.ABC):
                  use_cce_loss: bool = False):
         requirements: ClassificationRequirements = self._get_requirements()
         super().__init__(config, requirements)
+
+        assert requirements.ce_loss is not None, \
+            "ce_loss shouldn't be None in ClassificationRequirements"
+        assert requirements.label_loss_weights is not None, \
+            "label_loss_weights shouldn't be None in ClassificationRequirements"
+
         self._ce_loss: nn.CrossEntropyLoss = requirements.ce_loss
         self._label_loss_weights: torch.Tensor = torch.from_numpy(requirements.label_loss_weights)
         self._evaluation_dice_thr: float = 0.3
