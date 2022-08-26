@@ -65,14 +65,14 @@ class Resnet34UnetLocTrainer(LocalizationTrainer):
                            batch_size=self._config.batch_size,
                            num_workers=6,
                            shuffle=True,
-                           pin_memory=False,
+                           pin_memory=True,
                            drop_last=True),
 
                 DataLoader(self._config.validation_dataset,
                            batch_size=self._config.val_batch_size,
                            num_workers=6,
                            shuffle=False,
-                           pin_memory=False))
+                           pin_memory=True))
 
     def _get_requirements(self) -> LocalizationRequirements:
         model: nn.Module = self._get_model()
