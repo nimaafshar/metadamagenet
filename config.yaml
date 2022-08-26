@@ -1,11 +1,11 @@
 # example config: suited for working in gradient notebooks
 
 train-dirs:
-  - /datasets/xview2-mini/train
+  - /datasets/xview2/train
   #- /datasets/xview2-mini/tier3
 
 test-dirs:
-  - /datasets/xview2-mini/test/
+  - /datasets/xview2/test/
 
 dir-names:
   images: images
@@ -13,6 +13,6 @@ dir-names:
   masks: targets
   localization: pred_loc_val
 
-predictions-dir: ./data/pred/
-submissions-dir: ./data/submissions/
-model-weights-dir: ./data/weights/
+predictions-dir: ./root/pred/
+submissions-dir: ./root/submissions/
+model-weights-dir: ./root/weights/
