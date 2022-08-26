@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 from .trainer import Trainer, TrainingConfig
 from src.util.utils import AverageMeter
-from src.losses import dice, dice_round, ComboLoss
+from src.losses import dice_batch, dice_round, ComboLoss
 from src.logs import log
 
 
@@ -56,25 +56,27 @@ class LocalizationTrainer(Trainer, abc.ABC):
 
     def _evaluate(self, number: int) -> float:
 
-        dices0 = []
+        meter = AverageMeter()
 
+        iterator = tqdm(self._val_data_loader)
         self._model.eval()
         with torch.no_grad():
-            for i, (img_batch, msk_batch) in enumerate(tqdm(self._val_data_loader)):
-                msk_batch = msk_batch.numpy()
-                img_batch = img_batch.cuda(non_blocking=True)
+            for i, (img_batch, msk_batch) in enumerate(iterator):
+                msk_batch: torch.FloatTensor = msk_batch.cuda(non_blocking=True)
+                img_batch: torch.BoolTensor = img_batch.cuda(non_blocking=True)
 
-                out_batch = self._model(img_batch)
+                out_batch: torch.FloatTensor = self._model(img_batch)
+                msk_pred: torch.FloatTensor = torch.sigmoid(out_batch[:, 0, ...])
 
-                msk_pred = torch.sigmoid(out_batch[:, 0, ...]).cpu().numpy()
+                dice_scores = dice_batch(msk_batch[:, 0, ...], msk_pred > self._evaluation_dice_thr)
+                meter.update(float(dice_scores.mean()), n=img_batch.size(0))
 
-                for j in range(msk_batch.shape[0]):
-                    dices0.append(dice(msk_batch[j, 0], msk_pred[j] > self._evaluation_dice_thr))
+                iterator.set_description(
+                    f"epoch: {number};'"
+                    f" Dice {meter.val:.6f} ({meter.avg:.6f})")
 
-        d0: float = float(np.mean(dices0))
-
-        log(f"Validation set Dice: {d0:.6f}")
-        return d0
+        log(f"Validation set Dice: {meter.avg:.6f}")
+        return meter.avg
 
     def _save_model(self, epoch: int, score: float, best_score: Union[float, None]) -> bool:
         if best_score is None or score > best_score:
