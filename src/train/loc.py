@@ -12,35 +12,21 @@ from torch.optim.lr_scheduler import MultiStepLR
 from torch.backends import cudnn
 from tqdm import tqdm
 
-from .trainer import Trainer, TrainingConfig
+from .trainer import Trainer, TrainingConfig, Requirements
 from src.util.utils import AverageMeter
 from src.losses import dice_batch, dice_round, ComboLoss
 from src.logs import log
 
 
-@dataclasses.dataclass
-class LocalizationRequirements:
-    model: nn.Module
-    optimizer: Optimizer
-    lr_scheduler: MultiStepLR
-    seg_loss: ComboLoss
-    grad_scaler: Optional[amp.GradScaler] = None
-
-
 class LocalizationTrainer(Trainer, abc.ABC):
 
     def __init__(self, config: TrainingConfig):
-        super().__init__(config)
-        requirements: LocalizationRequirements = self._get_requirements()
-        self._model: nn.Module = requirements.model
-        self._optimizer: Optimizer = requirements.optimizer
-        self._lr_scheduler: MultiStepLR = requirements.lr_scheduler
-        self._seg_loss: ComboLoss = requirements.seg_loss
-        self._grad_scaler: Optional[amp.GradScaler] = requirements.grad_scaler
+        requirements: Requirements = self._get_requirements()
+        super().__init__(config, requirements)
         self._evaluation_dice_thr: float = 0.5
 
     @abc.abstractmethod
-    def _get_requirements(self) -> LocalizationRequirements:
+    def _get_requirements(self) -> Requirements:
         pass
 
     @abc.abstractmethod
@@ -55,11 +41,10 @@ class LocalizationTrainer(Trainer, abc.ABC):
         cudnn.benchmark = True
 
     def _evaluate(self, number: int) -> float:
-
         meter = AverageMeter()
-
         iterator = tqdm(self._val_data_loader)
         self._model.eval()
+
         with torch.no_grad():
             for i, (img_batch, msk_batch) in enumerate(iterator):
                 msk_batch: torch.FloatTensor = msk_batch.cuda(non_blocking=True)
@@ -72,7 +57,7 @@ class LocalizationTrainer(Trainer, abc.ABC):
                 meter.update(float(dice_scores.mean()), n=img_batch.size(0))
 
                 iterator.set_description(
-                    f"epoch: {number};'"
+                    f"round: {number};'"
                     f" Dice {meter.val:.6f} ({meter.avg:.6f})")
 
         log(f"Validation set Dice: {meter.avg:.6f}")
