@@ -193,7 +193,7 @@ if __name__ == '__main__':
         evaluation_interval=2
     )
 
-    trainer = SEResNext50UnetLocTrainer(config)
+    trainer = Dpn92UnetLocTrainer(config)
 
     trainer.train()
 

@@ -54,9 +54,9 @@ os.environ["NUMEXPR_NUM_THREADS"] = "2"
 os.environ["OMP_NUM_THREADS"] = "2"
 
 
-class SEResNext50UnetLocTuner(LocalizationTrainer):
+class Dpn92UnetLocTuner(LocalizationTrainer):
     def _setup(self):
-        super(SEResNext50UnetLocTuner, self)._setup()
+        super(Dpn92UnetLocTuner, self)._setup()
         np.random.seed(self._config.model_config.seed + 156)
         random.seed(self._config.model_config.seed + 156)
 
@@ -204,7 +204,7 @@ if __name__ == '__main__':
         start_checkpoint=start_checkpoint
     )
 
-    trainer = SEResNext50UnetLocTuner(config)
+    trainer = Dpn92UnetLocTuner(config)
 
     trainer.train()
 
