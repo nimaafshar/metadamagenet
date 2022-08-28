@@ -127,7 +127,6 @@ if __name__ == '__main__':
 
     input_shape = (608, 608)
 
-    # TODO: count images with 2,3 damage level 2 times
     # in tuning, it's better to train with all available train images
     train_image_dataset = ImageDataset(config.train_dirs)
     train_image_dataset.discover()

@@ -62,6 +62,6 @@ class GeneralConfig:
         self.submissions_dir = pathlib.Path(source['submissions-dir'])
 
 
-# FIXME: enable ssl verification. ssl verification is disabled so downloading models from pretrained-models be possible
+# enable ssl verification. ssl verification is disabled so downloading models from pretrained-models be possible
 # their certificate has expired.
 ssl._create_default_https_context = ssl._create_unverified_context
