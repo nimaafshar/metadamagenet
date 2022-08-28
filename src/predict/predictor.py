@@ -1,11 +1,12 @@
 import abc
 import pathlib
 from abc import ABC
+from typing import List, Sequence, Optional
 
 import torch
+from torch import nn
 from tqdm import tqdm
 import numpy.typing as npt
-from typing import List, Sequence
 
 from src.model_config import ModelConfig
 from src.file_structure import Dataset, ImageData
@@ -87,8 +88,13 @@ class SingleModelPredictor(Predictor, ABC):
         self._load_model()
 
     def _load_model(self):
-        log('=> loading best model...')
-        self._model: torch.nn.Module = self._model_config.load_best_model()
+        log(f"=> loading best model... {self._model_config.name} "
+            f"[seed={self._model_config.seed},version={self._model_config.version}]")
+        model: nn.Module
+        best_score: Optional[float]
+        start_epoch: int
+        self._model, best_score, start_epoch = self._model_config.load_best_model()
+        self._model = self._model.cuda()
         self._model.eval()
 
     def _make_prediction(self, inp: torch.Tensor) -> torch.Tensor:
@@ -106,7 +112,11 @@ class MultipleModelPredictor(Predictor, ABC):
     def _load_models(self):
         for model_config in self._model_configs:
             log(f"==> loading model {model_config.name} [seed={model_config.seed},version={model_config.version}]")
-            model = model_config.load_best_model().cuda()
+            model: nn.Module
+            best_score: Optional[float]
+            start_epoch: int
+            model, best_score, start_epoch = model_config.load_best_model()
+            model = model.cuda()
             model.eval()
             self._models.append(model)
 
