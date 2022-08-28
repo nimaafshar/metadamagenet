@@ -113,11 +113,11 @@ class Trainer(abc.ABC):
         torch.cuda.empty_cache()
         for epoch in range(self._start_epoch, self._start_epoch + self._config.epochs):
             log(f"===> :repeat_one: epoch {epoch}")
-            log(f"======> training")
+            log(f"======>:relieved: training")
             self._train_epoch(epoch)
             if epoch % self._config.evaluation_interval == 0:
                 evaluation_round += 1
-                log(f"======> evaluation")
+                log(f"======>:fearful: evaluation")
                 torch.cuda.empty_cache()
                 score: float = self._evaluate(evaluation_round)
                 self._save_model(epoch, score, best_score)
