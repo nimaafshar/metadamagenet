@@ -129,7 +129,6 @@ if __name__ == '__main__':
 
     input_shape = (448, 448)
 
-    # TODO: count images with 2,3 damage level 2 times
     train_image_dataset = ImageDataset(config.train_dirs)
     train_image_dataset.discover()
 

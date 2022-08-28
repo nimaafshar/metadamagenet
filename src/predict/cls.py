@@ -35,8 +35,6 @@ class ClassificationPredictor(SingleModelPredictor, ABC):
         return torch.from_numpy(inp).float().cuda()
 
     def _save_output(self, output_mask: npt.NDArray, image_data: ImageData) -> None:
-        # write predictions to file
-        # FIXME: what is part1 and part2?
         cv2.imwrite(str(self._pred_directory / f'{image_data.name(DataTime.PRE)}_part1.png'),
                     output_mask[..., :3],
                     [cv2.IMWRITE_PNG_COMPRESSION, 9])
@@ -59,7 +57,7 @@ class SoftmaxClassificationPredictor(ClassificationPredictor):
     def _process_output(self, model_output: torch.Tensor) -> npt.NDArray:
         msk: npt.NDArray = torch.softmax(model_output[:, :, ...], dim=1).cpu().numpy()
 
-        # FIXME: what is this line for
+        # inverse localization mask
         msk[:, 0, ...] = 1 - msk[:, 0, ...]
 
         msk = revert_augmentation(msk) * 255
