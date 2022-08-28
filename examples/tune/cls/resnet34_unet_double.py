@@ -2,6 +2,7 @@ import sys
 import timeit
 import random
 import os
+from typing import Optional
 
 import cv2
 import numpy as np
@@ -19,7 +20,7 @@ from src.configs import GeneralConfig
 from src.train.cls import ClassificationTrainer, ClassificationRequirements
 from src.train.trainer import TrainingConfig
 from src.model_config import ModelConfig
-from src.zoo.models import Res34_Unet_Double, Res34_Unet_Loc
+from src.zoo.models import Res34_Unet_Double
 from src.losses import ComboLoss
 from src.setup import set_random_seeds
 
@@ -78,7 +79,11 @@ class Resnet34UnetDoubleTrainer(ClassificationTrainer):
                            pin_memory=False))
 
     def _get_requirements(self) -> ClassificationRequirements:
-        model: nn.Module = self._get_model()
+        model: nn.Module
+        best_score: Optional[float]
+        start_epoch: int
+        model, best_score, start_epoch = self._get_model()
+        model = model.cuda()
 
         optimizer: Optimizer = AdamW(model.parameters(),
                                      lr=0.000008,
@@ -96,8 +101,10 @@ class Resnet34UnetDoubleTrainer(ClassificationTrainer):
             optimizer,
             lr_scheduler,
             seg_loss,
-            ce_loss,
             grad_scaler=amp.GradScaler(),
+            model_score=best_score,
+            start_epoch=start_epoch,
+            ce_loss=ce_loss,
             label_loss_weights=np.array([0.05, 0.2, 0.8, 0.7, 0.4])
         )
 
@@ -264,8 +271,7 @@ if __name__ == '__main__':
                 ),
                     probability=0.99
                 )
-            )
-                , probability=0),
+            ), probability=0),
             ElasticTransformation(
                 probability=0.99,
                 apply_to=('img_pre',)
@@ -274,8 +280,7 @@ if __name__ == '__main__':
                 probability=0.99,
                 apply_to=('img_post',)
             )
-        ))
-        , do_dilation=True)
+        )), do_dilation=True)
 
     validation_dataset = ClassificationValidationDataset(
         image_dataset=valid_image_data,
@@ -305,7 +310,6 @@ if __name__ == '__main__':
         ),
     )
 
-    trainer = Resnet34UnetDoubleTrainer(training_config,
-                                        use_cce_loss=False)
+    trainer = Resnet34UnetDoubleTrainer(training_config, use_cce_loss=False)
 
     trainer.train()
