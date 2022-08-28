@@ -8,9 +8,9 @@ from multiprocessing import Pool
 
 import shapely.geometry
 
-import configs
-from setup import single_thread_numpy, set_random_seeds
-from file_structure import Dataset, ImageData, DataTime
+from src import configs
+from src.setup import single_thread_numpy, set_random_seeds
+from src.file_structure import Dataset, ImageData, DataTime
 from src.logs import log
 
 single_thread_numpy()
@@ -43,7 +43,7 @@ def create_masks(image_data: ImageData):
 
     for polygon, _ in image_data.polygons(DataTime.PRE):
         _msk = mask_for_polygon(polygon)
-        polygons_mask[_msk > 0] = 255
+        polygons_mask[_msk > 0] = 1
 
     for polygon, damage_type in image_data.polygons(DataTime.POST):
         _msk = mask_for_polygon(polygon)
