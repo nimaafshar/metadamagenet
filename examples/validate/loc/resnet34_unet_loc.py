@@ -32,6 +32,7 @@ if __name__ == "__main__":
     config = GeneralConfig.get_instance()
 
     image_dataset: ImageDataset = ImageDataset(config.test_dirs)
+    image_dataset.discover()
 
     dataset: LocalizationDataset = LocalizationDataset(image_dataset, post_version_prob=1)
 
