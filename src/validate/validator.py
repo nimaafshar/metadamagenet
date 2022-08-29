@@ -29,7 +29,7 @@ class Validator(abc.ABC):
     def validate(self):
         self._setup()
 
-        log(f':arrow_forward: starting to train model {self._config.model_config.full_name} ...')
+        log(f':arrow_forward: starting to validate model {self._config.model_config.full_name} ...')
         log(f'steps: {len(self._dataloader)}')
 
         self._evaluate()
