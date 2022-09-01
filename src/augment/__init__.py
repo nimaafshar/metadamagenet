@@ -1,3 +1,4 @@
+from .test_time import TestTimeAugmentor, FourFlips
 from .augmentation import Pipeline, OneOf
 from .train import (
     TopDownFlip,
