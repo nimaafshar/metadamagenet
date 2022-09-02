@@ -64,7 +64,7 @@ class LocalizationDataset(Dataset):
         if random.random() > self._post_version_prob:
             # replace with post_disaster version
             img: npt.NDArray = cv2.imread(str(image_data.image(DataTime.POST)), cv2.IMREAD_COLOR)
-            msk: npt.NDArray = ((cv2.imread(str(image_data.mask(DataTime.POST)), cv2.IMREAD_UNCHANGED) > 0) * 255) \
+            msk: npt.NDArray = (cv2.imread(str(image_data.mask(DataTime.POST)), cv2.IMREAD_UNCHANGED) > 0) \
                 .astype(np.uint8)
             # tell the owner: previously pre-disaster masks were used for post-disaster images too
 
@@ -114,6 +114,7 @@ class ClassificationDataset(Dataset):
         msk0: npt.NDArray = cv2.imread(str(image_data.mask(DataTime.PRE)), cv2.IMREAD_UNCHANGED)
 
         # read post_disaster image and mask
+        # TODO: inspect this 255
         img_post: npt.NDArray = cv2.imread(str(image_data.image(DataTime.POST)), cv2.IMREAD_COLOR)
         label_msk: npt.NDArray = (cv2.imread(str(image_data.mask(DataTime.POST)), cv2.IMREAD_UNCHANGED) > 0) * 255
 
