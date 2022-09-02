@@ -1,8 +1,10 @@
+import numpy as np
 import torch
 from torch import nn
 import torch.nn.functional as F
 
 from ..modules import ConvRelu
+from ...senet import senet154
 
 
 class SENet154UnetDouble(nn.Module):
@@ -59,7 +61,7 @@ class SENet154UnetDouble(nn.Module):
         dec8 = self.conv8_2(torch.cat([dec8, enc2], 1))
 
         dec9 = self.conv9(F.interpolate(dec8, scale_factor=2))
-        dec9 = self.conv9_2(torch.cat([dec9,enc1], 1))
+        dec9 = self.conv9_2(torch.cat([dec9, enc1], 1))
 
         dec10 = self.conv10(F.interpolate(dec9, scale_factor=2))
 

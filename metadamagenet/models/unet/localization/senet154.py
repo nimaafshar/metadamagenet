@@ -1,6 +1,15 @@
-class SeNet154_Unet_Loc(nn.Module):
+import numpy as np
+import torch
+from torch import nn
+import torch.nn.functional as F
+
+from ..modules import ConvRelu
+from ...senet import senet154
+
+
+class SeNet154UnetLocalization(nn.Module):
     def __init__(self, pretrained='imagenet', **kwargs):
-        super(SeNet154_Unet_Loc, self).__init__()
+        super(SeNet154UnetLocalization, self).__init__()
 
         encoder_filters = [128, 256, 512, 1024, 2048]
         decoder_filters = np.asarray([48, 64, 96, 160, 320])
@@ -25,12 +34,13 @@ class SeNet154_Unet_Loc(nn.Module):
         # _w = encoder.layer0.conv1.state_dict()
         # _w['weight'] = torch.cat([0.8 * _w['weight'], 0.1 * _w['weight'], 0.1 * _w['weight']], 1)
         # conv1_new.load_state_dict(_w)
-        self.conv1 = nn.Sequential(encoder.layer0.conv1, encoder.layer0.bn1, encoder.layer0.relu1, encoder.layer0.conv2, encoder.layer0.bn2, encoder.layer0.relu2, encoder.layer0.conv3, encoder.layer0.bn3, encoder.layer0.relu3)
+        self.conv1 = nn.Sequential(encoder.layer0.conv1, encoder.layer0.bn1, encoder.layer0.relu1, encoder.layer0.conv2,
+                                   encoder.layer0.bn2, encoder.layer0.relu2, encoder.layer0.conv3, encoder.layer0.bn3,
+                                   encoder.layer0.relu3)
         self.conv2 = nn.Sequential(encoder.pool, encoder.layer1)
         self.conv3 = encoder.layer2
         self.conv4 = encoder.layer3
         self.conv5 = encoder.layer4
-
 
     def forward(self, x):
         batch_size, C, H, W = x.shape
@@ -42,21 +52,16 @@ class SeNet154_Unet_Loc(nn.Module):
         enc5 = self.conv5(enc4)
 
         dec6 = self.conv6(F.interpolate(enc5, scale_factor=2))
-        dec6 = self.conv6_2(torch.cat([dec6, enc4
-                ], 1))
+        dec6 = self.conv6_2(torch.cat([dec6, enc4], 1))
 
         dec7 = self.conv7(F.interpolate(dec6, scale_factor=2))
-        dec7 = self.conv7_2(torch.cat([dec7, enc3
-                ], 1))
+        dec7 = self.conv7_2(torch.cat([dec7, enc3], 1))
 
         dec8 = self.conv8(F.interpolate(dec7, scale_factor=2))
-        dec8 = self.conv8_2(torch.cat([dec8, enc2
-                ], 1))
+        dec8 = self.conv8_2(torch.cat([dec8, enc2], 1))
 
         dec9 = self.conv9(F.interpolate(dec8, scale_factor=2))
-        dec9 = self.conv9_2(torch.cat([dec9,
-                enc1
-                ], 1))
+        dec9 = self.conv9_2(torch.cat([dec9, enc1], 1))
 
         dec10 = self.conv10(F.interpolate(dec9, scale_factor=2))
 
@@ -71,4 +76,3 @@ class SeNet154_Unet_Loc(nn.Module):
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
-

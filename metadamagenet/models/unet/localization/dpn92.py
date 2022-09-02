@@ -16,19 +16,26 @@ class Dpn92UnetLocalization(nn.Module):
         decoder_filters = np.asarray([64, 96, 128, 256, 512]) // 2
 
         self.conv6 = ConvRelu(encoder_filters[-1], decoder_filters[-1])
-        self.conv6_2 = nn.Sequential(ConvRelu(decoder_filters[-1] + encoder_filters[-2], decoder_filters[-1]),
-                                     SCSEModule(decoder_filters[-1], reduction=16, concat=True))
+        self.conv6_2 = nn.Sequential(
+            ConvRelu(decoder_filters[-1] + encoder_filters[-2], decoder_filters[-1]),
+            SCSEModule(decoder_filters[-1], reduction=16, concat=True)
+        )
         self.conv7 = ConvRelu(decoder_filters[-1] * 2, decoder_filters[-2])
-        self.conv7_2 = nn.Sequential(ConvRelu(decoder_filters[-2] + encoder_filters[-3], decoder_filters[-2]),
-                                     SCSEModule(decoder_filters[-2], reduction=16, concat=True))
+        self.conv7_2 = nn.Sequential(
+            ConvRelu(decoder_filters[-2] + encoder_filters[-3], decoder_filters[-2]),
+            SCSEModule(decoder_filters[-2], reduction=16, concat=True)
+        )
         self.conv8 = ConvRelu(decoder_filters[-2] * 2, decoder_filters[-3])
-        self.conv8_2 = nn.Sequential(ConvRelu(decoder_filters[-3] + encoder_filters[-4], decoder_filters[-3]),
-                                     SCSEModule(decoder_filters[-3], reduction=16, concat=True))
+        self.conv8_2 = nn.Sequential(
+            ConvRelu(decoder_filters[-3] + encoder_filters[-4], decoder_filters[-3]),
+            SCSEModule(decoder_filters[-3], reduction=16, concat=True)
+        )
         self.conv9 = ConvRelu(decoder_filters[-3] * 2, decoder_filters[-4])
-        self.conv9_2 = nn.Sequential(ConvRelu(decoder_filters[-4] + encoder_filters[-5], decoder_filters[-4]),
-                                     SCSEModule(decoder_filters[-4], reduction=16, concat=True))
+        self.conv9_2 = nn.Sequential(
+            ConvRelu(decoder_filters[-4] + encoder_filters[-5], decoder_filters[-4]),
+            SCSEModule(decoder_filters[-4], reduction=16, concat=True)
+        )
         self.conv10 = ConvRelu(decoder_filters[-4] * 2, decoder_filters[-5])
-
         self.res = nn.Conv2d(decoder_filters[-5], 1, 1, stride=1, padding=0)
 
         self._initialize_weights()
