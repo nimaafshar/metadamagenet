@@ -1,5 +1,6 @@
 - [ ] create masks for `tier3` data
 - [ ] test classification models
+- [ ] remove `_part1` files from classification training pipeline
 - [ ] evaluation for localization
 - [ ] evaluation for classification models
 - [x] test localization validation api
