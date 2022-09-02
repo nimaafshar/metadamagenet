@@ -13,3 +13,4 @@
 - [ ] experiment: train and test localization models with post-disaster images too
 - [ ] fix model load and save
 - [ ] make a localization dataset which can load both pre and post disaster images
+- [ ] integrate augmentations with torchvision
