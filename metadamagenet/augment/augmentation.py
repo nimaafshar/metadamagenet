@@ -2,7 +2,6 @@ import abc
 import random
 from typing import Sequence, Tuple, Dict, Optional, Any, Type
 
-import numpy
 import numpy.typing as npt
 
 
