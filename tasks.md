@@ -1,0 +1,14 @@
+- [ ] create masks for `tier3` data
+- [ ] test classification models
+- [ ] evaluation for localization
+- [ ] evaluation for classification models
+- [x] test localization validation api
+- [ ] test classification validation api
+- [ ] predict and calculate accuracy on `test` and `holdout` sets
+- [x] create Split from `ImageDataset`
+- [ ] create meta-split from `ImageDataset`
+- [ ] read *MAML* codes
+- [ ] implement *MAML* codes
+- [ ] experiment: train and test localization models with post-disaster images too
+- [ ] fix model load and save
+- [ ] make a localization dataset which can load both pre and post disaster images
