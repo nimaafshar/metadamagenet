@@ -39,9 +39,9 @@ class LocalizationValidator(Validator):
                     augmented_msk_pred = torch.unsqueeze(augmented_msk_pred, dim=1)
                     print("augmented_mask_pred (un squeezed):", augmented_msk_pred.shape)
                     msk_pred = self._test_time_augmentor.aggregate(augmented_msk_pred.cpu()).cuda(non_blocking=True)
-                    print("mask_pred:", augmented_msk_pred.shape)
+                    print("mask_pred:", msk_pred.shape)
                     msk_pred = msk_pred[:, 0, ...]
-                    print("mask_pred [:,0,...]:", augmented_msk_pred.shape)
+                    print("mask_pred [:,0,...]:", msk_pred.shape)
                 else:
                     out_batch: torch.FloatTensor = self._model(img_batch.cuda(non_blocking=True))
                     msk_pred: torch.FloatTensor = torch.sigmoid(out_batch[:, 0, ...])
