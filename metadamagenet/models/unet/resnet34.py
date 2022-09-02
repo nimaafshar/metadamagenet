@@ -1,18 +1,18 @@
 import numpy as np
 import torch
+import torchvision
 from torch import nn
 import torch.nn.functional as F
 
-from ..modules import ConvRelu
-from ...senet import se_resnext50_32x4d
+from .modules import ConvRelu
 
 
-class SeResNext50UnetLocalization(nn.Module):
-    def __init__(self, pretrained='imagenet', **kwargs):
-        super(SeResNext50UnetLocalization, self).__init__()
+class Resnet34Unet(nn.Module):
+    def __init__(self, pretrained: bool = True):
+        super(Resnet34Unet, self).__init__()
 
-        encoder_filters = [64, 256, 512, 1024, 2048]
-        decoder_filters = np.asarray([64, 96, 128, 256, 512]) // 2
+        encoder_filters = [64, 64, 128, 256, 512]
+        decoder_filters = np.asarray([48, 64, 96, 160, 320])
 
         self.conv6 = ConvRelu(encoder_filters[-1], decoder_filters[-1])
         self.conv6_2 = ConvRelu(decoder_filters[-1] + encoder_filters[-2], decoder_filters[-1])
@@ -24,19 +24,19 @@ class SeResNext50UnetLocalization(nn.Module):
         self.conv9_2 = ConvRelu(decoder_filters[-4] + encoder_filters[-5], decoder_filters[-4])
         self.conv10 = ConvRelu(decoder_filters[-4], decoder_filters[-5])
 
-        self.res = nn.Conv2d(decoder_filters[-5], 1, 1, stride=1, padding=0)
+        # res
 
         self._initialize_weights()
 
-        encoder = se_resnext50_32x4d(pretrained=pretrained)
-
-        # conv1_new = nn.Conv2d(6, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-        # _w = encoder.layer0.conv1.state_dict()
-        # _w['weight'] = torch.cat([0.5 * _w['weight'], 0.5 * _w['weight']], 1)
-        # conv1_new.load_state_dict(_w)
-        self.conv1 = nn.Sequential(encoder.layer0.conv1, encoder.layer0.bn1,
-                                   encoder.layer0.relu1)  # encoder.layer0.conv1
-        self.conv2 = nn.Sequential(encoder.pool, encoder.layer1)
+        encoder_weights = torchvision.models.ResNet34_Weights.DEFAULT if pretrained else None
+        encoder = torchvision.models.resnet34(weights=encoder_weights)
+        self.conv1 = nn.Sequential(
+            encoder.conv1,
+            encoder.bn1,
+            encoder.relu)
+        self.conv2 = nn.Sequential(
+            encoder.maxpool,
+            encoder.layer1)
         self.conv3 = encoder.layer2
         self.conv4 = encoder.layer3
         self.conv5 = encoder.layer4
@@ -64,7 +64,7 @@ class SeResNext50UnetLocalization(nn.Module):
 
         dec10 = self.conv10(F.interpolate(dec9, scale_factor=2))
 
-        return self.res(dec10)
+        return dec10
 
     def _initialize_weights(self):
         for m in self.modules():
@@ -75,3 +75,27 @@ class SeResNext50UnetLocalization(nn.Module):
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
+
+
+class Resnet34UnetLocalization(nn.Module):
+    def __init__(self, pretrained: bool = True):
+        super(Resnet34UnetLocalization, self).__init__()
+        self.unet: nn.Module = Resnet34Unet(pretrained)
+        self.res = nn.Conv2d(decoder_filters[-5], 1, 1, stride=1, padding=0)
+
+    def forward(self, x):
+        dec10 = self.unet(x)
+        return self.res(dec10)
+
+
+class Resnet34UnetDouble(nn.Module):
+    def __init__(self, pretrained: bool = True):
+        super(Resnet34UnetDouble, self).__init__()
+        self.unet: nn.Module = Resnet34Unet(pretrained)
+        self.res = nn.Conv2d(decoder_filters[-5] * 2, 5, 1, stride=1, padding=0)
+
+    def forward(self, x):
+        dec10_0 = self.unet(x[:, :3, :, :])
+        dec10_1 = self.unet(x[:, 3:, :, :])
+        dec10 = torch.cat([dec10_0, dec10_1], 1)
+        return self.res(dec10)

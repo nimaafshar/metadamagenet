@@ -3,15 +3,14 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from ..modules import ConvRelu
-from ...senet import SCSEModule
-from ...dpn import dpn92
+from .modules import ConvRelu
+from ..senet import SCSEModule
+from ..dpn import dpn92
 
 
-class Dpn92UnetDouble(nn.Module):
-    def __init__(self, pretrained='imagenet+5k', **kwargs):
-        super(Dpn92UnetDouble, self).__init__()
-
+class Dpn92Unet(nn.Module):
+    def __init__(self, pretrained: str = 'imagenet+5k'):
+        super(Dpn92Unet, self).__init__()
         encoder_filters = [64, 336, 704, 1552, 2688]
         decoder_filters = np.asarray([64, 96, 128, 256, 512]) // 2
 
@@ -37,8 +36,7 @@ class Dpn92UnetDouble(nn.Module):
         )
         self.conv10 = ConvRelu(decoder_filters[-4] * 2, decoder_filters[-5])
 
-        self.res = nn.Conv2d(decoder_filters[-5] * 2, 5, 1, stride=1, padding=0)
-
+        # res
         self._initialize_weights()
 
         encoder = dpn92(pretrained=pretrained)
@@ -61,8 +59,8 @@ class Dpn92UnetDouble(nn.Module):
         self.conv4 = nn.Sequential(*[b for k, b in encoder.blocks.items() if k.startswith('conv4_')])
         self.conv5 = nn.Sequential(*[b for k, b in encoder.blocks.items() if k.startswith('conv5_')])
 
-    def forward1(self, x):
-        batch_size, C, H, W = x.shape
+    def forward(self, x: torch.Tensor):
+        # batch_size, c, h, w = x.shape
 
         enc1 = self.conv1(x)
         enc2 = self.conv2(enc1)
@@ -70,6 +68,7 @@ class Dpn92UnetDouble(nn.Module):
         enc4 = self.conv4(enc3)
         enc5 = self.conv5(enc4)
 
+        # TODO: inspect
         enc1 = (torch.cat(enc1, dim=1) if isinstance(enc1, tuple) else enc1)
         enc2 = (torch.cat(enc2, dim=1) if isinstance(enc2, tuple) else enc2)
         enc3 = (torch.cat(enc3, dim=1) if isinstance(enc3, tuple) else enc3)
@@ -86,21 +85,10 @@ class Dpn92UnetDouble(nn.Module):
         dec8 = self.conv8_2(torch.cat([dec8, enc2], 1))
 
         dec9 = self.conv9(F.interpolate(dec8, scale_factor=2))
-        dec9 = self.conv9_2(torch.cat([dec9,
-                                       enc1], 1))
+        dec9 = self.conv9_2(torch.cat([dec9, enc1], 1))
 
         dec10 = self.conv10(F.interpolate(dec9, scale_factor=2))
-
         return dec10
-
-    def forward(self, x):
-
-        dec10_0 = self.forward1(x[:, :3, :, :])
-        dec10_1 = self.forward1(x[:, 3:, :, :])
-
-        dec10 = torch.cat([dec10_0, dec10_1], 1)
-
-        return self.res(dec10)
 
     def _initialize_weights(self):
         for m in self.modules():
@@ -111,3 +99,26 @@ class Dpn92UnetDouble(nn.Module):
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
+
+
+class Dpn92UnetLocalization(nn.Module):
+    def __init__(self, pretrained: str = 'imagenet+5k'):
+        super(Dpn92UnetLocalization, self).__init__()
+        self.unet: nn.Module = Dpn92Unet(pretrained)
+        self.res = nn.Conv2d(decoder_filters[-5], 1, 1, stride=1, padding=0)  # TODO: initialize this
+
+    def forward(self, x):
+        return self.res(self.unet)
+
+
+class Dpn92UnetDouble(nn.Module):
+    def __init__(self, pretrained: str = 'imagenet+5k'):
+        super(Dpn92UnetDouble, self).__init__()
+        self.unet: nn.Module = Dpn92Unet(pretrained)
+        self.res = nn.Conv2d(decoder_filters[-5] * 2, 5, 1, stride=1, padding=0)  # TODO: initialize this
+
+    def forward(self, x):
+        dec10_0 = self.unet(x[:, :3, :, :])
+        dec10_1 = self.unet(x[:, 3:, :, :])
+        dec10 = torch.cat([dec10_0, dec10_1], dim=1)
+        return self.res(dec10)

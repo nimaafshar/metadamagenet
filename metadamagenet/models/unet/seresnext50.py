@@ -3,16 +3,14 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from ..modules import ConvRelu
-from ...senet import senet154
+from .modules import ConvRelu
+from ..senet import se_resnext50_32x4d
 
-
-class SENet154UnetDouble(nn.Module):
-    def __init__(self, pretrained='imagenet', **kwargs):
-        super(SENet154UnetDouble, self).__init__()
-
-        encoder_filters = [128, 256, 512, 1024, 2048]
-        decoder_filters = np.asarray([48, 64, 96, 160, 320])
+class SeResnext50Unet(nn.Module):
+    def __init__(self, pretrained: str = 'imagenet'):
+        super().__init__()
+        encoder_filters = [64, 256, 512, 1024, 2048]
+        decoder_filters = np.asarray([64, 96, 128, 256, 512]) // 2
 
         self.conv6 = ConvRelu(encoder_filters[-1], decoder_filters[-1])
         self.conv6_2 = ConvRelu(decoder_filters[-1] + encoder_filters[-2], decoder_filters[-1])
@@ -24,25 +22,24 @@ class SENet154UnetDouble(nn.Module):
         self.conv9_2 = ConvRelu(decoder_filters[-4] + encoder_filters[-5], decoder_filters[-4])
         self.conv10 = ConvRelu(decoder_filters[-4], decoder_filters[-5])
 
-        self.res = nn.Conv2d(decoder_filters[-5] * 2, 5, 1, stride=1, padding=0)
+        # res
 
         self._initialize_weights()
 
-        encoder = senet154(pretrained=pretrained)
+        encoder = se_resnext50_32x4d(pretrained=pretrained)
 
-        # conv1_new = nn.Conv2d(9, 64, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+        # conv1_new = nn.Conv2d(6, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         # _w = encoder.layer0.conv1.state_dict()
-        # _w['weight'] = torch.cat([0.8 * _w['weight'], 0.1 * _w['weight'], 0.1 * _w['weight']], 1)
+        # _w['weight'] = torch.cat([0.5 * _w['weight'], 0.5 * _w['weight']], 1)
         # conv1_new.load_state_dict(_w)
-        self.conv1 = nn.Sequential(encoder.layer0.conv1, encoder.layer0.bn1, encoder.layer0.relu1, encoder.layer0.conv2,
-                                   encoder.layer0.bn2, encoder.layer0.relu2, encoder.layer0.conv3, encoder.layer0.bn3,
-                                   encoder.layer0.relu3)
+        self.conv1 = nn.Sequential(encoder.layer0.conv1, encoder.layer0.bn1,
+                                   encoder.layer0.relu1)  # encoder.layer0.conv1
         self.conv2 = nn.Sequential(encoder.pool, encoder.layer1)
         self.conv3 = encoder.layer2
         self.conv4 = encoder.layer3
         self.conv5 = encoder.layer4
 
-    def forward1(self, x):
+    def forward(self, x):
         batch_size, C, H, W = x.shape
 
         enc1 = self.conv1(x)
@@ -67,15 +64,6 @@ class SENet154UnetDouble(nn.Module):
 
         return dec10
 
-    def forward(self, x):
-
-        dec10_0 = self.forward1(x[:, :3, :, :])
-        dec10_1 = self.forward1(x[:, 3:, :, :])
-
-        dec10 = torch.cat([dec10_0, dec10_1], 1)
-
-        return self.res(dec10)
-
     def _initialize_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d) or isinstance(m, nn.Linear):
@@ -85,3 +73,27 @@ class SENet154UnetDouble(nn.Module):
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
+
+
+class SeResNext50UnetLocalization(nn.Module):
+    def __init__(self, pretrained: str = 'imagenet'):
+        super(SeResNext50UnetLocalization, self).__init__()
+        self.unet: nn.Module = SeResnext50Unet(pretrained)
+        self.res = nn.Conv2d(decoder_filters[-5], 1, 1, stride=1, padding=0)  # TODO: initialize this
+
+    def forward(self, x):
+        dec10 = self.unet(x)
+        return self.res(dec10)
+
+
+class SeResNext50UnetDouble(nn.Module):
+    def __init__(self, pretrained: str = 'imagenet'):
+        super(SeResNext50UnetDouble, self).__init__()
+        self.unet: nn.Module = SeResnext50Unet(pretrained)
+        self.res = nn.Conv2d(decoder_filters[-5] * 2, 5, 1, stride=1, padding=0)  # TODO: initialize this
+
+    def forward(self, x):
+        dec10_0 = self.unet(x[:, :3, :, :])
+        dec10_1 = self.unet(x[:, 3:, :, :])
+        dec10 = torch.cat([dec10_0, dec10_1], 1)
+        return self.res(dec10)
