@@ -1,7 +1,4 @@
 import torch
-import numpy as np
-import numpy.typing as npt
-
 from .epsilon import eps
 
 
@@ -93,5 +90,5 @@ class DiceLoss(torch.nn.Module):
         self.register_buffer('weight', weight)
         self.per_image = per_image
 
-    def forward(self, input, target):
-        return soft_dice_loss(input, target, per_image=self.per_image)
+    def forward(self, outputs, targets):
+        return soft_dice_loss(outputs, targets, per_image=self.per_image)
