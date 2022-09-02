@@ -1,6 +1,15 @@
-class Res34_Unet_Double(nn.Module):
+import numpy as np
+import torch
+import torchvision
+from torch import nn
+import torch.nn.functional as F
+
+from ..modules import ConvRelu
+
+
+class Resnet34UnetDouble(nn.Module):
     def __init__(self, pretrained=True, **kwargs):
-        super(Res34_Unet_Double, self).__init__()
+        super(Resnet34UnetDouble, self).__init__()
 
         encoder_filters = [64, 64, 128, 256, 512]
         decoder_filters = np.asarray([48, 64, 96, 160, 320])
@@ -42,21 +51,16 @@ class Res34_Unet_Double(nn.Module):
         enc5 = self.conv5(enc4)
 
         dec6 = self.conv6(F.interpolate(enc5, scale_factor=2))
-        dec6 = self.conv6_2(torch.cat([dec6, enc4
-                                       ], 1))
+        dec6 = self.conv6_2(torch.cat([dec6, enc4], 1))
 
         dec7 = self.conv7(F.interpolate(dec6, scale_factor=2))
-        dec7 = self.conv7_2(torch.cat([dec7, enc3
-                                       ], 1))
+        dec7 = self.conv7_2(torch.cat([dec7, enc3], 1))
 
         dec8 = self.conv8(F.interpolate(dec7, scale_factor=2))
-        dec8 = self.conv8_2(torch.cat([dec8, enc2
-                                       ], 1))
+        dec8 = self.conv8_2(torch.cat([dec8, enc2], 1))
 
         dec9 = self.conv9(F.interpolate(dec8, scale_factor=2))
-        dec9 = self.conv9_2(torch.cat([dec9,
-                                       enc1
-                                       ], 1))
+        dec9 = self.conv9_2(torch.cat([dec9,enc1], 1))
 
         dec10 = self.conv10(F.interpolate(dec9, scale_factor=2))
 
