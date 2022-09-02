@@ -12,6 +12,3 @@ def single_thread_numpy():
 def set_random_seeds():
     random.seed(1)
     np.random.seed(1)
-
-
-
