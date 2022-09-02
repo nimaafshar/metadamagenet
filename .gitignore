@@ -161,3 +161,6 @@ cython_debug/
 
 #dataset folder
 data/
+
+#model weights folder
+weights/
