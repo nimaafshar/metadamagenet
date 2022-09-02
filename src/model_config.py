@@ -1,7 +1,7 @@
 import dataclasses
 import gc
 import pathlib
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Type
 
 from torch import nn
 import torch
@@ -13,13 +13,21 @@ from src.logs import log
 @dataclasses.dataclass
 class ModelConfig:
     name: str
-    empty_model: nn.Module
+    model_type: Type[nn.Module]
     version: str
     seed: int
+    data_parallel: bool = False
 
     @property
     def full_name(self) -> str:
         return f'{self.name}_{self.seed}_{self.version}'
+
+    @property
+    def empty_model(self) -> nn.Module:
+        model = self.model_type().cuda()
+        if self.data_parallel:
+            model = nn.DataParallel(model).cuda()
+        return model
 
     @property
     def pred_directory(self) -> pathlib.Path:
