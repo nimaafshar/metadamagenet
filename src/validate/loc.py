@@ -33,20 +33,13 @@ class LocalizationValidator(Validator):
                     augmented_batch: torch.FloatTensor = self._test_time_augmentor.augment(img_batch).cuda(
                         non_blocking=True)
                     augmented_out_batch: torch.FloatTensor = self._model(augmented_batch)
-                    print("augmented_out_batch:", augmented_out_batch.shape)
-                    augmented_msk_pred: torch.FloatTensor = torch.sigmoid(augmented_out_batch[:, 0, ...])
-                    print("augmented_mask_pred:", augmented_msk_pred.shape)
-                    augmented_msk_pred = torch.unsqueeze(augmented_msk_pred, dim=1)
-                    print("augmented_mask_pred (un squeezed):", augmented_msk_pred.shape)
+                    augmented_msk_pred: torch.FloatTensor = torch.sigmoid(augmented_out_batch)
                     msk_pred = self._test_time_augmentor.aggregate(augmented_msk_pred.cpu()).cuda(non_blocking=True)
-                    print("mask_pred:", msk_pred.shape)
-                    msk_pred = msk_pred[:, 0, ...]
-                    print("mask_pred [:,0,...]:", msk_pred.shape)
                 else:
                     out_batch: torch.FloatTensor = self._model(img_batch.cuda(non_blocking=True))
-                    msk_pred: torch.FloatTensor = torch.sigmoid(out_batch[:, 0, ...])
+                    msk_pred: torch.FloatTensor = torch.sigmoid(out_batch)
 
-                dice_scores = dice_batch(msk_batch[:, 0, ...], msk_pred > self._evaluation_dice_thr)
+                dice_scores = dice_batch(msk_batch[:, 0, ...], msk_pred[:, 0, ...] > self._evaluation_dice_thr)
                 meter.update(float(dice_scores.mean()), n=img_batch.size(0))
 
                 iterator.set_description(f" Dice {meter.val:.6f} ({meter.avg:.6f})")
