@@ -13,6 +13,7 @@ from src.train.dataset import LocalizationDataset
 from src.model_config import ModelConfig
 from src.zoo.models import Res34_Unet_Loc
 from src.logs import log
+from src.augment import FourFlips
 
 
 class Resnet34LocValidator(LocalizationValidator):
@@ -51,7 +52,8 @@ if __name__ == "__main__":
 
     validation_config = ValidationConfig(
         model_config=model_config,
-        dataloader=dataloader
+        dataloader=dataloader,
+        test_time_augmentor=FourFlips()
     )
 
     validator: LocalizationValidator = Resnet34LocValidator(validation_config)
