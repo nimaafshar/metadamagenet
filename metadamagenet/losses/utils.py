@@ -1,5 +1,7 @@
-import numpy as np
 from itertools import filterfalse
+from typing import Iterable
+
+import numpy as np
 
 
 def flatten_binary_scores(scores, labels, ignore=None):
@@ -17,21 +19,21 @@ def flatten_binary_scores(scores, labels, ignore=None):
     return vscores, vlabels
 
 
-def mean(l, ignore_nan=False, empty=0):
+def mean(iterable: Iterable, ignore_nan=False, empty=0):
     """
     nanmean compatible with generators.
     """
-    l = iter(l)
+    i = iter(iterable)
     if ignore_nan:
-        l = filterfalse(np.isnan, l)
+        i = filterfalse(np.isnan, i)
     try:
         n = 1
-        acc = next(l)
+        acc = next(i)
     except StopIteration:
         if empty == 'raise':
             raise ValueError('Empty mean')
         return empty
-    for n, v in enumerate(l, 2):
+    for n, v in enumerate(i, 2):
         acc += v
     if n == 1:
         return acc

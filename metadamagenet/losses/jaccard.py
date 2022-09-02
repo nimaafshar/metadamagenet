@@ -46,5 +46,5 @@ class JaccardLoss(torch.nn.Module):
         self.register_buffer('weight', weight)
         self.per_image = per_image
 
-    def forward(self, input, target):
-        return jaccard(input, target, per_image=self.per_image)
+    def forward(self, outputs, targets):
+        return jaccard(outputs, targets, per_image=self.per_image)

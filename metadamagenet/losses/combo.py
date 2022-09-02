@@ -3,7 +3,7 @@ import torch
 from .bce import StableBCELoss
 from .dice import DiceLoss
 from .jaccard import JaccardLoss
-from .lovasz import LovaszLoss,LovaszLossSigmoid
+from .lovasz import LovaszLoss, LovaszLossSigmoid
 from .focal import FocalLoss2d
 
 
