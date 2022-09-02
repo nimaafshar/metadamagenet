@@ -26,9 +26,17 @@ class LocalizationValidator(Validator):
             for i, (img_batch, msk_batch) in enumerate(iterator):
                 msk_batch: torch.FloatTensor = msk_batch.cuda(non_blocking=True)
                 img_batch: torch.BoolTensor = img_batch.cuda(non_blocking=True)
-                # TODO: test-time augment
-                out_batch: torch.FloatTensor = self._model(img_batch)
-                msk_pred: torch.FloatTensor = torch.sigmoid(out_batch[:, 0, ...])
+
+                msk_pred: torch.FloatTensor
+
+                if self._test_time_augmentor is not None:
+                    augmented_batch: torch.FloatTensor = self._test_time_augmentor.augment(img_batch)
+                    augmented_out_batch: torch.FloatTensor = self._model(augmented_batch)
+                    augmented_msk_pred: torch.FloatTensor = torch.sigmoid(augmented_out_batch[:, 0, ...])
+                    msk_pred = self._test_time_augmentor.aggregate(augmented_msk_pred)
+                else:
+                    out_batch: torch.FloatTensor = self._model(img_batch)
+                    msk_pred: torch.FloatTensor = torch.sigmoid(out_batch[:, 0, ...])
 
                 dice_scores = dice_batch(msk_batch[:, 0, ...], msk_pred > self._evaluation_dice_thr)
                 meter.update(float(dice_scores.mean()), n=img_batch.size(0))
