@@ -30,15 +30,10 @@ class LocalizationValidator(Validator):
                 msk_pred: torch.FloatTensor
 
                 if self._test_time_augmentor is not None:
-                    print("img_batch:", img_batch.shape)
                     augmented_batch: torch.FloatTensor = self._test_time_augmentor.augment(img_batch)
-                    print("augmented_batch:", augmented_batch.shape)
                     augmented_out_batch: torch.FloatTensor = self._model(augmented_batch)
-                    print("model output:", augmented_out_batch.shape)
                     augmented_msk_pred: torch.FloatTensor = torch.sigmoid(augmented_out_batch)
-                    print("sigmoid applied", augmented_msk_pred.shape)
                     msk_pred = self._test_time_augmentor.aggregate(augmented_msk_pred)
-                    print("msk_pred", msk_pred.shape)
                 else:
                     out_batch: torch.FloatTensor = self._model(img_batch)
                     msk_pred: torch.FloatTensor = torch.sigmoid(out_batch)
