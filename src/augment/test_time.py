@@ -43,9 +43,8 @@ class FourFlips(TestTimeAugmentor):
         """
         revere flips and aggregate augmentations of every image in the batch by taking their mean
         """
-        reshaped = augmented_img_batch \
-            .permute(0, 2, 3, 1) \
-            .reshape((4, augmented_img_batch.size(0) // 4) + augmented_img_batch.size()[1:])
+        transposed = augmented_img_batch.permute(0, 2, 3, 1)
+        reshaped = transposed.reshape((4, transposed.size(0) // 4) + transposed.size()[1:])
         return torch.stack(
             (reshaped[0],  # original
              reshaped[1].flip((1,)),  # top-down flip
