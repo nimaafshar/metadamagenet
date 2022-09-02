@@ -33,7 +33,7 @@ class TestTimeAugmentor(abc.ABC):
         :param augmented_img_batch: torch.FloatTensor of shape (augmented batch size,channels,height,width)
         :return: :return: torch.FloatTensor of shape (original batch size,channels,height,width)
         """
-        aggregated: npt.NDArray[np.float32] = self._augment(
+        aggregated: npt.NDArray[np.float32] = self._aggregate(
             augmented_img_batch
             .numpy()
             .transpose(0, 2, 3, 1)
