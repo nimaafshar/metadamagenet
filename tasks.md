@@ -6,7 +6,7 @@
 - [x] test localization validation api
 - [ ] test classification validation api
 - [ ] predict and calculate accuracy on `test` and `holdout` sets
-- [x] create Split from `ImageDataset`
+- [ ] create Split from `ImageDataset`
 - [ ] create meta-split from `ImageDataset`
 - [ ] read *MAML* codes
 - [ ] implement *MAML* codes
