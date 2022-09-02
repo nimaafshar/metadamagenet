@@ -5,73 +5,51 @@ import torch
 
 
 class TestTimeAugmentor(abc.ABC):
+
+    @abc.abstractmethod
     def augment(self, img_batch: torch.FloatTensor) -> torch.FloatTensor:
         """
         augment a batch of images. this may change batch size
         :param img_batch: torch.FloatTensor of shape (original batch size,channels,height,width)
         :return: torch.FloatTensor of shape (augmented batch size,channels,height,width)
         """
-        augmented: npt.NDArray[np.float32] = self._augment(
-            img_batch
-            .numpy()
-            .transpose(0, 2, 3, 1)
-        ).transpose(0, 3, 1, 2)
-        return torch.from_numpy(augmented)
-
-    @abc.abstractmethod
-    def _augment(self, img_batch: npt.NDArray[np.float32]) -> npt.NDArray[np.float32]:
-        """
-        implementation of the augment operation
-        :param img_batch: np.ndarray[np.float32] of shape (original batch size,height,width,channels)
-        :return: np.ndarray[np.float32] of shape (augmented batch size,height,width,channels)
-        """
         pass
 
+    @abc.abstractmethod
     def aggregate(self, augmented_img_batch: torch.FloatTensor) -> torch.FloatTensor:
         """
         aggregate augmentations in a batch of images. this method reverts batch size to its original value
         :param augmented_img_batch: torch.FloatTensor of shape (augmented batch size,channels,height,width)
         :return: :return: torch.FloatTensor of shape (original batch size,channels,height,width)
         """
-        aggregated: npt.NDArray[np.float32] = self._aggregate(
-            augmented_img_batch
-            .numpy()
-            .transpose(0, 2, 3, 1)
-        ).transpose(0, 3, 1, 2)
-        return torch.from_numpy(aggregated)
-
-    @abc.abstractmethod
-    def _aggregate(self, augmented_img_batch: npt.NDArray[np.float32]) -> npt.NDArray[np.float32]:
-        """
-        implementation of the aggregate operation
-        :param augmented_img_batch: np.ndarray[np.float32] of shape (augmented batch size,height,width,channels)
-        :return: np.ndarray[np.float32] of shape (original batch size,height,width,channels)
-        """
         pass
 
 
 class FourFlips(TestTimeAugmentor):
-    def _augment(self, img_batch: npt.NDArray[np.float32]) -> npt.NDArray[np.float32]:
+    def augment(self, img_batch: torch.FloatTensor) -> torch.FloatTensor:
         """
         augment using combinations of top-down and left-right flips
         """
-        return np.vstack(
-            (img_batch,  # original
-             img_batch[:, ::-1, ...],  # top-down flip
-             img_batch[:, :, ::-1, ...],  # left-right flip
-             img_batch[:, ::-1, ::-1, ...]  # flip along both x and y-axis (180 rotation)
+        transposed: torch.FloatTensor = img_batch.permute(0, 2, 3, 1)
+        return torch.vstack(
+            (transposed,  # original
+             transposed.flip((1,)),  # top-down flip
+             transposed.flip((2,)),  # left-right flip
+             transposed.flip((1, 2))  # flip along both x and y-axis (180 rotation)
              )
-        )
+        ).permute(0, 3, 1, 2)
 
-    def _aggregate(self, augmented_img_batch: npt.NDArray[np.float32]) -> npt.NDArray[np.float32]:
+    def aggregate(self, augmented_img_batch: torch.FloatTensor) -> torch.FloatTensor:
         """
         revere flips and aggregate augmentations of every image in the batch by taking their mean
         """
-        reshaped = augmented_img_batch.reshape((4, augmented_img_batch.shape[0] // 4) + augmented_img_batch.shape[1:])
-        return np.stack(
-            (reshaped[0, ...],  # original
-             reshaped[1, :, ::-1, ...],  # top-down flip
-             reshaped[2, :, :, ::-1, ...],  # left-right flip
-             reshaped[3, :, ::-1, ::-1, ...]  # flip along both x and y-axis (180 rotation)
+        reshaped = augmented_img_batch \
+            .permute(0, 2, 3, 1) \
+            .reshape((4, augmented_img_batch.size(0) // 4) + augmented_img_batch.size()[1:])
+        return torch.stack(
+            (reshaped[0],  # original
+             reshaped[1].flip((1,)),  # top-down flip
+             reshaped[2].flip((2,)),  # left-right flip
+             reshaped[3].flip((1, 2)),  # flip along both x and y-axis (180 rotation)
              )
-        ).mean(axis=0)
+        ).mean(axis=0).permute(0, 3, 1, 2)
