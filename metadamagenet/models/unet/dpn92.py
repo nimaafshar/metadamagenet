@@ -13,6 +13,8 @@ class Dpn92Unet(nn.Module):
         super(Dpn92Unet, self).__init__()
         encoder_filters = [64, 336, 704, 1552, 2688]
         decoder_filters = np.asarray([64, 96, 128, 256, 512]) // 2
+        self.encoder_filters = encoder_filters
+        self.decoder_filters = decoder_filters
 
         self.conv6 = ConvRelu(encoder_filters[-1], decoder_filters[-1])
         self.conv6_2 = nn.Sequential(
@@ -105,7 +107,7 @@ class Dpn92UnetLocalization(nn.Module):
     def __init__(self, pretrained: str = 'imagenet+5k'):
         super(Dpn92UnetLocalization, self).__init__()
         self.unet: nn.Module = Dpn92Unet(pretrained)
-        self.res = nn.Conv2d(decoder_filters[-5], 1, 1, stride=1, padding=0)  # TODO: initialize this
+        self.res = nn.Conv2d(self.unet.decoder_filters[-5], 1, 1, stride=1, padding=0)  # TODO: initialize this
 
     def forward(self, x):
         return self.res(self.unet)
@@ -115,7 +117,7 @@ class Dpn92UnetDouble(nn.Module):
     def __init__(self, pretrained: str = 'imagenet+5k'):
         super(Dpn92UnetDouble, self).__init__()
         self.unet: nn.Module = Dpn92Unet(pretrained)
-        self.res = nn.Conv2d(decoder_filters[-5] * 2, 5, 1, stride=1, padding=0)  # TODO: initialize this
+        self.res = nn.Conv2d(self.unet.decoder_filters[-5] * 2, 5, 1, stride=1, padding=0)  # TODO: initialize this
 
     def forward(self, x):
         dec10_0 = self.unet(x[:, :3, :, :])
