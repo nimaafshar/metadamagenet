@@ -11,6 +11,8 @@ class SeResnext50Unet(nn.Module):
         super().__init__()
         encoder_filters = [64, 256, 512, 1024, 2048]
         decoder_filters = np.asarray([64, 96, 128, 256, 512]) // 2
+        self.encoder_filters = encoder_filters
+        self.decoder_filters = decoder_filters
 
         self.conv6 = ConvRelu(encoder_filters[-1], decoder_filters[-1])
         self.conv6_2 = ConvRelu(decoder_filters[-1] + encoder_filters[-2], decoder_filters[-1])
@@ -79,7 +81,7 @@ class SeResNext50UnetLocalization(nn.Module):
     def __init__(self, pretrained: str = 'imagenet'):
         super(SeResNext50UnetLocalization, self).__init__()
         self.unet: nn.Module = SeResnext50Unet(pretrained)
-        self.res = nn.Conv2d(decoder_filters[-5], 1, 1, stride=1, padding=0)  # TODO: initialize this
+        self.res = nn.Conv2d(self.unet.decoder_filters[-5], 1, 1, stride=1, padding=0)  # TODO: initialize this
 
     def forward(self, x):
         dec10 = self.unet(x)
@@ -90,7 +92,7 @@ class SeResNext50UnetDouble(nn.Module):
     def __init__(self, pretrained: str = 'imagenet'):
         super(SeResNext50UnetDouble, self).__init__()
         self.unet: nn.Module = SeResnext50Unet(pretrained)
-        self.res = nn.Conv2d(decoder_filters[-5] * 2, 5, 1, stride=1, padding=0)  # TODO: initialize this
+        self.res = nn.Conv2d(self.unet.decoder_filters[-5] * 2, 5, 1, stride=1, padding=0)  # TODO: initialize this
 
     def forward(self, x):
         dec10_0 = self.unet(x[:, :3, :, :])

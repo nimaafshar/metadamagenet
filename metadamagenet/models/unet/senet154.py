@@ -9,10 +9,11 @@ from ..senet import senet154
 
 class SeNet154Unet(nn.Module):
     def __init__(self, pretrained: str = 'imagenet'):
-        super().__init__()
-
+        super(SeNet154Unet,self).__init__()
         encoder_filters = [128, 256, 512, 1024, 2048]
         decoder_filters = np.asarray([48, 64, 96, 160, 320])
+        self.encoder_filters = encoder_filters
+        self.decoder_filters = decoder_filters
 
         self.conv6 = ConvRelu(encoder_filters[-1], decoder_filters[-1])
         self.conv6_2 = ConvRelu(decoder_filters[-1] + encoder_filters[-2], decoder_filters[-1])
@@ -82,7 +83,7 @@ class SeNet154UnetLocalization(nn.Module):
     def __init__(self, pretrained: str = 'imagenet'):
         super().__init__()
         self.unet: nn.Module = SeNet154Unet(pretrained)
-        self.res = nn.Conv2d(decoder_filters[-5], 1, 1, stride=1, padding=0)
+        self.res = nn.Conv2d(self.unet.decoder_filters[-5], 1, 1, stride=1, padding=0)
 
     def forward(self, x):
         dec10 = self.unet(x)
@@ -93,7 +94,7 @@ class SENet154UnetDouble(nn.Module):
     def __init__(self, pretrained: str = 'imagenet'):
         super().__init__()
         self.unet: nn.Module = SeNet154Unet(pretrained)
-        self.res = nn.Conv2d(decoder_filters[-5] * 2, 5, 1, stride=1, padding=0)
+        self.res = nn.Conv2d(self.unet.decoder_filters[-5] * 2, 5, 1, stride=1, padding=0)
 
     def forward(self, x):
         dec10_0 = self.unet(x[:, :3, :, :])
