@@ -4,6 +4,7 @@ import ssl
 import enum
 from typing import Optional, List
 
+import torch.hub
 import yaml
 
 
@@ -60,6 +61,10 @@ class GeneralConfig:
         self.predictions_dir = pathlib.Path(source['predictions-dir'])
         self.model_weights_dir = pathlib.Path(source['model-weights-dir'])
         self.submissions_dir = pathlib.Path(source['submissions-dir'])
+
+        self.torch_hub_dir = pathlib.Path(source['torch-hub-dir'])
+        self.torch_hub_dir.mkdir(exist_ok=True)
+        torch.hub.set_dir(str(self.torch_hub_dir))
 
 
 # enable ssl verification. ssl verification is disabled so downloading models from pretrained-models be possible
