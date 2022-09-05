@@ -1,6 +1,7 @@
 import abc
 from typing import Tuple
 
+import torch
 from torch import nn
 
 from metadamagenet.models.metadata import Metadata
@@ -31,6 +32,10 @@ class ModelWrapper(abc.ABC):
     def from_backbone(self, backbone: nn.Module) -> Tuple[nn.Module, Metadata]:
         pass
 
+    @abc.abstractmethod
+    def apply_activation(self, x: torch.Tensor) -> torch.Tensor:
+        pass
+
 
 class ClassifierModelWrapper(ModelWrapper, abc.ABC):
     @property
@@ -42,3 +47,6 @@ class LocalizerModelWrapper(ModelWrapper, abc.ABC):
     @property
     def unet_type(self) -> nn.Module:
         return Localizer
+
+    def apply_activation(self, x: torch.Tensor) -> torch.Tensor:
+        return torch.sigmoid(x[:, 0, ...])

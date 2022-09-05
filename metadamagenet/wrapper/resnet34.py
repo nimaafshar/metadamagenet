@@ -1,5 +1,7 @@
 import abc
 from typing import Tuple
+
+import torch
 from torchvision.models import resnet34
 from torch import nn
 
@@ -46,3 +48,6 @@ class Resnet34ClassifierWrapper(Resnet34Wrapper, ClassifierModelWrapper):
     @property
     def model_name(self) -> str:
         return "Resnet34UnetClassifier"
+
+    def apply_activation(self, x: torch.Tensor) -> torch.Tensor:
+        return torch.sigmoid(x)
