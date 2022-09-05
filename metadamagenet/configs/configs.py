@@ -59,7 +59,7 @@ class GeneralConfig:
         self.localization_dirname: str = source['dir-names']['localization']
 
         self.predictions_dir = pathlib.Path(source['predictions-dir'])
-        self.model_weights_dir = pathlib.Path(source['model-weights-dir'])
+        self.models_root = pathlib.Path(source['models-root'])
         self.submissions_dir = pathlib.Path(source['submissions-dir'])
 
         self.torch_hub_dir = pathlib.Path(source['torch-hub-dir'])
