@@ -5,10 +5,11 @@ from torch import nn
 import torch.nn.functional as F
 
 from .modules import ConvRelu
+from .base import Unet
 
 
-class Resnet34Unet(nn.Module):
-    def __init__(self, pretrained: bool = True):
+class Resnet34Unet(Unet):
+    def __init__(self, resnet: torchvision.models.ResNet):
         super(Resnet34Unet, self).__init__()
         encoder_filters = [64, 64, 128, 256, 512]
         decoder_filters = np.asarray([48, 64, 96, 160, 320])
@@ -25,26 +26,24 @@ class Resnet34Unet(nn.Module):
         self.conv9_2 = ConvRelu(decoder_filters[-4] + encoder_filters[-5], decoder_filters[-4])
         self.conv10 = ConvRelu(decoder_filters[-4], decoder_filters[-5])
 
-        # res
-
         self._initialize_weights()
 
-        encoder_weights = torchvision.models.ResNet34_Weights.DEFAULT if pretrained else None
-        encoder = torchvision.models.resnet34(weights=encoder_weights)
         self.conv1 = nn.Sequential(
-            encoder.conv1,
-            encoder.bn1,
-            encoder.relu)
+            resnet.conv1,
+            resnet.bn1,
+            resnet.relu)
         self.conv2 = nn.Sequential(
-            encoder.maxpool,
-            encoder.layer1)
-        self.conv3 = encoder.layer2
-        self.conv4 = encoder.layer3
-        self.conv5 = encoder.layer4
+            resnet.maxpool,
+            resnet.layer1)
+        self.conv3 = resnet.layer2
+        self.conv4 = resnet.layer3
+        self.conv5 = resnet.layer4
 
-    def forward(self, x):
-        batch_size, C, H, W = x.shape
-
+    def forward(self, x: torch.Tensor):
+        """
+        :param x: batch_size, C, H, W = x.shape
+        :return:
+        """
         enc1 = self.conv1(x)
         enc2 = self.conv2(enc1)
         enc3 = self.conv3(enc2)
@@ -67,36 +66,6 @@ class Resnet34Unet(nn.Module):
 
         return dec10
 
-    def _initialize_weights(self):
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d) or isinstance(m, nn.Linear):
-                m.weight.data = nn.init.kaiming_normal_(m.weight.data)
-                if m.bias is not None:
-                    m.bias.data.zero_()
-            elif isinstance(m, nn.BatchNorm2d):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
-
-
-class Resnet34UnetLocalization(nn.Module):
-    def __init__(self, pretrained: bool = True):
-        super(Resnet34UnetLocalization, self).__init__()
-        self.unet: nn.Module = Resnet34Unet(pretrained)
-        self.res = nn.Conv2d(self.unet.decoder_filters[-5], 1, 1, stride=1, padding=0)
-
-    def forward(self, x):
-        dec10 = self.unet(x)
-        return self.res(dec10)
-
-
-class Resnet34UnetDouble(nn.Module):
-    def __init__(self, pretrained: bool = True):
-        super(Resnet34UnetDouble, self).__init__()
-        self.unet: nn.Module = Resnet34Unet(pretrained)
-        self.res = nn.Conv2d(self.unet.decoder_filters[-5] * 2, 5, 1, stride=1, padding=0)
-
-    def forward(self, x):
-        dec10_0 = self.unet(x[:, :3, :, :])
-        dec10_1 = self.unet(x[:, 3:, :, :])
-        dec10 = torch.cat([dec10_0, dec10_1], 1)
-        return self.res(dec10)
+    @property
+    def out_channels(self) -> int:
+        return self.encoder_filters[-5]

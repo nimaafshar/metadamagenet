@@ -3,19 +3,20 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
+from .base import Unet
 from .modules import ConvRelu
 from ..senet import SCSEModule
-from ..dpn import dpn92
+from ..dpn import DPN
 
 
-class Dpn92Unet(nn.Module):
-    def __init__(self, pretrained: str = 'imagenet+5k'):
+class Dpn92Unet(Unet):
+
+    def __init__(self, dpn: DPN):
         super(Dpn92Unet, self).__init__()
         encoder_filters = [64, 336, 704, 1552, 2688]
         decoder_filters = np.asarray([64, 96, 128, 256, 512]) // 2
         self.encoder_filters = encoder_filters
         self.decoder_filters = decoder_filters
-
         self.conv6 = ConvRelu(encoder_filters[-1], decoder_filters[-1])
         self.conv6_2 = nn.Sequential(
             ConvRelu(decoder_filters[-1] + encoder_filters[-2], decoder_filters[-1]),
@@ -37,29 +38,19 @@ class Dpn92Unet(nn.Module):
             SCSEModule(decoder_filters[-4], reduction=16, concat=True)
         )
         self.conv10 = ConvRelu(decoder_filters[-4] * 2, decoder_filters[-5])
-
-        # res
         self._initialize_weights()
-
-        encoder = dpn92(pretrained=pretrained)
-
-        # conv1_new = nn.Conv2d(6, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-        # _w = encoder.blocks['conv1_1'].conv.state_dict()
-        # _w['weight'] = torch.cat([0.5 * _w['weight'], 0.5 * _w['weight']], 1)
-        # conv1_new.load_state_dict(_w)
-
         self.conv1 = nn.Sequential(
-            encoder.blocks['conv1_1'].conv,  # conv
-            encoder.blocks['conv1_1'].bn,  # bn
-            encoder.blocks['conv1_1'].act,  # relu
+            dpn.blocks['conv1_1'].conv,  # conv
+            dpn.blocks['conv1_1'].bn,  # bn
+            dpn.blocks['conv1_1'].act,  # relu
         )
         self.conv2 = nn.Sequential(
-            encoder.blocks['conv1_1'].pool,  # maxpool
-            *[b for k, b in encoder.blocks.items() if k.startswith('conv2_')]
+            dpn.blocks['conv1_1'].pool,  # maxpool
+            *[b for k, b in dpn.blocks.items() if k.startswith('conv2_')]
         )
-        self.conv3 = nn.Sequential(*[b for k, b in encoder.blocks.items() if k.startswith('conv3_')])
-        self.conv4 = nn.Sequential(*[b for k, b in encoder.blocks.items() if k.startswith('conv4_')])
-        self.conv5 = nn.Sequential(*[b for k, b in encoder.blocks.items() if k.startswith('conv5_')])
+        self.conv3 = nn.Sequential(*[b for k, b in dpn.blocks.items() if k.startswith('conv3_')])
+        self.conv4 = nn.Sequential(*[b for k, b in dpn.blocks.items() if k.startswith('conv4_')])
+        self.conv5 = nn.Sequential(*[b for k, b in dpn.blocks.items() if k.startswith('conv5_')])
 
     def forward(self, x: torch.Tensor):
         # batch_size, c, h, w = x.shape
@@ -92,35 +83,6 @@ class Dpn92Unet(nn.Module):
         dec10 = self.conv10(F.interpolate(dec9, scale_factor=2))
         return dec10
 
-    def _initialize_weights(self):
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d) or isinstance(m, nn.Linear):
-                m.weight.data = nn.init.kaiming_normal_(m.weight.data)
-                if m.bias is not None:
-                    m.bias.data.zero_()
-            elif isinstance(m, nn.BatchNorm2d):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
-
-
-class Dpn92UnetLocalization(nn.Module):
-    def __init__(self, pretrained: str = 'imagenet+5k'):
-        super(Dpn92UnetLocalization, self).__init__()
-        self.unet: nn.Module = Dpn92Unet(pretrained)
-        self.res = nn.Conv2d(self.unet.decoder_filters[-5], 1, 1, stride=1, padding=0)  # TODO: initialize this
-
-    def forward(self, x):
-        return self.res(self.unet)
-
-
-class Dpn92UnetDouble(nn.Module):
-    def __init__(self, pretrained: str = 'imagenet+5k'):
-        super(Dpn92UnetDouble, self).__init__()
-        self.unet: nn.Module = Dpn92Unet(pretrained)
-        self.res = nn.Conv2d(self.unet.decoder_filters[-5] * 2, 5, 1, stride=1, padding=0)  # TODO: initialize this
-
-    def forward(self, x):
-        dec10_0 = self.unet(x[:, :3, :, :])
-        dec10_1 = self.unet(x[:, 3:, :, :])
-        dec10 = torch.cat([dec10_0, dec10_1], dim=1)
-        return self.res(dec10)
+    @property
+    def out_channels(self) -> int:
+        return self.decoder_filters[-5]
