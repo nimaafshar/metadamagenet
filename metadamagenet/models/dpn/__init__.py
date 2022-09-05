@@ -8,3 +8,4 @@ This implementation is compatible with the pretrained weights
 from cypw's MXNet implementation.
 """
 from .factory import dpn92
+from .model import DPN
