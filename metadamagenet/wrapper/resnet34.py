@@ -4,15 +4,15 @@ from torchvision.models import resnet34
 from torch import nn
 
 from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
-from ..unet.base import Unet, Localizer, Classifier
-from ..metadata import Metadata
-from ..checkpoint import Checkpoint
-from ..manager import Manager
-from ..unet.resnet34 import Resnet34Unet
+from metadamagenet.models.unet import Unet
+from metadamagenet.models.metadata import Metadata
+from metadamagenet.models.checkpoint import Checkpoint
+from metadamagenet.models.manager import Manager
+from metadamagenet.models.unet import Resnet34Unet
 from torchvision.models import ResNet
 
 
-class Resnet34Wrapper(LocalizerModelWrapper, abc.ABC):
+class Resnet34Wrapper(ModelWrapper, abc.ABC):
     def from_checkpoint(self, version: str, seed: int) -> Tuple[nn.Module, Metadata]:
         checkpoint = Checkpoint(
             model_name=self.model_name,
@@ -25,11 +25,11 @@ class Resnet34Wrapper(LocalizerModelWrapper, abc.ABC):
         empty_model.load_state_dict(state_dict, strict=True)
         return empty_model, metadata
 
-    def from_unet(self, unet: Unet) -> Localizer:
+    def from_unet(self, unet: Unet) -> Tuple[nn.Module, Metadata]:
         return nn.DataParallel(self.unet_type(unet)), Metadata()
 
-    def from_backbone(self, backbone: ResNet) -> Localizer:
-        return nn.DataParallel((self.unet_type(Resnet34Unet(backbone))))
+    def from_backbone(self, backbone: ResNet) -> Tuple[nn.Module, Metadata]:
+        return nn.DataParallel((self.unet_type(Resnet34Unet(backbone)))), Metadata()
 
 
 class Resnet34LocalizerWrapper(Resnet34Wrapper, LocalizerModelWrapper):
