@@ -25,10 +25,13 @@ class Resnet34Wrapper(ModelWrapper, abc.ABC):
         empty_model.load_state_dict(state_dict, strict=True)
         return empty_model, metadata
 
-    def from_unet(self, unet: Unet) -> Tuple[nn.Module, Metadata]:
+    def from_unet(self, unet: Resnet34Unet) -> Tuple[nn.Module, Metadata]:
         return nn.DataParallel(self.unet_type(unet)), Metadata()
 
     def from_backbone(self, backbone: ResNet) -> Tuple[nn.Module, Metadata]:
+        """
+        :param backbone: a resnet34 model
+        """
         return nn.DataParallel((self.unet_type(Resnet34Unet(backbone)))), Metadata()
 
 
