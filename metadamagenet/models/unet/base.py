@@ -1,4 +1,5 @@
 import abc
+from typing import Optional, List
 
 import torch
 from torch import nn
@@ -9,14 +10,20 @@ class Unet(nn.Module, abc.ABC):
     def forward(self, x: torch.Tensor):
         pass
 
-    @abc.abstractmethod
-    def initialize_weights(self):
-        pass
-
     @property
     @abc.abstractmethod
     def out_channels(self) -> int:
         pass
+
+    def _initialize_weights(self) -> None:
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d) or isinstance(m, nn.Linear):
+                m.weight.data = nn.init.kaiming_normal_(m.weight.data)
+                if m.bias is not None:
+                    m.bias.data.zero_()
+            elif isinstance(m, nn.BatchNorm2d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
 
 
 class Localizer(nn.Module):
@@ -28,11 +35,12 @@ class Localizer(nn.Module):
                                         kernel_size=1,
                                         stride=1,
                                         padding=0)
+        self._initialize_weights()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.res(self.unet(x))
 
-    def initialize_weights(self) -> None:
+    def _initialize_weights(self) -> None:
         """
         initialize model weights assuming that unet weights are initialized
         :return:
@@ -50,14 +58,15 @@ class Classifier:
                                         kernel_size=1,
                                         stride=1,
                                         padding=0)
+        self._initialize_weights()
 
     def forward(self, x: torch.Tensor):
         dec10_0 = self.unet(x[:, :3, :, :])
         dec10_1 = self.unet(x[:, 3:, :, :])
-        dec10 = torch.cat([dec10_0, dec10_1], 1)
+        dec10 = torch.cat([dec10_0, dec10_1], dim=1)
         return self.res(dec10)
 
-    def initialize_weights(self) -> None:
+    def _initialize_weights(self) -> None:
         """
         initialize model weights assuming that unet weights are initialized
         :return:
