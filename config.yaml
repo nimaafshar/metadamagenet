@@ -15,6 +15,6 @@ dir-names:
 
 predictions-dir: /root/pred/
 submissions-dir: /root/submissions/
-model-weights-dir: /root/weights/
+models-root: /root/notebooks/weights/
 
 torch-hub-dir: /root/notebooks/hub/
