@@ -11,14 +11,14 @@ from metadamagenet.models.unet import Dpn92Unet
 from metadamagenet.models.dpn import DPN,dpn92
 
 
-class SeResnext50Wrapper(ModelWrapper, abc.ABC):
+class Dpn92Wrapper(ModelWrapper, abc.ABC):
     pass
 
 
-class SeResnext50LocalizerWrapper(SeResnext50Wrapper, LocalizerModelWrapper):
+class Dpn92LocalizerWrapper(Dpn92Wrapper, LocalizerModelWrapper):
     @property
     def model_name(self) -> str:
-        return "SeResnext50UnetLocalizer"
+        return "Dpn92UnetLocalizer"
 
     def from_checkpoint(self, version: str, seed: int) -> Tuple[nn.Module, Metadata]:
         checkpoint = Checkpoint(
@@ -39,11 +39,11 @@ class SeResnext50LocalizerWrapper(SeResnext50Wrapper, LocalizerModelWrapper):
         return self.unet_type(Dpn92Unet(backbone)), Metadata()
 
 
-class SeResnext50ClassifierWrapper(SeResnext50Wrapper, ClassifierModelWrapper):
+class Dpn92ClassifierWrapper(Dpn92Wrapper, ClassifierModelWrapper):
 
     @property
     def model_name(self) -> str:
-        return "SeResnext50UnetClassifier"
+        return "Dpn92UnetClassifier"
 
     def from_checkpoint(self, version: str, seed: int) -> Tuple[nn.Module, Metadata]:
         checkpoint = Checkpoint(
