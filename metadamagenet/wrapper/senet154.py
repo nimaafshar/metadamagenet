@@ -1,9 +1,11 @@
 import abc
 from typing import Tuple
+
+import torch
 from torch import nn
 
+
 from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
-from metadamagenet.models.unet import Unet
 from metadamagenet.models.metadata import Metadata
 from metadamagenet.models.checkpoint import Checkpoint
 from metadamagenet.models.manager import Manager
@@ -45,3 +47,6 @@ class SeNet154ClassifierWrapper(SeNet154Wrapper, ClassifierModelWrapper):
     @property
     def model_name(self) -> str:
         return "SeNet154UnetClassifier"
+
+    def apply_activation(self, x: torch.Tensor) -> torch.Tensor:
+        return torch.softmax(x,dim=1)

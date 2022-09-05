@@ -1,5 +1,7 @@
 import abc
 from typing import Tuple
+
+import torch
 from torch import nn
 
 from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
@@ -68,3 +70,6 @@ class SeResnext50ClassifierWrapper(SeResnext50Wrapper, ClassifierModelWrapper):
         :param backbone: a se_resnext50_32x4d module
         """
         return nn.DataParallel((self.unet_type(SeResnext50Unet(backbone)))), Metadata()
+
+    def apply_activation(self, x: torch.Tensor) -> torch.Tensor:
+        return torch.softmax(x, dim=1)

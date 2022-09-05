@@ -1,5 +1,7 @@
 import abc
 from typing import Tuple
+
+import torch
 from torch import nn
 
 from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
@@ -68,3 +70,6 @@ class Dpn92ClassifierWrapper(Dpn92Wrapper, ClassifierModelWrapper):
         :param backbone: a dpn92 module
         """
         return nn.DataParallel((self.unet_type(Dpn92Unet(backbone)))), Metadata()
+
+    def apply_activation(self, x: torch.Tensor) -> torch.Tensor:
+        return torch.softmax(x, dim=1)
