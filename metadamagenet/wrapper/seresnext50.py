@@ -32,10 +32,13 @@ class SeResnext50LocalizerWrapper(SeResnext50Wrapper, LocalizerModelWrapper):
         empty_model.load_state_dict(state_dict, strict=True)
         return empty_model, metadata
 
-    def from_unet(self, unet: Unet) -> Tuple[nn.Module, Metadata]:
+    def from_unet(self, unet: SeResnext50Unet) -> Tuple[nn.Module, Metadata]:
         return self.unet_type(unet), Metadata()
 
     def from_backbone(self, backbone: SENet) -> Tuple[nn.Module, Metadata]:
+        """
+        :param backbone: a se_resnext50_32x4d module
+        """
         return self.unet_type(SeResnext50Unet(backbone)), Metadata()
 
 
@@ -57,8 +60,11 @@ class SeResnext50ClassifierWrapper(SeResnext50Wrapper, ClassifierModelWrapper):
         empty_model.load_state_dict(state_dict, strict=True)
         return empty_model, metadata
 
-    def from_unet(self, unet: Unet) -> Tuple[nn.Module, Metadata]:
+    def from_unet(self, unet: SeResnext50Unet) -> Tuple[nn.Module, Metadata]:
         return nn.DataParallel(self.unet_type(unet)), Metadata()
 
     def from_backbone(self, backbone: SENet) -> Tuple[nn.Module, Metadata]:
+        """
+        :param backbone: a se_resnext50_32x4d module
+        """
         return nn.DataParallel((self.unet_type(SeResnext50Unet(backbone)))), Metadata()

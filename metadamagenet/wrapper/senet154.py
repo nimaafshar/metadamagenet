@@ -24,10 +24,13 @@ class SeNet154Wrapper(ModelWrapper, abc.ABC):
         empty_model.load_state_dict(state_dict, strict=True)
         return empty_model, metadata
 
-    def from_unet(self, unet: Unet) -> Tuple[nn.Module, Metadata]:
+    def from_unet(self, unet: SeNet154Unet) -> Tuple[nn.Module, Metadata]:
         return nn.DataParallel(self.unet_type(unet)), Metadata()
 
     def from_backbone(self, backbone: SENet) -> Tuple[nn.Module, Metadata]:
+        """
+        :param backbone: a senet154 module
+        """
         return nn.DataParallel((self.unet_type(SeNet154Unet(backbone)))), Metadata()
 
 

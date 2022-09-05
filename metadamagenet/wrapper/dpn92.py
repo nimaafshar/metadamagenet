@@ -8,7 +8,7 @@ from metadamagenet.models.metadata import Metadata
 from metadamagenet.models.checkpoint import Checkpoint
 from metadamagenet.models.manager import Manager
 from metadamagenet.models.unet import Dpn92Unet
-from metadamagenet.models.dpn import DPN,dpn92
+from metadamagenet.models.dpn import DPN, dpn92
 
 
 class Dpn92Wrapper(ModelWrapper, abc.ABC):
@@ -32,10 +32,13 @@ class Dpn92LocalizerWrapper(Dpn92Wrapper, LocalizerModelWrapper):
         empty_model.load_state_dict(state_dict, strict=True)
         return empty_model, metadata
 
-    def from_unet(self, unet: Unet) -> Tuple[nn.Module, Metadata]:
+    def from_unet(self, unet: Dpn92Unet) -> Tuple[nn.Module, Metadata]:
         return self.unet_type(unet), Metadata()
 
     def from_backbone(self, backbone: DPN) -> Tuple[nn.Module, Metadata]:
+        """
+        :param backbone: a dpn92 module
+        """
         return self.unet_type(Dpn92Unet(backbone)), Metadata()
 
 
@@ -57,8 +60,11 @@ class Dpn92ClassifierWrapper(Dpn92Wrapper, ClassifierModelWrapper):
         empty_model.load_state_dict(state_dict, strict=True)
         return empty_model, metadata
 
-    def from_unet(self, unet: Unet) -> Tuple[nn.Module, Metadata]:
+    def from_unet(self, unet: Dpn92Unet) -> Tuple[nn.Module, Metadata]:
         return nn.DataParallel(self.unet_type(unet)), Metadata()
 
     def from_backbone(self, backbone: DPN) -> Tuple[nn.Module, Metadata]:
+        """
+        :param backbone: a dpn92 module
+        """
         return nn.DataParallel((self.unet_type(Dpn92Unet(backbone)))), Metadata()
