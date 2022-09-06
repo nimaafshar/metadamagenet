@@ -92,8 +92,7 @@ class SENet154UnetDoubleTrainer(ClassificationTrainer):
                                                             110, 130, 150, 170, 180, 190],
                                                 gamma=0.5)
 
-        seg_loss: ComboLoss = ComboLoss({'dice': 0.5}, per_image=False).cuda()
-        ce_loss: nn.CrossEntropyLoss = nn.CrossEntropyLoss().cuda()
+
         return ClassificationRequirements(
             model,
             optimizer,
