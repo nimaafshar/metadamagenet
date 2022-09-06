@@ -87,7 +87,7 @@ class Dpn92UnetLocTrainer(LocalizationTrainer):
         lr_scheduler = MultiStepLR(optimizer,
                                    milestones=[15, 29, 43, 53, 65, 80, 90, 100, 110, 130, 150, 170, 180, 190],
                                    gamma=0.5)
-        seg_loss = ComboLoss({'dice': 1.0, 'focal': 6.0}, per_image=False).cuda()
+
         return Requirements(
             model,
             optimizer,
@@ -125,48 +125,7 @@ if __name__ == '__main__':
 
     train_data = LocalizationDataset(
         image_dataset=train_image_dataset,
-        augmentations=Pipeline(
-            (
-                TopDownFlip(probability=0.5),
-                Rotation90Degree(probability=0.05),
-                Shift(probability=0.9,
-                      y_range=(-320, 320),
-                      x_range=(-320, 320)),
-                RotateAndScale(
-                    probability=0.9,
-                    center_y_range=(-320, 320),
-                    center_x_range=(-320, 320),
-                    angle_range=(-10, 10),
-                    scale_range=(0.9, 1.1)
-                ),
-                RandomCrop(
-                    default_crop_size=input_shape[0],
-                    size_change_probability=0.5,
-                    crop_size_range=(int(input_shape[0] / 1.1), int(input_shape[0] / 0.9)),
-                    try_range=(1, 5)
-                ),
-                Resize(*input_shape),
-                ShiftRGB(probability=0.99,
-                         r_range=(-5, 5),
-                         g_range=(-5, 5),
-                         b_range=(-5, 5)),
-                ShiftHSV(probability=0.99,
-                         h_range=(-5, 5),
-                         s_range=(-5, 5),
-                         v_range=(-5, 5)),
-                OneOf((
-                    OneOf((
-                        Clahe(0.99),
-                        GaussianNoise(0.99),
-                        Blur(0.99)),
-                        probability=0.99),
-                    OneOf((
-                        Saturation(0.99, (0.9, 1.1)),
-                        Brightness(0.99, (0.9, 1.1)),
-                        Contrast(0.99, (0.9, 1.1))),
-                        probability=0.99)), probability=0),
-                ElasticTransformation(0.999)
-            ))
+        augmentations=
     )
 
     vali_data = LocalizationDataset(

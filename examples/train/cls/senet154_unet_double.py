@@ -92,8 +92,7 @@ class SENet154UnetDoubleTrainer(ClassificationTrainer):
                                                             130, 150, 170, 180, 190],
                                                 gamma=0.5)
 
-        seg_loss: ComboLoss = ComboLoss({'dice': 0.5}, per_image=False).cuda()
-        ce_loss: nn.CrossEntropyLoss = nn.CrossEntropyLoss().cuda()
+
         return ClassificationRequirements(
             model,
             optimizer,
@@ -103,7 +102,7 @@ class SENet154UnetDoubleTrainer(ClassificationTrainer):
             model_score=best_score,
             start_epoch=start_epoch,
             ce_loss=ce_loss,
-            label_loss_weights=np.array([0.1, 0.1, 0.6, 0.3, 0.2, 8]),
+
             dice_metric_calculator=F1ScoreCalculator()
         )
 
@@ -139,150 +138,7 @@ if __name__ == '__main__':
     train_dataset = ClassificationDataset(
         image_dataset=train_image_dataset,
         inverse_msk0=True,
-        augmentations=Pipeline((
-            TopDownFlip(
-                probability=0.5
-            ),
-            Rotation90Degree(
-                probability=0.0001
-            ),
-            Shift(probability=0.5,
-                  y_range=(-320, 320),
-                  x_range=(-320, 320)),
-            RotateAndScale(
-                probability=0.05,
-                center_x_range=(-320, 320),
-                center_y_range=(-320, 320),
-                scale_range=(0.9, 1.1),
-                angle_range=(-10, 10)
-            ),
-            RandomCrop(
-                default_crop_size=input_shape[0],
-                size_change_probability=0.05,
-                crop_size_range=(int(input_shape[0] / 1.15), int(input_shape[0] / 0.85)),
-                try_range=(1, 10),
-                scoring_weights={'msk2': 5, 'msk3': 5, 'msk4': 2, 'msk1': 1}
-            ),
-            Resize(
-                height=input_shape[0],
-                width=input_shape[1],
-            ),
-            OneOf((
-                ShiftRGB(
-                    probability=0.9,
-                    r_range=(-5, 5),
-                    g_range=(-5, 5),
-                    b_range=(-5, 5),
-                    apply_to=('img_pre',)
-                ),
-                ShiftRGB(
-                    probability=0.9,
-                    r_range=(-5, 5),
-                    g_range=(-5, 5),
-                    b_range=(-5, 5),
-                    apply_to=('img_post',)
-                ),
-            ), probability=0
-            ),
-            OneOf((
-                ShiftHSV(
-                    probability=0.9,
-                    h_range=(-5, 5),
-                    s_range=(-5, 5),
-                    v_range=(-5, 5),
-                    apply_to=('img_pre',)
-                ),
-                ShiftHSV(
-                    probability=0.9,
-                    h_range=(-5, 5),
-                    s_range=(-5, 5),
-                    v_range=(-5, 5),
-                    apply_to=('img_post',)
-                ),
-            ), probability=0
-            ),
-            OneOf((
-                OneOf((
-                    Clahe(
-                        probability=0.9,
-                        apply_to=('img_pre',)
-                    ),
-                    GaussianNoise(
-                        probability=0.9,
-                        apply_to=('img_pre',)
-                    ),
-                    Blur(
-                        probability=0.9,
-                        apply_to=('img_post',)
-                    )
-                ), probability=0.9
-                ),
-                OneOf((
-                    Saturation(
-                        probability=0.9,
-                        alpha_range=(0.9, 1.1),
-                        apply_to=('img_pre',)
-                    ),
-                    Brightness(
-                        probability=0.9,
-                        alpha_range=(0.9, 1.1),
-                        apply_to=('img_pre',)
-                    ),
-                    Contrast(
-                        probability=0.9,
-                        alpha_range=(0.9, 1.1),
-                        apply_to=('img_pre',)
-                    )
-                ), probability=0.9
-                )
-            ), probability=0
-            ),
-            OneOf((
-                OneOf((
-                    Clahe(
-                        probability=0.9,
-                        apply_to=('img_post',)
-                    ),
-                    GaussianNoise(
-                        probability=0.9,
-                        apply_to=('img_post',)
-                    ),
-                    Blur(
-                        probability=0.9,
-                        apply_to=('img_post',)
-                    )
-                ),
-                    probability=0.9
-                ),
-                OneOf((
-                    Saturation(
-                        probability=0.9,
-                        alpha_range=(0.9, 1.1),
-                        apply_to=('img_post',)
-                    ),
-                    Brightness(
-                        probability=0.9,
-                        alpha_range=(0.9, 1.1),
-                        apply_to=('img_post',)
-                    ),
-                    Contrast(
-                        probability=0.9,
-                        alpha_range=(0.9, 1.1),
-                        apply_to=('img_post',)
-                    )
-                ),
-                    probability=0.9
-                )
-            ), probability=0),
-            ElasticTransformation(
-                probability=0.9,
-                apply_to=('img_pre',)
-            ),
-            ElasticTransformation(
-                probability=0.9,
-                apply_to=('img_post',)
-            )
-        )), do_dilation=True)
+        augmentations=, do_dilation=True)
 
     validation_dataset = ClassificationValidationDataset(
         image_dataset=valid_image_data,
