@@ -81,9 +81,6 @@ class SEResNext50UnetLocTuner(LocalizationTrainer):
 
         model = model.cuda()
 
-        optimizer: Optimizer = AdamW(model.parameters(),
-                                     lr=0.00004,
-                                     weight_decay=1e-6)
 
         lr_scheduler = MultiStepLR(optimizer,
                                    milestones=[1, 2, 3, 4, 5, 7, 9, 11, 17, 23, 29, 33, 47, 50, 60, 70, 90, 110, 130,

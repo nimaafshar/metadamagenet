@@ -83,9 +83,6 @@ class SENet154UnetDoubleTrainer(ClassificationTrainer):
         model, best_score, start_epoch = self._get_model()
         model = model.cuda()
 
-        optimizer: Optimizer = AdamW(model.parameters(),
-                                     lr=0.0001,
-                                     weight_decay=1e-6)
 
         lr_scheduler: MultiStepLR = MultiStepLR(optimizer,
                                                 milestones=[3, 5, 9, 13, 17, 21, 25, 29, 33, 47, 50, 60, 70, 90, 110,

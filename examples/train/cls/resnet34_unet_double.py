@@ -71,9 +71,6 @@ def train():
                 shuffle=False,
                 pin_memory=False))
 
-    optimizer: Optimizer = AdamW(model.parameters(),
-                                 lr=0.0002,
-                                 weight_decay=1e-6)
 
     lr_scheduler: MultiStepLR = MultiStepLR(optimizer,
                                             milestones=[5, 11, 17, 23, 29, 33, 47, 50, 60, 70, 90, 110, 130, 150,
