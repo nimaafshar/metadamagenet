@@ -82,9 +82,7 @@ class Resnet34UnetLocTrainer(LocalizationTrainer):
         model, best_score, start_epoch = self._get_model()
         model = model.cuda()
 
-        optimizer: Optimizer = AdamW(model.parameters(),
-                                     lr=0.00015,
-                                     weight_decay=1e-6)
+
         lr_scheduler: MultiStepLR = MultiStepLR(optimizer,
                                                 milestones=[5, 11, 17, 25, 33, 47, 50,
                                                             60, 70, 90, 110, 130, 150,
