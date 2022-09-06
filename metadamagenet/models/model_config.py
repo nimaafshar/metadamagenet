@@ -6,8 +6,8 @@ from typing import Optional, Tuple, Type
 from torch import nn
 import torch
 
-from src.configs import GeneralConfig
-from src.logs import log
+from metadamagenet.configs import GeneralConfig
+from metadamagenet.logging import log
 
 
 @dataclasses.dataclass
