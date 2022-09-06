@@ -90,7 +90,7 @@ class Resnet34UnetLocTrainer(LocalizationTrainer):
                                                             60, 70, 90, 110, 130, 150,
                                                             170, 180, 190],
                                                 gamma=0.5)
-        seg_loss: ComboLoss = ComboLoss({'dice': 1.0, 'focal': 10.0}, per_image=False).cuda()
+
         return Requirements(
             model,
             optimizer,

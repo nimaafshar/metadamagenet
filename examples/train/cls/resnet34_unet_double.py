@@ -54,60 +54,34 @@ cv2.setNumThreads(0)
 cv2.ocl.setUseOpenCL(False)
 
 
-class Resnet34UnetDoubleTrainer(ClassificationTrainer):
+def train():
+    np.random.seed(self._config.model_config.seed + 321)
+    random.seed(self._config.model_config.seed + 321)
+
+    (DataLoader(self._config.train_dataset,
+                batch_size=self._config.batch_size,
+                num_workers=6,
+                shuffle=True,
+                pin_memory=False,
+                drop_last=True),
+
+     DataLoader(self._config.validation_dataset,
+                batch_size=self._config.val_batch_size,
+                num_workers=6,
+                shuffle=False,
+                pin_memory=False))
+
+    optimizer: Optimizer = AdamW(model.parameters(),
+                                 lr=0.0002,
+                                 weight_decay=1e-6)
+
+    lr_scheduler: MultiStepLR = MultiStepLR(optimizer,
+                                            milestones=[5, 11, 17, 23, 29, 33, 47, 50, 60, 70, 90, 110, 130, 150,
+                                                        170, 180, 190],
+                                            gamma=0.5)
 
     def _apply_activation(self, model_out: torch.Tensor) -> torch.Tensor:
         return torch.sigmoid(model_out)
-
-    def _setup(self):
-        super(Resnet34UnetDoubleTrainer, self)._setup()
-        np.random.seed(self._config.model_config.seed + 321)
-        random.seed(self._config.model_config.seed + 321)
-
-    def _get_dataloaders(self) -> (DataLoader, DataLoader):
-        return (DataLoader(self._config.train_dataset,
-                           batch_size=self._config.batch_size,
-                           num_workers=6,
-                           shuffle=True,
-                           pin_memory=False,
-                           drop_last=True),
-
-                DataLoader(self._config.validation_dataset,
-                           batch_size=self._config.val_batch_size,
-                           num_workers=6,
-                           shuffle=False,
-                           pin_memory=False))
-
-    def _get_requirements(self) -> ClassificationRequirements:
-        model: nn.Module
-        best_score: Optional[float]
-        start_epoch: int
-        model, best_score, start_epoch = self._get_model()
-        model = model.cuda()
-
-        optimizer: Optimizer = AdamW(model.parameters(),
-                                     lr=0.0002,
-                                     weight_decay=1e-6)
-
-        lr_scheduler: MultiStepLR = MultiStepLR(optimizer,
-                                                milestones=[5, 11, 17, 23, 29, 33, 47, 50, 60, 70, 90, 110, 130, 150,
-                                                            170, 180, 190],
-                                                gamma=0.5)
-
-        seg_loss: ComboLoss = ComboLoss({'dice': 1.0, 'focal': 12.0}, per_image=False).cuda()
-        ce_loss: nn.CrossEntropyLoss = nn.CrossEntropyLoss().cuda()
-        return ClassificationRequirements(
-            model,
-            optimizer,
-            lr_scheduler,
-            seg_loss,
-            grad_scaler=amp.GradScaler(),
-            model_score=best_score,
-            start_epoch=start_epoch,
-            ce_loss=ce_loss,
-            label_loss_weights=np.array([0.05, 0.2, 0.8, 0.7, 0.4])
-        )
-
     def _update_weights(self, loss: torch.Tensor) -> None:
         self._optimizer.zero_grad()
         self._grad_scaler.scale(loss).backward()
@@ -116,7 +90,6 @@ class Resnet34UnetDoubleTrainer(ClassificationTrainer):
         self._grad_scaler.step(self._optimizer)
         self._grad_scaler.update()
 
-if __name__ == '__main__':
     t0 = timeit.default_timer()
 
     GeneralConfig.load()
@@ -135,150 +108,7 @@ if __name__ == '__main__':
 
     train_dataset = ClassificationDataset(
         image_dataset=train_image_dataset,
-        augmentations=Pipeline((
-            TopDownFlip(
-                probability=0.5
-            ),
-            Rotation90Degree(
-                probability=0.05
-            ),
-            Shift(probability=0.9,
-                  y_range=(-320, 320),
-                  x_range=(-320, 320)),
-            RotateAndScale(
-                probability=0.6,
-                center_x_range=(-320, 320),
-                center_y_range=(-320, 320),
-                scale_range=(0.9, 1.1),
-                angle_range=(-10, 10)
-            ),
-            RandomCrop(
-                default_crop_size=input_shape[0],
-                size_change_probability=0.2,
-                crop_size_range=(int(input_shape[0] / 1.15), int(input_shape[0] / 0.85)),
-                try_range=(1, 10),
-                scoring_weights={'msk2': 5, 'msk3': 5, 'msk4': 2, 'msk1': 1}
-            ),
-            Resize(
-                height=input_shape[0],
-                width=input_shape[1],
-            ),
-            OneOf((
-                ShiftRGB(
-                    probability=0.985,
-                    r_range=(-5, 5),
-                    g_range=(-5, 5),
-                    b_range=(-5, 5),
-                    apply_to=('img_pre',)
-                ),
-                ShiftRGB(
-                    probability=0.985,
-                    r_range=(-5, 5),
-                    g_range=(-5, 5),
-                    b_range=(-5, 5),
-                    apply_to=('img_post',)
-                ),
-            ), probability=0
-            ),
-            OneOf((
-                ShiftHSV(
-                    probability=0.985,
-                    h_range=(-5, 5),
-                    s_range=(-5, 5),
-                    v_range=(-5, 5),
-                    apply_to=('img_pre',)
-                ),
-                ShiftHSV(
-                    probability=0.985,
-                    h_range=(-5, 5),
-                    s_range=(-5, 5),
-                    v_range=(-5, 5),
-                    apply_to=('img_post',)
-                ),
-            ), probability=0
-            ),
-            OneOf((
-                OneOf((
-                    Clahe(
-                        probability=0.985,
-                        apply_to=('img_pre',)
-                    ),
-                    GaussianNoise(
-                        probability=0.985,
-                        apply_to=('img_pre',)
-                    ),
-                    Blur(
-                        probability=0.985,
-                        apply_to=('img_post',)
-                    )
-                ), probability=0.98
-                ),
-                OneOf((
-                    Saturation(
-                        probability=0.985,
-                        alpha_range=(0.9, 1.1),
-                        apply_to=('img_pre',)
-                    ),
-                    Brightness(
-                        probability=0.985,
-                        alpha_range=(0.9, 1.1),
-                        apply_to=('img_pre',)
-                    ),
-                    Contrast(
-                        probability=0.985,
-                        alpha_range=(0.9, 1.1),
-                        apply_to=('img_pre',)
-                    )
-                ), probability=0.98
-                )
-            ), probability=0
-            ),
-            OneOf((
-                OneOf((
-                    Clahe(
-                        probability=0.985,
-                        apply_to=('img_post',)
-                    ),
-                    GaussianNoise(
-                        probability=0.985,
-                        apply_to=('img_post',)
-                    ),
-                    Blur(
-                        probability=0.985,
-                        apply_to=('img_post',)
-                    )
-                ),
-                    probability=0.98
-                ),
-                OneOf((
-                    Saturation(
-                        probability=0.985,
-                        alpha_range=(0.9, 1.1),
-                        apply_to=('img_post',)
-                    ),
-                    Brightness(
-                        probability=0.985,
-                        alpha_range=(0.9, 1.1),
-                        apply_to=('img_post',)
-                    ),
-                    Contrast(
-                        probability=0.985,
-                        alpha_range=(0.9, 1.1),
-                        apply_to=('img_post',)
-                    )
-                ),
-                    probability=0.98
-                )
-            ), probability=0),
-            ElasticTransformation(
-                probability=0.983,
-                apply_to=('img_pre',)
-            ),
-            ElasticTransformation(
-                probability=0.983,
-                apply_to=('img_post',)
-            )
-        )), do_dilation=True)
+        augmentations=, do_dilation=True)
 
     validation_dataset = ClassificationValidationDataset(
         image_dataset=valid_image_data,
@@ -312,3 +142,5 @@ if __name__ == '__main__':
                                         use_cce_loss=False)
 
     trainer.train()
+
+
