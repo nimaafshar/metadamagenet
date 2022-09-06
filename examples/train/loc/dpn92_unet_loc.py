@@ -82,9 +82,6 @@ class Dpn92UnetLocTrainer(LocalizationTrainer):
         model = model.cuda()
 
 
-        lr_scheduler = MultiStepLR(optimizer,
-                                   milestones=[15, 29, 43, 53, 65, 80, 90, 100, 110, 130, 150, 170, 180, 190],
-                                   gamma=0.5)
 
         return Requirements(
             model,

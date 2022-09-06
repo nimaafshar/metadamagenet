@@ -103,10 +103,6 @@ def train():
     )
 
 
-    lr_scheduler: MultiStepLR = MultiStepLR(optimizer,
-                                            milestones=[5, 11, 17, 23, 29, 33, 47, 50, 60, 70, 90, 110, 130, 150,
-                                                        170, 180, 190],
-                                            gamma=0.5)
 
     training_config: TrainingConfig = TrainingConfig(
         model_config=model_config,

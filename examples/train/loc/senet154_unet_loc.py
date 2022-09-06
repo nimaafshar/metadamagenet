@@ -80,10 +80,6 @@ class SENet154UnetLocTrainer(LocalizationTrainer):
         model, best_score, start_epoch = self._get_model()
         model = model.cuda()
 
-        lr_scheduler = MultiStepLR(optimizer,
-                                   milestones=[3, 7, 11, 15, 19, 23, 27, 33, 41, 50, 60, 70, 90, 110, 130, 150, 170,
-                                               180, 190],
-                                   gamma=0.5)
 
         return Requirements(
             model,

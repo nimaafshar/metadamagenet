@@ -84,10 +84,6 @@ class SENet154UnetDoubleTrainer(ClassificationTrainer):
         model = model.cuda()
 
 
-        lr_scheduler: MultiStepLR = MultiStepLR(optimizer,
-                                                milestones=[3, 5, 9, 13, 17, 21, 25, 29, 33, 47, 50, 60, 70, 90, 110,
-                                                            130, 150, 170, 180, 190],
-                                                gamma=0.5)
 
 
         return ClassificationRequirements(
