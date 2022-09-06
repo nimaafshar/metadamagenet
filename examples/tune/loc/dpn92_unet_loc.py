@@ -88,7 +88,7 @@ class Dpn92UnetLocTuner(LocalizationTrainer):
                                    milestones=[1, 2, 3, 4, 5, 7, 9, 11, 17, 23, 29, 33, 47, 50, 60, 70, 90, 110, 130,
                                                150, 170, 180, 190],
                                    gamma=0.5)
-        seg_loss = ComboLoss({'dice': 1.0, 'focal': 6.0}, per_image=False).cuda()
+
         return Requirements(
             model,
             optimizer,
@@ -127,48 +127,7 @@ if __name__ == '__main__':
 
     train_data = LocalizationDataset(
         image_dataset=train_image_dataset,
-        augmentations=Pipeline(
-            (
-                TopDownFlip(probability=0.55),
-                Rotation90Degree(probability=0.1),
-                Shift(probability=0.95,
-                      y_range=(-320, 320),
-                      x_range=(-320, 320)),
-                RotateAndScale(
-                    probability=0.95,
-                    center_y_range=(-320, 320),
-                    center_x_range=(-320, 320),
-                    angle_range=(-10, 10),
-                    scale_range=(0.9, 1.1)
-                ),
-                RandomCrop(
-                    default_crop_size=input_shape[0],
-                    size_change_probability=0.6,
-                    crop_size_range=(int(input_shape[0] / 1.1), int(input_shape[0] / 0.9)),
-                    try_range=(1, 5)
-                ),
-                Resize(*input_shape),
-                ShiftRGB(probability=0.99,
-                         r_range=(-5, 5),
-                         g_range=(-5, 5),
-                         b_range=(-5, 5)),
-                ShiftHSV(probability=0.99,
-                         h_range=(-5, 5),
-                         s_range=(-5, 5),
-                         v_range=(-5, 5)),
-                OneOf((
-                    OneOf((
-                        Clahe(0.99),
-                        GaussianNoise(0.99),
-                        Blur(0.99)),
-                        probability=0.99),
-                    OneOf((
-                        Saturation(0.99, (0.9, 1.1)),
-                        Brightness(0.99, (0.9, 1.1)),
-                        Contrast(0.99, (0.9, 1.1))),
-                        probability=0.99)), probability=0),
-                ElasticTransformation(0.999)
-            )),
+        augmentations=,
         post_version_prob=1
     )
 

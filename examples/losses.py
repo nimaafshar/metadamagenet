@@ -30,3 +30,27 @@ seg_loss = ComboLoss({'dice': 1.0, 'focal': 14.0}, per_image=False).cuda()
 
 #seresnext 50 unet localization
 seg_loss = ComboLoss({'dice': 1.0, 'focal': 10.0}, per_image=False).cuda()
+
+
+# tune
+#dpn92 unet double
+seg_loss: ComboLoss = ComboLoss({'dice': 0.5, 'focal': 5.0}, per_image=False).cuda()
+ce_loss: nn.CrossEntropyLoss = nn.CrossEntropyLoss().cuda()
+
+#resnet 34 unet double
+seg_loss: ComboLoss = ComboLoss({'dice': 1.0, 'focal': 12.0}, per_image=False).cuda()
+ce_loss: nn.CrossEntropyLoss = nn.CrossEntropyLoss().cuda()
+
+#se154 unet double
+seg_loss: ComboLoss = ComboLoss({'dice': 0.5}, per_image=False).cuda()
+ce_loss: nn.CrossEntropyLoss = nn.CrossEntropyLoss().cuda()
+
+#seresnext 50 unet double
+seg_loss: ComboLoss = ComboLoss({'dice': 0.5, 'focal': 2.0}, per_image=False).cuda()
+ce_loss: nn.CrossEntropyLoss = nn.CrossEntropyLoss().cuda()
+
+#dpn92 unet loc
+seg_loss = ComboLoss({'dice': 1.0, 'focal': 6.0}, per_image=False).cuda()
+
+#seresnext 50 unet loc
+seg_loss = ComboLoss({'dice': 1.0, 'focal': 10.0}, per_image=False).cuda()

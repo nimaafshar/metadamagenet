@@ -89,7 +89,7 @@ class SEResNext50UnetLocTuner(LocalizationTrainer):
                                    milestones=[1, 2, 3, 4, 5, 7, 9, 11, 17, 23, 29, 33, 47, 50, 60, 70, 90, 110, 130,
                                                150, 170, 180, 190],
                                    gamma=0.5)
-        seg_loss = ComboLoss({'dice': 1.0, 'focal': 10.0}, per_image=False).cuda()
+
         return Requirements(
             model,
             optimizer,
