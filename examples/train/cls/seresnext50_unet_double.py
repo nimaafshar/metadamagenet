@@ -84,10 +84,6 @@ class SEResnext50UnetDoubleTrainer(ClassificationTrainer):
         model = model.cuda()
 
 
-        lr_scheduler: MultiStepLR = MultiStepLR(optimizer,
-                                                milestones=[5, 11, 17, 23, 29, 33, 47, 50, 60, 70, 90, 110, 130, 150,
-                                                            170, 180, 190],
-                                                gamma=0.5)
 
 
         return ClassificationRequirements(

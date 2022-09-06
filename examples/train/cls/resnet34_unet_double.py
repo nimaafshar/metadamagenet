@@ -72,10 +72,6 @@ def train():
                 pin_memory=False))
 
 
-    lr_scheduler: MultiStepLR = MultiStepLR(optimizer,
-                                            milestones=[5, 11, 17, 23, 29, 33, 47, 50, 60, 70, 90, 110, 130, 150,
-                                                        170, 180, 190],
-                                            gamma=0.5)
 
     def _apply_activation(self, model_out: torch.Tensor) -> torch.Tensor:
         return torch.sigmoid(model_out)
