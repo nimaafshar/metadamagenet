@@ -102,6 +102,10 @@ class LovaszLoss(torch.nn.Module):
 
 
 class LovaszLossSigmoid(torch.nn.Module):
+    """
+    expects sigmoid output
+    """
+
     def __init__(self, ignore_index=255, per_image=True):
         super().__init__()
         self.ignore_index = ignore_index
