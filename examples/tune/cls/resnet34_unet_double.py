@@ -81,7 +81,7 @@ class Resnet34UnetDoubleTrainer(ClassificationTrainer):
             model_score=best_score,
             start_epoch=start_epoch,
             ce_loss=ce_loss,
-            label_loss_weights=np.array([0.05, 0.2, 0.8, 0.7, 0.4])
+
         )
 
 

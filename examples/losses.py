@@ -1,56 +1,182 @@
+from metadamagenet.losses import DiceLoss, WithSigmoid, FocalLoss2d, ComboLoss, ChanneledLoss
+
+from torch import nn
+
 # dpn92 unet double
-seg_loss: ComboLoss = ComboLoss({'dice': 0.5, 'focal': 5.0}, per_image=False).cuda()
-ce_loss: nn.CrossEntropyLoss = nn.CrossEntropyLoss().cuda()
-label_loss_weights = np.array([0.1, 0.1, 0.5, 0.3, 0.2, 11])
+seg_loss: ComboLoss = ComboLoss(
+    (WithSigmoid(DiceLoss()), 0.5),
+    (WithSigmoid(FocalLoss2d()), 5.0)
+)
+
+channeled: ChanneledLoss = ChanneledLoss(
+    (seg_loss, 0.1),
+    (seg_loss, 0.1),
+    (seg_loss, 0.5),
+    (seg_loss, 0.3),
+    (seg_loss, 0.2),
+)
+
+final_loss: ComboLoss = ComboLoss(
+    (channeled, 1),
+    (nn.CrossEntropyLoss(), 11)
+).cuda()
 
 # resnet34 unet double
-seg_loss: ComboLoss = ComboLoss({'dice': 1.0, 'focal': 12.0}, per_image=False).cuda()
-ce_loss: nn.CrossEntropyLoss = nn.CrossEntropyLoss().cuda()
+seg_loss: ComboLoss = ComboLoss(
+    (WithSigmoid(DiceLoss()), 1.0),
+    (WithSigmoid(FocalLoss2d()), 12.0)
+)
 
-label_loss_weights = np.array([0.05, 0.2, 0.8, 0.7, 0.4])
+channeled: ChanneledLoss = ChanneledLoss(
+    (seg_loss, 0.05),
+    (seg_loss, 0.2),
+    (seg_loss, 0.8),
+    (seg_loss, 0.7),
+    (seg_loss, 0.4),
+)
 
 # senet154 unet double
-seg_loss: ComboLoss = ComboLoss({'dice': 0.5}, per_image=False).cuda()
-ce_loss: nn.CrossEntropyLoss = nn.CrossEntropyLoss().cuda()
-label_loss_weights = np.array([0.1, 0.1, 0.6, 0.3, 0.2, 8])
+seg_loss: ComboLoss = ComboLoss(
+    (WithSigmoid(DiceLoss()), 0.5)
+)
+
+channeled: ChanneledLoss = ChanneledLoss(
+    (seg_loss, 0.1),
+    (seg_loss, 0.1),
+    (seg_loss, 0.6),
+    (seg_loss, 0.3),
+    (seg_loss, 0.2),
+)
+
+final_loss: ComboLoss = ComboLoss(
+    (channeled, 1),
+    (nn.CrossEntropyLoss(), 8)
+)
 
 # seresnext50 unet double
-seg_loss: ComboLoss = ComboLoss({'dice': 0.5, 'focal': 2.0}, per_image=False).cuda()
-ce_loss: nn.CrossEntropyLoss = nn.CrossEntropyLoss().cuda()
+seg_loss: ComboLoss = ComboLoss(
+    (WithSigmoid(DiceLoss()), 0.5),
+    (WithSigmoid(FocalLoss2d()), 2.0)
+)
 
-#dpn92 unet localization
-seg_loss = ComboLoss({'dice': 1.0, 'focal': 6.0}, per_image=False).cuda()
+channeled: ChanneledLoss = ChanneledLoss(
+    (seg_loss, 0.1),
+    (seg_loss, 0.1),
+    (seg_loss, 0.3),
+    (seg_loss, 0.3),
+    (seg_loss, 0.2),
+)
 
-#resnet34 unet localization
-seg_loss: ComboLoss = ComboLoss({'dice': 1.0, 'focal': 10.0}, per_image=False).cuda()
+final_loss: ComboLoss = ComboLoss(
+    (channeled, 1),
+    (nn.CrossEntropyLoss(), 11)
+)
 
-#senet 154 unet localization
-seg_loss = ComboLoss({'dice': 1.0, 'focal': 14.0}, per_image=False).cuda()
+# dpn92 unet localization
+seg_loss: ComboLoss = ComboLoss(
+    (WithSigmoid(DiceLoss()), 1.0),
+    (WithSigmoid(FocalLoss2d()), 6.0)
+)
 
 
-#seresnext 50 unet localization
-seg_loss = ComboLoss({'dice': 1.0, 'focal': 10.0}, per_image=False).cuda()
+# resnet34 unet localization
+seg_loss: ComboLoss = ComboLoss(
+    (WithSigmoid(DiceLoss()), 1.0),
+    (WithSigmoid(FocalLoss2d()), 10.0)
+)
+
+# senet 154 unet localization
+seg_loss: ComboLoss = ComboLoss(
+    (WithSigmoid(DiceLoss()), 1.0),
+    (WithSigmoid(FocalLoss2d()), 14.0)
+)
+
+# seresnext 50 unet localization
+seg_loss: ComboLoss = ComboLoss(
+    (WithSigmoid(DiceLoss()), 1.0),
+    (WithSigmoid(FocalLoss2d()), 10.0)
+)
 
 
 # tune
-#dpn92 unet double
-seg_loss: ComboLoss = ComboLoss({'dice': 0.5, 'focal': 5.0}, per_image=False).cuda()
-ce_loss: nn.CrossEntropyLoss = nn.CrossEntropyLoss().cuda()
+# dpn92 unet double
+seg_loss: ComboLoss = ComboLoss(
+    (WithSigmoid(DiceLoss()), 0.5),
+    (WithSigmoid(FocalLoss2d()), 5.0)
+)
 
-#resnet 34 unet double
-seg_loss: ComboLoss = ComboLoss({'dice': 1.0, 'focal': 12.0}, per_image=False).cuda()
-ce_loss: nn.CrossEntropyLoss = nn.CrossEntropyLoss().cuda()
+channeled: ChanneledLoss = ChanneledLoss(
+    (seg_loss, 0.1),
+    (seg_loss, 0.1),
+    (seg_loss, 0.5),
+    (seg_loss, 0.3),
+    (seg_loss, 0.2),
+)
 
-#se154 unet double
-seg_loss: ComboLoss = ComboLoss({'dice': 0.5}, per_image=False).cuda()
-ce_loss: nn.CrossEntropyLoss = nn.CrossEntropyLoss().cuda()
+final_loss: ComboLoss = ComboLoss(
+    (channeled, 1),
+    (nn.CrossEntropyLoss(), 11)
+)
 
-#seresnext 50 unet double
-seg_loss: ComboLoss = ComboLoss({'dice': 0.5, 'focal': 2.0}, per_image=False).cuda()
-ce_loss: nn.CrossEntropyLoss = nn.CrossEntropyLoss().cuda()
+# resnet 34 unet double
+seg_loss: ComboLoss = ComboLoss(
+    (WithSigmoid(DiceLoss()), 1.0),
+    (WithSigmoid(FocalLoss2d()), 12.0)
+)
 
-#dpn92 unet loc
-seg_loss = ComboLoss({'dice': 1.0, 'focal': 6.0}, per_image=False).cuda()
+channeled: ChanneledLoss = ChanneledLoss(
+    (seg_loss, 0.05),
+    (seg_loss, 0.2),
+    (seg_loss, 0.8),
+    (seg_loss, 0.7),
+    (seg_loss, 0.4),
+)
 
-#seresnext 50 unet loc
-seg_loss = ComboLoss({'dice': 1.0, 'focal': 10.0}, per_image=False).cuda()
+# se154 unet double
+seg_loss: ComboLoss = ComboLoss(
+    (WithSigmoid(DiceLoss()), 0.5)
+)
+
+channeled: ChanneledLoss = ChanneledLoss(
+    (seg_loss, 0.1),
+    (seg_loss, 0.1),
+    (seg_loss, 0.6),
+    (seg_loss, 0.3),
+    (seg_loss, 0.2),
+)
+
+final_loss: ComboLoss = ComboLoss(
+    (channeled, 1),
+    (nn.CrossEntropyLoss(), 8)
+)
+
+# seresnext 50 unet double
+seg_loss: ComboLoss = ComboLoss(
+    (WithSigmoid(DiceLoss()), 0.5),
+    (WithSigmoid(FocalLoss2d()), 2.0)
+)
+
+channeled: ChanneledLoss = ChanneledLoss(
+    (seg_loss, 0.1),
+    (seg_loss, 0.1),
+    (seg_loss, 0.3),
+    (seg_loss, 0.3),
+    (seg_loss, 0.2),
+)
+
+final_loss: ComboLoss = ComboLoss(
+    (channeled, 1),
+    (nn.CrossEntropyLoss(), 11)
+)
+
+# dpn92 unet loc
+seg_loss: ComboLoss = ComboLoss(
+    (WithSigmoid(DiceLoss()), 1.0),
+    (WithSigmoid(FocalLoss2d()), 6.0)
+)
+
+# seresnext 50 unet loc
+seg_loss: ComboLoss = ComboLoss(
+    (WithSigmoid(DiceLoss()), 1.0),
+    (WithSigmoid(FocalLoss2d()), 10.0)
+)
