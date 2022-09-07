@@ -61,19 +61,7 @@ class Resnet34UnetLocTrainer(LocalizationTrainer):
         np.random.seed(self._config.model_config.seed + 545)
         random.seed(self._config.model_config.seed + 454)
 
-    def _get_dataloaders(self) -> (DataLoader, DataLoader):
-        return (DataLoader(self._config.train_dataset,
-                           batch_size=self._config.batch_size,
-                           num_workers=6,
-                           shuffle=True,
-                           pin_memory=True,
-                           drop_last=True),
 
-                DataLoader(self._config.validation_dataset,
-                           batch_size=self._config.val_batch_size,
-                           num_workers=6,
-                           shuffle=False,
-                           pin_memory=True))
 
     def _get_requirements(self) -> Requirements:
         model: nn.Module
@@ -177,8 +165,6 @@ if __name__ == '__main__':
         model_config=model_config,
         input_shape=input_shape,
         epochs=55,
-        batch_size=16,
-        val_batch_size=8,
         train_dataset=train_data,
         validation_dataset=vali_data,
         evaluation_interval=2

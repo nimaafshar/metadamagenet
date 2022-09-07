@@ -63,18 +63,7 @@ class SEResnext50UnetDoubleTrainer(ClassificationTrainer):
         random.seed(self._config.model_config.seed + 1234)
 
     def _get_dataloaders(self) -> (DataLoader, DataLoader):
-        return (DataLoader(self._config.train_dataset,
-                           batch_size=self._config.batch_size,
-                           num_workers=6,
-                           shuffle=True,
-                           pin_memory=False,
-                           drop_last=True),
-
-                DataLoader(self._config.validation_dataset,
-                           batch_size=self._config.val_batch_size,
-                           num_workers=6,
-                           shuffle=False,
-                           pin_memory=False))
+        return
 
     def _get_requirements(self) -> ClassificationRequirements:
         model: nn.Module
@@ -141,8 +130,6 @@ if __name__ == '__main__':
         model_config=model_config,
         input_shape=input_shape,
         epochs=20,
-        batch_size=16,
-        val_batch_size=4,
         train_dataset=train_dataset,
         validation_dataset=validation_dataset,
         evaluation_interval=2,

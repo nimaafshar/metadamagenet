@@ -58,19 +58,6 @@ def train():
     np.random.seed(self._config.model_config.seed + 321)
     random.seed(self._config.model_config.seed + 321)
 
-    (DataLoader(self._config.train_dataset,
-                batch_size=self._config.batch_size,
-                num_workers=6,
-                shuffle=True,
-                pin_memory=False,
-                drop_last=True),
-
-     DataLoader(self._config.validation_dataset,
-                batch_size=self._config.val_batch_size,
-                num_workers=6,
-                shuffle=False,
-                pin_memory=False))
-
 
 
     def _apply_activation(self, model_out: torch.Tensor) -> torch.Tensor:
@@ -113,8 +100,6 @@ def train():
         model_config=model_config,
         input_shape=input_shape,
         epochs=20,
-        batch_size=16,
-        val_batch_size=8,
         train_dataset=train_dataset,
         validation_dataset=validation_dataset,
         evaluation_interval=2,

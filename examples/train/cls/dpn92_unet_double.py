@@ -73,18 +73,9 @@ def train():
     valid_image_data = ImageDataset(config.test_dirs)
     valid_image_data.discover()
 
-    DataLoader(self._config.train_dataset,
-               batch_size=self._config.batch_size,
-               num_workers=6,
-               shuffle=True,
-               pin_memory=False,
-               drop_last=True),
+    ,
 
-    DataLoader(self._config.validation_dataset,
-               batch_size=self._config.val_batch_size,
-               num_workers=6,
-               shuffle=False,
-               pin_memory=False)
+
 
     train_dataset = ClassificationDataset(
         image_dataset=train_image_dataset,
@@ -108,8 +99,6 @@ def train():
         model_config=model_config,
         input_shape=input_shape,
         epochs=10,
-        batch_size=12,
-        val_batch_size=4,
         train_dataset=train_dataset,
         validation_dataset=validation_dataset,
         evaluation_interval=2,
