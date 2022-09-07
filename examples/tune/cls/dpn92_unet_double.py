@@ -88,9 +88,6 @@ class Dpn92UnetDoubleTrainer(ClassificationTrainer):
             dice_metric_calculator=F1ScoreCalculator()
         )
 
-    def _apply_activation(self, model_out: torch.Tensor) -> torch.Tensor:
-        return torch.softmax(model_out, dim=1)
-
 
 
 if __name__ == '__main__':

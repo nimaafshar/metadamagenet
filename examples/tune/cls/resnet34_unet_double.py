@@ -56,8 +56,6 @@ cv2.ocl.setUseOpenCL(False)
 
 class Resnet34UnetDoubleTrainer(ClassificationTrainer):
 
-    def _apply_activation(self, model_out: torch.Tensor) -> torch.Tensor:
-        return torch.sigmoid(model_out)
 
     def _setup(self):
         super(Resnet34UnetDoubleTrainer, self)._setup()

@@ -118,11 +118,6 @@ def train():
     # for 0-5 masks we have to flag pixels that are not in any damage boundary with
     # value 1 in mask 0. so that the cross entropy loss forces other values (mask 1-4) to be 0
 
-    def _apply_activation(self, model_out: torch.Tensor) -> torch.Tensor:
-        return torch.softmax(model_out, dim=1)
 
 
     dice_metric_calculator = F1ScoreCalculator()
-
-    def _update_weights(self, loss: torch.Tensor) -> None:
-
