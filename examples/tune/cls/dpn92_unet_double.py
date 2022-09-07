@@ -84,7 +84,7 @@ class Dpn92UnetDoubleTrainer(ClassificationTrainer):
             model_score=best_score,
             start_epoch=start_epoch,
             ce_loss=ce_loss,
-            label_loss_weights=np.array([0.1, 0.1, 0.5, 0.3, 0.2, 11]),
+
             dice_metric_calculator=F1ScoreCalculator()
         )
 
