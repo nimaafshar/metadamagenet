@@ -40,6 +40,9 @@ def iou_round(preds, trues):
 
 
 class JaccardLoss(torch.nn.Module):
+    """
+    expects sigmoid
+    """
     def __init__(self, weight=None, size_average=True, per_image=False):
         super().__init__()
         self.size_average = size_average

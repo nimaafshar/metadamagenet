@@ -4,6 +4,9 @@ from .epsilon import eps
 
 
 class FocalLoss2d(torch.nn.Module):
+    """
+    expects sigmoid
+    """
     def __init__(self, gamma=2, ignore_index=255):
         super().__init__()
         self.gamma = gamma

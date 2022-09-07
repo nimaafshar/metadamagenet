@@ -2,6 +2,8 @@ from itertools import filterfalse
 from typing import Iterable
 
 import numpy as np
+import torch
+from torch import nn
 
 
 def flatten_binary_scores(scores, labels, ignore=None):
@@ -38,3 +40,12 @@ def mean(iterable: Iterable, ignore_nan=False, empty=0):
     if n == 1:
         return acc
     return acc / n
+
+
+class WithSigmoid(nn.Module):
+    def __init__(self, loss: nn.Module):
+        super().__init__()
+        self._loss = loss
+
+    def forward(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        return self._loss(torch.sigmoid(outputs), targets)

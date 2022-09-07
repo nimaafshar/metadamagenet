@@ -1,39 +1,28 @@
+from typing import Tuple
+
 import torch
-
-from .bce import StableBCELoss
-from .dice import DiceLoss
-from .jaccard import JaccardLoss
-from .lovasz import LovaszLoss, LovaszLossSigmoid
-from .focal import FocalLoss2d
+from torch import nn
 
 
-class ComboLoss(torch.nn.Module):
-    def __init__(self, weights, per_image=False):
+class ComboLoss(nn.Module):
+    """
+    example:
+    ComboLoss(
+        (StableBCELoss(), 1),
+        (WithSigmoid(DiceLoss(per_image=False)), 1),
+        (WithSigmoid(JaccardLoss(per_image=False)), 1),
+        (LovaszLoss(per_image), 1),
+        (WithSigmoid(LovaszLossSigmoid(per_image)), 1),
+        (WithSigmoid(FocalLoss2d()), 1)
+    )
+    """
+
+    def __init__(self, *weighted_losses: Tuple[nn.Module, float]):
         super().__init__()
-        self.weights = weights
-        self.bce = StableBCELoss()
-        self.dice = DiceLoss(per_image=False)
-        self.jaccard = JaccardLoss(per_image=False)
-        self.lovasz = LovaszLoss(per_image=per_image)
-        self.lovasz_sigmoid = LovaszLossSigmoid(per_image=per_image)
-        self.focal = FocalLoss2d()
-        self.mapping = {'bce': self.bce,
-                        'dice': self.dice,
-                        'focal': self.focal,
-                        'jaccard': self.jaccard,
-                        'lovasz': self.lovasz,
-                        'lovasz_sigmoid': self.lovasz_sigmoid}
-        self.expect_sigmoid = {'dice', 'focal', 'jaccard', 'lovasz_sigmoid'}
-        self.values = {}
+        self._weighted_losses: Tuple[nn.Module, float] = weighted_losses
 
-    def forward(self, outputs, targets):
-        loss = 0
-        weights = self.weights
-        sigmoid_input = torch.sigmoid(outputs)
-        for k, v in weights.items():
-            if not v:
-                continue
-            val = self.mapping[k](sigmoid_input if k in self.expect_sigmoid else outputs, targets)
-            self.values[k] = val
-            loss += self.weights[k] * val
-        return loss
+    def forward(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        total_loss = 0
+        for loss, weight in self._weighted_losses:
+            total_loss += loss(outputs, targets) * weight
+        return total_loss
