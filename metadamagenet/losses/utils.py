@@ -45,7 +45,7 @@ def mean(iterable: Iterable, ignore_nan=False, empty=0):
 class WithSigmoid(nn.Module):
     def __init__(self, loss: nn.Module):
         super().__init__()
-        self._loss = loss
+        self.loss: nn.Module = loss
 
     def forward(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         return self._loss(torch.sigmoid(outputs), targets)
