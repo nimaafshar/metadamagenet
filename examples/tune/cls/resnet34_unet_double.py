@@ -100,13 +100,6 @@ class Resnet34UnetDoubleTrainer(ClassificationTrainer):
             label_loss_weights=np.array([0.05, 0.2, 0.8, 0.7, 0.4])
         )
 
-    def _update_weights(self, loss: torch.Tensor) -> None:
-        self._optimizer.zero_grad()
-        self._grad_scaler.scale(loss).backward()
-        self._grad_scaler.unscale_(self._optimizer)
-        torch.nn.utils.clip_grad_norm_(self._model.parameters(), 0.999)
-        self._grad_scaler.step(self._optimizer)
-        self._grad_scaler.update()
 
 
 if __name__ == '__main__':
