@@ -60,11 +60,6 @@ def train():
 
 
 
-    def _apply_activation(self, model_out: torch.Tensor) -> torch.Tensor:
-        return torch.sigmoid(model_out)
-    def _update_weights(self, loss: torch.Tensor) -> None:
-
-
     t0 = timeit.default_timer()
 
     GeneralConfig.load()
