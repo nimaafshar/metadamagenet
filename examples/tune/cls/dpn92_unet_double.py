@@ -63,18 +63,7 @@ class Dpn92UnetDoubleTrainer(ClassificationTrainer):
         random.seed(self._config.model_config.seed + 777)
 
     def _get_dataloaders(self) -> (DataLoader, DataLoader):
-        return (DataLoader(self._config.train_dataset,
-                           batch_size=self._config.batch_size,
-                           num_workers=6,
-                           shuffle=True,
-                           pin_memory=False,
-                           drop_last=True),
-
-                DataLoader(self._config.validation_dataset,
-                           batch_size=self._config.val_batch_size,
-                           num_workers=6,
-                           shuffle=False,
-                           pin_memory=False))
+        return
 
     def _get_requirements(self) -> ClassificationRequirements:
         model: nn.Module
@@ -124,150 +113,7 @@ if __name__ == '__main__':
     train_dataset = ClassificationDataset(
         image_dataset=train_image_dataset,
         inverse_msk0=True,
-        augmentations=Pipeline((
-            TopDownFlip(
-                probability=0.7
-            ),
-            Rotation90Degree(
-                probability=0.3
-            ),
-            Shift(probability=0.99,
-                  y_range=(-320, 320),
-                  x_range=(-320, 320)),
-            RotateAndScale(
-                probability=0.5,
-                center_x_range=(-320, 320),
-                center_y_range=(-320, 320),
-                scale_range=(0.9, 1.1),
-                angle_range=(-10, 10)
-            ),
-            RandomCrop(
-                default_crop_size=input_shape[0],
-                size_change_probability=0.5,
-                crop_size_range=(int(input_shape[0] / 1.15), int(input_shape[0] / 0.85)),
-                try_range=(1, 10),
-                scoring_weights={'msk2': 5, 'msk3': 5, 'msk4': 2, 'msk1': 1}
-            ),
-            Resize(
-                height=input_shape[0],
-                width=input_shape[1],
-            ),
-            OneOf((
-                ShiftRGB(
-                    probability=0.99,
-                    r_range=(-5, 5),
-                    g_range=(-5, 5),
-                    b_range=(-5, 5),
-                    apply_to=('img_pre',)
-                ),
-                ShiftRGB(
-                    probability=0.99,
-                    r_range=(-5, 5),
-                    g_range=(-5, 5),
-                    b_range=(-5, 5),
-                    apply_to=('img_post',)
-                ),
-            ), probability=0
-            ),
-            OneOf((
-                ShiftHSV(
-                    probability=0.99,
-                    h_range=(-5, 5),
-                    s_range=(-5, 5),
-                    v_range=(-5, 5),
-                    apply_to=('img_pre',)
-                ),
-                ShiftHSV(
-                    probability=0.99,
-                    h_range=(-5, 5),
-                    s_range=(-5, 5),
-                    v_range=(-5, 5),
-                    apply_to=('img_post',)
-                ),
-            ), probability=0
-            ),
-            OneOf((
-                OneOf((
-                    Clahe(
-                        probability=0.99,
-                        apply_to=('img_pre',)
-                    ),
-                    GaussianNoise(
-                        probability=0.99,
-                        apply_to=('img_pre',)
-                    ),
-                    Blur(
-                        probability=0.99,
-                        apply_to=('img_post',)
-                    )
-                ), probability=0.99
-                ),
-                OneOf((
-                    Saturation(
-                        probability=0.99,
-                        alpha_range=(0.9, 1.1),
-                        apply_to=('img_pre',)
-                    ),
-                    Brightness(
-                        probability=0.99,
-                        alpha_range=(0.9, 1.1),
-                        apply_to=('img_pre',)
-                    ),
-                    Contrast(
-                        probability=0.99,
-                        alpha_range=(0.9, 1.1),
-                        apply_to=('img_pre',)
-                    )
-                ), probability=0.99
-                )
-            ), probability=0
-            ),
-            OneOf((
-                OneOf((
-                    Clahe(
-                        probability=0.99,
-                        apply_to=('img_post',)
-                    ),
-                    GaussianNoise(
-                        probability=0.99,
-                        apply_to=('img_post',)
-                    ),
-                    Blur(
-                        probability=0.99,
-                        apply_to=('img_post',)
-                    )
-                ),
-                    probability=0.99
-                ),
-                OneOf((
-                    Saturation(
-                        probability=0.99,
-                        alpha_range=(0.9, 1.1),
-                        apply_to=('img_post',)
-                    ),
-                    Brightness(
-                        probability=0.99,
-                        alpha_range=(0.9, 1.1),
-                        apply_to=('img_post',)
-                    ),
-                    Contrast(
-                        probability=0.99,
-                        alpha_range=(0.9, 1.1),
-                        apply_to=('img_post',)
-                    )
-                ),
-                    probability=0.99
-                )
-            ), probability=0),
-            ElasticTransformation(
-                probability=0.99,
-                apply_to=('img_pre',)
-            ),
-            ElasticTransformation(
-                probability=0.99,
-                apply_to=('img_post',)
-            )
-        )), do_dilation=True)
+        augmentations=, do_dilation=True)
 
     validation_dataset = ClassificationValidationDataset(
         image_dataset=valid_image_data,
@@ -284,8 +130,6 @@ if __name__ == '__main__':
         model_config=model_config,
         input_shape=input_shape,
         epochs=1,
-        batch_size=12,
-        val_batch_size=4,
         train_dataset=train_dataset,
         validation_dataset=validation_dataset,
         evaluation_interval=2,
