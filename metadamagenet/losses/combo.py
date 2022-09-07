@@ -19,10 +19,12 @@ class ComboLoss(nn.Module):
 
     def __init__(self, *weighted_losses: Tuple[nn.Module, float]):
         super().__init__()
-        self._weighted_losses: Tuple[nn.Module, float] = weighted_losses
+        losses: Tuple[nn.Module]
+        weights: Tuple[float]
+        losses, weights = zip(*weighted_losses)
+        self.losses: nn.ModuleList = nn.ModuleList(losses)
+        self.register_buffer("weights", torch.FloatTensor(weights))
 
     def forward(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
-        total_loss = 0
-        for loss, weight in self._weighted_losses:
-            total_loss += loss(outputs, targets) * weight
-        return total_loss
+        loss_items = [loss(outputs, targets) for loss in self.losses]
+        return torch.dot(torch.tensor(loss_items), self.weights)
