@@ -102,13 +102,6 @@ class SEResnext50UnetDoubleTrainer(ClassificationTrainer):
     def _apply_activation(self, model_out: torch.Tensor) -> torch.Tensor:
         return torch.softmax(model_out, dim=1)
 
-    def _update_weights(self, loss: torch.Tensor) -> None:
-        self._optimizer.zero_grad()
-        self._grad_scaler.scale(loss).backward()
-        self._grad_scaler.unscale_(self._optimizer)
-        torch.nn.utils.clip_grad_norm_(self._model.parameters(), 0.999)
-        self._grad_scaler.step(self._optimizer)
-        self._grad_scaler.update()
 
 
 if __name__ == '__main__':
