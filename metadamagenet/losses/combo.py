@@ -38,8 +38,8 @@ class ComboLoss(MonitoredLoss):
         weighted_loss = torch.dot(torch.tensor(loss_values), self.weights)
         if self._monitor:
             for i, loss_value in enumerate(loss_values):
-                self._meters[i].update(loss_value.item(), outputs.size()[0])
-            self._total_loss_meter.update(weighted_loss.item(), outputs.size()[0])
+                self._meters[i].update(loss_value.item(), outputs.size(0))
+            self._total_loss_meter.update(weighted_loss.item(), outputs.size(0))
 
         return weighted_loss
 
