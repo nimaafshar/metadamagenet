@@ -4,11 +4,12 @@ from typing import Tuple, Type, Union
 import torch
 from torch import nn
 
-from metadamagenet.models.metadata import Metadata
-from metadamagenet.models.unet import Unet, Localizer, Classifier
-from metadamagenet.models.checkpoint import Checkpoint
-from metadamagenet.models.manager import Manager
-from metadamagenet.metrics import Score, Dice
+from ..models import Metadata
+from ..models.unet import Unet, Localizer, Classifier
+from ..models.checkpoint import Checkpoint
+from ..models.manager import Manager as ModelManager
+from ..metrics import Score, Dice
+from ..logging import log
 
 
 class ModelWrapper(abc.ABC):
@@ -44,12 +45,13 @@ class ModelWrapper(abc.ABC):
         pass
 
     def from_checkpoint(self, version: str, seed: int) -> Tuple[nn.Module, Metadata]:
+        log(":eyes: loading from checkpoint")
         checkpoint = Checkpoint(
             model_name=self.model_name,
             version=version,
             seed=seed
         )
-        manager = Manager.get_instance()
+        manager = ModelManager.get_instance()
         state_dict, metadata = manager.load_checkpoint(checkpoint)
         empty_model: nn.Module = self.unet_type(self.empty_unet)
         if self.data_parallel:
@@ -58,12 +60,14 @@ class ModelWrapper(abc.ABC):
         return empty_model, metadata
 
     def from_unet(self, unet: Unet) -> Tuple[nn.Module, Metadata]:
+        log(":eyes: creating from unet")
         model: nn.Module = self.unet_type(unet)
         if self.data_parallel:
             model = nn.DataParallel(model)
         return model, Metadata()
 
     def from_backbone(self, backbone: nn.Module) -> Tuple[nn.Module, Metadata]:
+        log(":eyes: creating from backbone")
         model: nn.Module = self.unet_type(self.unet_with_pretrained_backbone(backbone))
         if self.data_parallel:
             model = nn.DataParallel(model)

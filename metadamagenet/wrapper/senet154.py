@@ -1,14 +1,12 @@
 import abc
-from typing import Tuple
 
 import torch
 from torch import nn
 
 from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
-from metadamagenet.models.metadata import Metadata
-from metadamagenet.models.unet import Unet
-from metadamagenet.models.unet import SeNet154Unet
-from metadamagenet.models.senet import SENet, senet154
+from ..models.unet import Unet
+from ..models.unet import SeNet154Unet
+from ..models.senet import SENet, senet154
 from ..metrics import Score, F1Score
 
 

@@ -1,13 +1,12 @@
 import abc
-from typing import Tuple
 
 import torch
 from torch import nn
 
 from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
-from metadamagenet.models.unet import Unet
-from metadamagenet.models.unet import Dpn92Unet
-from metadamagenet.models.dpn import DPN, dpn92
+from ..models.unet import Unet
+from ..models.unet import Dpn92Unet
+from ..models.dpn import DPN, dpn92
 from ..metrics import Score, F1Score
 
 

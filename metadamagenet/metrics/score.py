@@ -2,7 +2,7 @@ from typing import Tuple
 
 import torch
 
-from metadamagenet.metrics import FloatMetric
+from ..metrics import FloatMetric
 
 
 class Score(FloatMetric):

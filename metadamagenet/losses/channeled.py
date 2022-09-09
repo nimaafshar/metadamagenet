@@ -4,7 +4,7 @@ import torch
 from torch import nn
 
 from .monitored import MonitoredLoss
-from metadamagenet.metrics import AverageMeter
+from ..metrics import AverageMeter
 
 
 class ChanneledLoss(MonitoredLoss):

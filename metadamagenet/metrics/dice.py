@@ -1,7 +1,7 @@
 import torch
 
 from .base import FloatMetric
-from metadamagenet.losses.dice import dice_round, dice_batch
+from ..losses.dice import dice_round, dice_batch
 
 
 class DiceRound(FloatMetric):
