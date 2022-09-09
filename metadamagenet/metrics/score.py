@@ -5,7 +5,7 @@ import torch
 from metadamagenet.metrics import FloatMetric
 
 
-class Scorer(FloatMetric):
+class Score(FloatMetric):
     def __init__(self, *metrics: Tuple[str, FloatMetric, float]):
         super().__init__()
         self._metrics: Tuple[FloatMetric]
