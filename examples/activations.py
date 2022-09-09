@@ -1,3 +1,5 @@
+cudnn.benchmark = True
+
 # dpn92 unet double
 torch.softmax(model_out, dim=1)
 # resnet34 unet double
