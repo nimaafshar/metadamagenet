@@ -8,6 +8,7 @@ from metadamagenet.models.metadata import Metadata
 from metadamagenet.models.unet import Unet, Localizer, Classifier
 from metadamagenet.models.checkpoint import Checkpoint
 from metadamagenet.models.manager import Manager
+from metadamagenet.metrics import Score, Dice
 
 
 class ModelWrapper(abc.ABC):
@@ -72,6 +73,11 @@ class ModelWrapper(abc.ABC):
     def apply_activation(self, x: torch.Tensor) -> torch.Tensor:
         pass
 
+    @abc.abstractmethod
+    @property
+    def default_score(self) -> Score:
+        pass
+
 
 class ClassifierModelWrapper(ModelWrapper, abc.ABC):
     unet_type = Classifier
@@ -79,6 +85,9 @@ class ClassifierModelWrapper(ModelWrapper, abc.ABC):
 
 class LocalizerModelWrapper(ModelWrapper, abc.ABC):
     unet_type = Localizer
+    default_score = Score(
+        ("Dice", Dice(threshold=0.5, channel=0), 1)
+    )
 
     def apply_activation(self, x: torch.Tensor) -> torch.Tensor:
         return torch.sigmoid(x[:, 0, ...])

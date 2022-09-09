@@ -4,6 +4,7 @@ from typing import Tuple
 import torch
 from torchvision.models import resnet34
 from torch import nn
+from torchvision.models import ResNet34_Weights
 
 from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
 from metadamagenet.models.unet import Unet
@@ -11,7 +12,8 @@ from metadamagenet.models.metadata import Metadata
 from metadamagenet.models.checkpoint import Checkpoint
 from metadamagenet.models.manager import Manager
 from metadamagenet.models.unet import Resnet34Unet
-from torchvision.models import ResNet34_Weights
+
+from ..metrics import Score, F1Score, Dice
 
 
 class Resnet34Wrapper(ModelWrapper, abc.ABC):
@@ -33,6 +35,10 @@ class Resnet34LocalizerWrapper(Resnet34Wrapper, LocalizerModelWrapper):
 class Resnet34ClassifierWrapper(Resnet34Wrapper, ClassifierModelWrapper):
     model_name = "Resnet34UnetClassifier"
     input_size = (608, 608)
+    default_score = Score(
+        ("LocDice", Dice(threshold=0.5, channel=0), 0.3),
+        ("F1", F1Score(start_idx=1), 0.7)
+    )
 
     def apply_activation(self, x: torch.Tensor) -> torch.Tensor:
         return torch.sigmoid(x)
