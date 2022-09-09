@@ -78,15 +78,16 @@ def soft_dice_loss(outputs: torch.Tensor, targets: torch.Tensor, per_image=False
     return loss
 
 
-def dice_round(preds, trues) -> torch.Tensor:
+def dice_round(preds, trues, per_image: bool = False) -> torch.Tensor:
     preds = preds.float()
-    return soft_dice_loss(preds, trues)
+    return soft_dice_loss(preds, trues, per_image)
 
 
 class DiceLoss(torch.nn.Module):
     """
     expects sigmoid output
     """
+
     def __init__(self, weight=None, size_average=True, per_image=False):
         super().__init__()
         self.size_average = size_average
