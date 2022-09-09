@@ -11,6 +11,7 @@ from metadamagenet.models.checkpoint import Checkpoint
 from metadamagenet.models.manager import Manager
 from metadamagenet.models.unet import SeResnext50Unet
 from metadamagenet.models.senet import se_resnext50_32x4d, SENet
+from ..metrics import Score, F1Score
 
 
 class SeResnext50Wrapper(ModelWrapper, abc.ABC):
@@ -31,6 +32,10 @@ class SeResnext50LocalizerWrapper(SeResnext50Wrapper, LocalizerModelWrapper):
 class SeResnext50ClassifierWrapper(SeResnext50Wrapper, ClassifierModelWrapper):
     data_parallel = True
     model_name = "SeResnext50UnetClassifier"
+    default_score = Score(
+        ("LocF1", F1Score(start_idx=0, end_idx=1), 0.3),
+        ("F1", F1Score(start_idx=1), 0.7)
+    )
 
     def apply_activation(self, x: torch.Tensor) -> torch.Tensor:
         return torch.softmax(x, dim=1)

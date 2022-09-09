@@ -9,6 +9,7 @@ from metadamagenet.models.metadata import Metadata
 from metadamagenet.models.unet import Unet
 from metadamagenet.models.unet import SeNet154Unet
 from metadamagenet.models.senet import SENet, senet154
+from ..metrics import Score, F1Score
 
 
 class SeNet154Wrapper(ModelWrapper, abc.ABC):
@@ -29,6 +30,10 @@ class SeNet154LocalizerWrapper(SeNet154Wrapper, LocalizerModelWrapper):
 class SeNet154ClassifierWrapper(SeNet154Wrapper, ClassifierModelWrapper):
     model_name = "SeNet154UnetClassifier"
     input_size = 448, 448
+    default_score = Score(
+        ("LocF1", F1Score(start_idx=0, end_idx=1), 0.3),
+        ("F1", F1Score(start_idx=1), 0.7)
+    )
 
     def apply_activation(self, x: torch.Tensor) -> torch.Tensor:
         return torch.softmax(x, dim=1)
