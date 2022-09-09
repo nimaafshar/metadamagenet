@@ -3,7 +3,7 @@ from typing import Tuple, List
 import torch
 from torch import nn
 
-from metadamagenet.utils import AverageMeter
+from metadamagenet.metrics import AverageMeter
 from .monitored import MonitoredLoss
 
 
@@ -67,4 +67,8 @@ class ComboLoss(MonitoredLoss):
                 children_aggregated.append(f"{name}:{self.losses[i].aggregate()}")
             else:
                 children_aggregated.append(f"{name}:{self._meters[i].avg:.4f}")
-        return f"Total: {self._total_loss_meter.avg:.4f} [{'; '.join(children_aggregated)}]"
+        result: str = f"Total: {self._total_loss_meter.avg:.4f} [{'; '.join(children_aggregated)}]"
+        for meter in self._meters:
+            meter.reset()
+        self._total_loss_meter.reset()
+        return result

@@ -6,3 +6,4 @@ from lovasz import LovaszLoss, LovaszLossSigmoid
 from .utils import WithSigmoid
 from .combo import ComboLoss
 from .channeled import ChanneledLoss
+from .monitored import MonitoredLoss

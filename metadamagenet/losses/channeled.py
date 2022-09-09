@@ -4,7 +4,7 @@ import torch
 from torch import nn
 
 from .monitored import MonitoredLoss
-from metadamagenet.utils import AverageMeter
+from metadamagenet.metrics import AverageMeter
 
 
 class ChanneledLoss(MonitoredLoss):
@@ -18,7 +18,7 @@ class ChanneledLoss(MonitoredLoss):
         self._monitor: bool = monitored
         if self._monitor:
             self._meters: List[AverageMeter] = [AverageMeter() for _ in len(losses)]
-            self._total_loss_meter = AverageMeter()
+            self._total_loss_meter: AverageMeter = AverageMeter()
 
     def forward(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         assert outputs.size(1) == targets.size(1) == len(self.losses), \
@@ -58,4 +58,8 @@ class ChanneledLoss(MonitoredLoss):
                 children_aggregated.append(self.losses[i].aggregate())
             else:
                 children_aggregated.append(f"{self._meters[i].avg:.4f}")
-        return f"Total: {self._total_loss_meter.avg:.4f} [{'; '.join(children_aggregated)}]"
+        result: str = f"Total: {self._total_loss_meter.avg:.4f} [{'; '.join(children_aggregated)}]"
+        for meter in self._meters:
+            meter.reset()
+        self._total_loss_meter.reset()
+        return result
