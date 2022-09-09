@@ -86,3 +86,8 @@ class FloatMetric:
         :return: average status of metric formatted as string
         """
         return f"{self._avg:.4f}"
+
+
+class AverageMeter(FloatMetric):
+    def update(self, value: int, n: int = 1) -> None:
+        self._update(value, n)
