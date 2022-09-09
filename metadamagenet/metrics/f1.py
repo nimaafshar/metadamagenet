@@ -3,7 +3,7 @@ from typing import Optional
 import torch
 
 from .base import FloatMetric
-from metadamagenet.losses.epsilon import eps
+from ..losses.epsilon import eps
 
 
 class F1Score(FloatMetric):

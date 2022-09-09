@@ -3,7 +3,7 @@ from typing import Tuple, List
 import torch
 from torch import nn
 
-from metadamagenet.metrics import AverageMeter
+from ..metrics import AverageMeter
 from .monitored import MonitoredLoss
 
 

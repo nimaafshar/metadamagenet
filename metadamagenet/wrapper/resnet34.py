@@ -1,5 +1,4 @@
 import abc
-from typing import Tuple
 
 import torch
 from torchvision.models import resnet34
@@ -7,12 +6,8 @@ from torch import nn
 from torchvision.models import ResNet34_Weights
 
 from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
-from metadamagenet.models.unet import Unet
-from metadamagenet.models.metadata import Metadata
-from metadamagenet.models.checkpoint import Checkpoint
-from metadamagenet.models.manager import Manager
-from metadamagenet.models.unet import Resnet34Unet
-
+from ..models.unet import Unet
+from ..models.unet import Resnet34Unet
 from ..metrics import Score, F1Score, Dice
 
 

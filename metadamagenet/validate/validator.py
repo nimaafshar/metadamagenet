@@ -1,43 +1,84 @@
-import abc
-import dataclasses
 from typing import Optional
 
+from tqdm import tqdm
+import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
-from src.logs import log
-from src.model_config import ModelConfig
-from src.augment import TestTimeAugmentor
+from ..augment import TestTimeAugmentor
+from ..metrics import Score, AverageMeter
+from ..wrapper import ModelWrapper
+from ..logging import log
+from ..losses import MonitoredLoss
 
 
-@dataclasses.dataclass
-class ValidationConfig:
-    model_config: ModelConfig
-    dataloader: DataLoader
-    dice_threshold: float = 0.5
-    test_time_augmentor: Optional[TestTimeAugmentor] = None
+class Validator:
+    def __init__(self,
+                 model: nn.Module,
+                 model_wrapper: ModelWrapper,
+                 dataloader: DataLoader,
+                 loss: Optional[MonitoredLoss],
+                 score: Score,
+                 device: Optional[torch.device] = None,
+                 test_time_augmentor: Optional[TestTimeAugmentor] = None
+                 ):
+        self._model: nn.Module = model
+        self._wrapper: ModelWrapper = model_wrapper
+        self._dataloader: DataLoader = dataloader
+        self._loss: Optional[MonitoredLoss] = loss
+        self._score: Score = Score
+        self._device: Optional[torch.device] = device
+        self._test_time_augmentor: Optional[TestTimeAugmentor] = test_time_augmentor
 
-
-class Validator(abc.ABC):
-    def __init__(self, config: ValidationConfig):
-        self._config: ValidationConfig = config
-        self._model: nn.Module
-        self._model, _, _ = config.model_config.load_best_model()
-        self._dataloader: DataLoader = config.dataloader
-        self._evaluation_dice_thr = config.dice_threshold
-        self._test_time_augmentor: Optional[TestTimeAugmentor] = config.test_time_augmentor
-
-    def _setup(self):
-        pass
-
-    def validate(self):
-        self._setup()
-
-        log(f':arrow_forward: starting to validate model {self._config.model_config.full_name} ...')
+    def validate(self) -> float:
+        """
+        validate model with given data
+        :return: score
+        """
+        log(f':arrow_forward: starting to validate model {self._wrapper.model_name} ...')
         log(f'steps: {len(self._dataloader)}')
+        self._model.eval()
+        iterator = tqdm(self._dataloader)
 
-        self._evaluate()
+        loss_meter: AverageMeter = AverageMeter()
 
-    @abc.abstractmethod
-    def _evaluate(self) -> float:
-        pass
+        with torch.no_grad():
+            i: int
+            inputs: torch.Tensor
+            targets: torch.Tensor
+            for i, (inputs, targets) in enumerate(iterator):
+                if self._device is not None:
+                    inputs = inputs.to(device=self._device, non_blocking=True)
+                    targets = targets.to(device=self._device, non_blocking=True)
+                outputs: torch.Tensor
+                if self._test_time_augmentor is not None:
+                    augmented_inputs: torch.Tensor = self._test_time_augmentor.augment(inputs)
+                    augmented_outputs: torch.Tensor = self._model(augmented_inputs)
+                    outputs: torch.Tensor = self._test_time_augmentor.aggregate(augmented_outputs)
+                else:
+                    outputs: torch.Tensor = self._model(inputs)
+
+                loss_status: str = "--"
+                if self._loss is not None:
+                    loss_value: torch.Tensor = self._loss(outputs, targets)
+                    if self._loss.monitored:
+                        loss_status = self._loss.last_values()
+                    else:
+                        loss_meter.update(loss_value.item(), inputs.size(0))
+                        loss_status = loss_meter.status
+
+                activated_outputs: torch.Tensor = self._wrapper.apply_activation(outputs)
+                self._score.update(activated_outputs, targets)
+                score_status: str = self._score.status()
+                iterator.set_postfix({"loss": loss_status, "score": score_status})
+
+            loss_status: str = "--"
+            if self._loss is not None:
+                if self._loss.monitored:
+                    loss_status = self._loss.aggregate()
+                else:
+                    loss_status = loss_meter.avg_status
+
+            score_status: str = self._score.avg_status()
+            log(f"Validation Results: loss:{loss_status} score:{score_status}")
+            return self._score.avg
