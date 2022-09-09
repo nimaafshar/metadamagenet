@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 
 from .base import FloatMetric
@@ -5,13 +7,15 @@ from metadamagenet.losses.epsilon import eps
 
 
 class F1Score(FloatMetric):
-    def __init__(self):
+    def __init__(self, start_idx: Optional[int] = None, end_idx: Optional[int] = None):
         super().__init__()
+        self._start_idx: Optional[int] = start_idx
+        self._end_idx: Optional[int] = end_idx
         self._f1_scores = torch.zeros((4,))
 
     def update(self, outputs: torch.Tensor, targets: torch.Tensor) -> None:
-        label_outputs = outputs[:, 1:, ...].argmax(dim=1)
-        label_targets = targets[:, 1:, ...].argmax(dim=1)
+        label_outputs = outputs[:, self._start_idx:self._end_idx, ...].argmax(dim=1)
+        label_targets = targets[:, self._start_idx:self._end_idx, ...].argmax(dim=1)
         # filter targets with masks
         targ = label_targets * (targets[:, 0, ...] > 0)
         # TODO: filter with preloaded loc mask
