@@ -23,12 +23,12 @@ class Manager:
         """
         assert checkpoint.exists, "checkpoint does not exist"
         model_state_dict: dict = torch.load(checkpoint.model_path, map_location="cpu")
-        with open(checkpoint.metadata_path) as metadata_file:
+        with open(checkpoint.metadata_path, "r") as metadata_file:
             metadata: Metadata = Metadata.from_dict(json.load(metadata_file))
         return model_state_dict, metadata
 
     def save_checkpoint(self, checkpoint: Checkpoint, model_state_dict: dict, metadata: Metadata) -> None:
         checkpoint.path.mkdir(exist_ok=True)
         torch.save(model_state_dict, checkpoint.model_path)
-        with open(checkpoint.metadata_path) as metadata_file:
+        with open(checkpoint.metadata_path, "w") as metadata_file:
             json.dump(metadata.to_dict(), metadata_file)
