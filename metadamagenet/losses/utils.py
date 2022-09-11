@@ -48,4 +48,4 @@ class WithSigmoid(nn.Module):
         self.loss: nn.Module = loss
 
     def forward(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
-        return self._loss(torch.sigmoid(outputs), targets)
+        return self.loss(torch.sigmoid(outputs), targets)
