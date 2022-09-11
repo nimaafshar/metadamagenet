@@ -68,4 +68,4 @@ class Resnet34Unet(Unet):
 
     @property
     def out_channels(self) -> int:
-        return self.encoder_filters[-5]
+        return self.decoder_filters[-5]
