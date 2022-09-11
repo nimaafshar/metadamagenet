@@ -28,7 +28,7 @@ class ChanneledLoss(MonitoredLoss):
         weighted_loss = 0
         for i, loss in enumerate(self.losses):
             value = loss(outputs[:, i, ...], targets[:, i, ...])
-            weighted_loss = value * self._weights[i]
+            weighted_loss = value * self.weights[i]
             loss_items.append(value.item())
 
         if self._monitor:
