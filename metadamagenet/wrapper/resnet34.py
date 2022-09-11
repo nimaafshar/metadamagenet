@@ -1,7 +1,8 @@
 import abc
+from typing import Optional
 
 import torch
-from torchvision.models import resnet34
+from torchvision.models import resnet34, ResNet
 from torch import nn
 from torchvision.models import ResNet34_Weights
 
@@ -18,7 +19,9 @@ class Resnet34Wrapper(ModelWrapper, abc.ABC):
     def empty_unet(self) -> Unet:
         return Resnet34Unet(resnet34(weights=None))
 
-    def unet_with_pretrained_backbone(self, backbone: nn.Module) -> Unet:
+    def unet_with_pretrained_backbone(self, backbone: Optional[ResNet] = None) -> Unet:
+        if backbone is not None:
+            return Resnet34Unet(backbone)
         return Resnet34Unet(resnet34(weights=ResNet34_Weights.DEFAULT))
 
 

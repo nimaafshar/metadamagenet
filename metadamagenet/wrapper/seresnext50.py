@@ -1,5 +1,5 @@
 import abc
-from typing import Tuple
+from typing import Tuple, Optional
 
 import torch
 from torch import nn
@@ -20,7 +20,9 @@ class SeResnext50Wrapper(ModelWrapper, abc.ABC):
     def empty_unet(self) -> Unet:
         return SeResnext50Unet(se_resnext50_32x4d(pretrained=None))
 
-    def unet_with_pretrained_backbone(self, backbone: nn.Module) -> Unet:
+    def unet_with_pretrained_backbone(self, backbone: Optional[SENet] = None) -> Unet:
+        if backbone is not None:
+            return SeResnext50Unet(backbone)
         return SeResnext50Unet(se_resnext50_32x4d())
 
 

@@ -1,4 +1,5 @@
 import abc
+from typing import Optional
 
 import torch
 from torch import nn
@@ -16,7 +17,9 @@ class Dpn92Wrapper(ModelWrapper, abc.ABC):
     def empty_unet(self) -> Unet:
         return Dpn92Unet(dpn92(pretrained=None))
 
-    def unet_with_pretrained_backbone(self, backbone: nn.Module) -> Unet:
+    def unet_with_pretrained_backbone(self, backbone: Optional[DPN] = None) -> Unet:
+        if backbone is not None:
+            return Dpn92Unet(backbone)
         return Dpn92Unet(dpn92())
 
 

@@ -1,5 +1,5 @@
 import abc
-from typing import Tuple, Type, Union
+from typing import Tuple, Type, Union, Optional
 
 import torch
 from torch import nn
@@ -41,7 +41,7 @@ class ModelWrapper(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def unet_with_pretrained_backbone(self, backbone: nn.Module) -> Unet:
+    def unet_with_pretrained_backbone(self, backbone: Optional[nn.Module] = None) -> Unet:
         pass
 
     def from_checkpoint(self, version: str, seed: int) -> Tuple[nn.Module, Metadata]:
@@ -66,7 +66,7 @@ class ModelWrapper(abc.ABC):
             model = nn.DataParallel(model)
         return model, Metadata()
 
-    def from_backbone(self, backbone: nn.Module) -> Tuple[nn.Module, Metadata]:
+    def from_backbone(self, backbone: Optional[nn.Module] = None) -> Tuple[nn.Module, Metadata]:
         log(":eyes: creating from backbone")
         model: nn.Module = self.unet_type(self.unet_with_pretrained_backbone(backbone))
         if self.data_parallel:
