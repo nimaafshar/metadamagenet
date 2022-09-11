@@ -36,7 +36,7 @@ class ComboLoss(MonitoredLoss):
     def forward(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         loss_items: List = []
         weighted_loss = 0
-        for i, loss in enumerate(self._losses):
+        for i, loss in enumerate(self.losses):
             value = loss(outputs, targets)
             weighted_loss = value * self._weights[i]
             loss_items.append(value.item())
