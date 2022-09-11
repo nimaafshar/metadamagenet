@@ -39,7 +39,7 @@ class GeneralConfig:
     @classmethod
     def get_instance(cls) -> 'GeneralConfig':
         if cls._instance is None:
-            raise ValueError('config has not been loaded yet. call `load` method')
+            cls.load()
         return cls._instance
 
     @classmethod
