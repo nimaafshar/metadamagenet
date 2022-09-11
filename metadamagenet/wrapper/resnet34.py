@@ -31,7 +31,7 @@ class Resnet34ClassifierWrapper(Resnet34Wrapper, ClassifierModelWrapper):
     model_name = "Resnet34UnetClassifier"
     input_size = (608, 608)
     default_score = Score(
-        ("LocDice", Dice(threshold=0.5, channel=0), 0.3),
+        ("LocDice", Dice(threshold=0.5, channel=0, inverse=True), 0.3),
         ("F1", F1Score(start_idx=1), 0.7)
     )
 
