@@ -177,7 +177,7 @@ class Trainer:
             loss.backward()
             self._optimizer.step()
             if self._clip_grad_norm is not None:
-                torch.nn.utils.clip_grad_norm(self._model.parameters(), self._clip_grad_norm)
+                torch.nn.utils.clip_grad_norm_(self._model.parameters(), self._clip_grad_norm)
 
     def _save_model(self, epochs_trained: int, score: float) -> None:
         metadata: Metadata = Metadata(best_score=score, trained_epochs=epochs_trained)
