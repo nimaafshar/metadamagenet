@@ -27,7 +27,7 @@ class ComboLoss(MonitoredLoss):
         names, losses, weights = zip(*weighted_losses)
         self.losses: nn.ModuleList = nn.ModuleList(losses)
         self.register_buffer("weights", torch.FloatTensor(weights))
-        self.register_buffer("names", names)
+        self._names = names
         self._monitor: bool = monitor
         if self._monitor:
             self._meters: List[AverageMeter] = [AverageMeter() for _ in len(names)]
@@ -51,7 +51,7 @@ class ComboLoss(MonitoredLoss):
         if not self._monitor:
             return "not monitored"
         children_last_values = []
-        for i, name in len(self.names):
+        for i, name in len(self._names):
             if isinstance(self.losses[i], MonitoredLoss) and self.losses[i].monitored:
                 children_last_values.append(f"{name}:{self.losses[i].last_values}")
             else:
@@ -62,7 +62,7 @@ class ComboLoss(MonitoredLoss):
         if not self._monitor:
             return "not monitored"
         children_aggregated = []
-        for i, name in len(self.names):
+        for i, name in len(self._names):
             if isinstance(self.losses[i], MonitoredLoss) and self.losses[i].monitored:
                 children_aggregated.append(f"{name}:{self.losses[i].aggregate()}")
             else:
