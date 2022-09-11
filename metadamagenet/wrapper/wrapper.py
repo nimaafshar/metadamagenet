@@ -53,7 +53,7 @@ class ModelWrapper(abc.ABC):
         )
         manager = ModelManager.get_instance()
         state_dict, metadata = manager.load_checkpoint(checkpoint)
-        empty_model: nn.Module = self.unet_type(self.empty_unet)
+        empty_model: nn.Module = self.unet_type(self.empty_unet())
         if self.data_parallel:
             empty_model = nn.DataParallel(empty_model)
         empty_model.load_state_dict(state_dict, strict=True)
