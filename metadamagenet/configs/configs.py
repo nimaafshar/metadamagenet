@@ -56,7 +56,6 @@ class GeneralConfig:
         self.images_dirname: str = source['dir-names']['images']
         self.labels_dirname: str = source['dir-names']['labels']
         self.masks_dirname: str = source['dir-names']['masks']
-        self.localization_dirname: str = source['dir-names']['localization']
 
         self.predictions_dir = pathlib.Path(source['predictions-dir'])
         self.models_root = pathlib.Path(source['models-root'])
