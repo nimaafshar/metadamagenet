@@ -24,12 +24,16 @@ class ChanneledLoss(MonitoredLoss):
         assert outputs.size(1) == targets.size(1) == len(self.losses), \
             "number of channels with number of losses do not match"
 
-        loss_values = [loss(outputs[:, i, ...], targets[:, i, ...]) for i, loss in enumerate(self.losses)]
-        weighted_loss = torch.dot(torch.tensor(loss_values), self.weights)
+        loss_items: List = []
+        weighted_loss = 0
+        for i, loss in enumerate(self._losses):
+            value = loss(outputs[:, i, ...], targets[:, i, ...])
+            weighted_loss = value * self._weights[i]
+            loss_items.append(value.item())
 
         if self._monitor:
-            for i, loss_value in enumerate(loss_values):
-                self._meters[i].update(loss_value.item(), outputs.size(0))
+            for i, loss_item in enumerate(loss_items):
+                self._meters[i].update(loss_item, outputs.size(0))
             self._total_loss_meter.update(weighted_loss.item(), outputs.size(0))
 
         return weighted_loss
@@ -46,8 +50,8 @@ class ChanneledLoss(MonitoredLoss):
             if isinstance(self.losses[i], MonitoredLoss) and self.losses[i].monitored:
                 children_last_values.append(self.losses[i].last_values)
             else:
-                children_last_values.append(f"{self._meters[i].val:.4f} ({self._meters[i].avg:.4f})")
-        return f"Total: {self._total_loss_meter.val:.4f} [{'; '.join(children_last_values)}]"
+                children_last_values.append(f"{self._meters[i].last:.4f} ({self._meters[i].avg:.4f})")
+        return f"Total: {self._total_loss_meter.last:.4f} [{'; '.join(children_last_values)}]"
 
     def aggregate(self) -> str:
         if not self._monitor:
