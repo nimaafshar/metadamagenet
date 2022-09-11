@@ -13,26 +13,26 @@ from ..logging import log
 
 
 class ModelWrapper(abc.ABC):
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def model_name(self) -> str:
         pass
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def input_size(self) -> Tuple[int, int]:
         """
         :return: (height,width)
         """
         pass
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def unet_type(self) -> Union[Type[Localizer], Type[Classifier]]:
         pass
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def data_parallel(self) -> bool:
         pass
 
@@ -77,8 +77,8 @@ class ModelWrapper(abc.ABC):
     def apply_activation(self, x: torch.Tensor) -> torch.Tensor:
         pass
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def default_score(self) -> Score:
         pass
 
