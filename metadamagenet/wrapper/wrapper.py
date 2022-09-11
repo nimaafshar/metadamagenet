@@ -94,4 +94,4 @@ class LocalizerModelWrapper(ModelWrapper, abc.ABC):
     )
 
     def apply_activation(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.sigmoid(x[:, 0, ...])
+        return torch.sigmoid(x)
