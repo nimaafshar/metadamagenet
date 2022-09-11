@@ -53,7 +53,8 @@ def dice_batch(msk_batch1: torch.BoolTensor, msk_batch2: torch.BoolTensor,
     """
 
     if msk_batch1.shape != msk_batch2.shape:
-        raise ValueError("Shape mismatch: msk_batch1 and msk_batch2 must have the same shape.")
+        raise ValueError("Shape mismatch: msk_batch1 and msk_batch2 must have the same shape. "
+                         f"got msk_batch1.shape={msk_batch1.shape} msk_batch2.shape={msk_batch2.shape}")
 
     msk_sum_batch: torch.Tensor = msk_batch1.sum(dim=(1, 2)) + msk_batch2.sum(dim=(1, 2))
 
