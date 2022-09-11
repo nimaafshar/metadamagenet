@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 from contextlib import nullcontext
+import gc
 
 from tqdm import tqdm
 import torch
@@ -80,6 +81,7 @@ class Trainer:
             log(f"===> :repeat_one: epoch {epoch}")
             log(f"======>:relieved: training")
             torch.cuda.empty_cache()
+            gc.collect()
             self._train_epoch()
             self._lr_scheduler.step()
             if self._validation_interval is not None and epoch % self._validation_interval == 0:
