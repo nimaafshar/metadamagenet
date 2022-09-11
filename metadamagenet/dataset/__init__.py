@@ -3,4 +3,4 @@ from .image_data import ImageData
 from .image_dataset import ImageDataset
 from .exceptions import DatasetNotDiscovered
 from .localization import LocalizationDataset
-from .classification import ClassificationDataset, ClassificationValidationDataset
+from .classification import ClassificationDataset
