@@ -146,6 +146,7 @@ class Trainer:
 
             iterator.set_postfix({
                 "loss": loss_status,
+                "score": score_status,
                 "lr": f"{self._lr_scheduler.get_last_lr()[-1]:.7f}"
             })
 
