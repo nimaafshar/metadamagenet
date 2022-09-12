@@ -73,12 +73,13 @@ class Trainer:
 
     def train(self) -> None:
         log(f':arrow_forward: starting to train model {self._wrapper.model_name}'
-            f' version {self._version} seed {self._seed}')
+            f" version='{self._version}' seed='{self._seed}'")
         log(f'steps_per_epoch: {len(self._dataloader)}')
 
         best_score: float = self._model_metadata.best_score
-        for epoch in range(self._model_metadata.trained_epochs + 1, self._epochs):
-            log(f"===> :repeat_one: epoch {epoch}")
+        for epoch in range(self._model_metadata.trained_epochs + 1,
+                           self._model_metadata.trained_epochs + 1 + self._epochs):
+            log(f"===> :repeat_one: epoch {epoch}/{self._model_metadata.trained_epochs + 1 + self._epochs}")
             log(f"======>:relieved: training")
             torch.cuda.empty_cache()
             gc.collect()
@@ -187,3 +188,4 @@ class Trainer:
         )
         manager: ModelManager = ModelManager.get_instance()
         manager.save_checkpoint(checkpoint, self._model.state_dict(), metadata)
+        log(f"======> model saved at {checkpoint}")
