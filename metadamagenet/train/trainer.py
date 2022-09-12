@@ -157,8 +157,6 @@ class Trainer:
         else:
             loss_status = loss_meter.avg_status
 
-        if isinstance(self._loss, MonitoredLoss):
-            self._loss.reset()
         self._score.reset()
 
         score_status: str = self._score.avg_status()
