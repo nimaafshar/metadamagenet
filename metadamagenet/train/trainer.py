@@ -168,7 +168,7 @@ class Trainer:
             self._grad_scaler.scale(loss).backward()
             self._grad_scaler.unscale_(self._optimizer)
             if self._clip_grad_norm is not None:
-                torch.nn.utils.clip_grad_norm(self._model.parameters(), self._clip_grad_norm)
+                torch.nn.utils.clip_grad_norm_(self._model.parameters(), self._clip_grad_norm)
             self._grad_scaler.step(self._optimizer)
             self._grad_scaler.update()
         else:
