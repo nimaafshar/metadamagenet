@@ -141,9 +141,10 @@ class Trainer:
                 loss_meter.update(loss.item(), inputs.size(0))
                 loss_status = loss_meter.status
 
-            activated_outputs: torch.Tensor = self._wrapper.apply_activation(outputs)
-            self._score.update(activated_outputs, targets)
-            score_status: str = self._score.status()
+            with torch.no_grad():
+                activated_outputs: torch.Tensor = self._wrapper.apply_activation(outputs)
+                self._score.update(activated_outputs, targets)
+                score_status: str = self._score.status()
 
             iterator.set_postfix({
                 "loss": loss_status,
