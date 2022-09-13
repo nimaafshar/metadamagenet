@@ -18,9 +18,9 @@ class DiceRound(ImageMetric):
         """
         out = 1 - output_batch[:, self._channel, ...] if self._inverse else output_batch[:, self._channel, ...]
         tar = 1 - targets_batch[:, self._channel, ...] if self._inverse else targets_batch[:, self._channel, ...]
-        dice_sc = 1 - dice_round(out, tar, per_image=True)
+        dice_sc: torch.Tensor = 1 - dice_round(out, tar, per_image=True)
         self._average.update(dice_sc.mean().item(), output_batch.size(0))
-        return dice_sc
+        return dice_sc.mean()
 
     @property
     def till_here(self) -> float:
@@ -49,9 +49,9 @@ class Dice(ImageMetric):
         """
         out = 1 - output_batch[:, self._channel, ...] if self._inverse else output_batch[:, self._channel, ...]
         tar = 1 - targets_batch[:, self._channel, ...] if self._inverse else targets_batch[:, self._channel, ...]
-        dice_scores = dice_batch(out, tar > self._threshold)
+        dice_scores: torch.Tensor = dice_batch(out, tar > self._threshold)
         self._average.update(dice_scores.mean().item(), output_batch.size(0))
-        return dice_scores
+        return dice_scores.mean()
 
     @property
     def till_here(self) -> float:
