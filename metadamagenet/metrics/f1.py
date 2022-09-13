@@ -8,14 +8,14 @@ from ..losses.epsilon import eps
 
 
 class F1Score(ImageMetric):
-    def __init__(self, start_idx: Optional[int] = None, end_idx: Optional[int] = None):
+    def __init__(self, start_idx: int, end_idx: int):
         """
         :param start_idx: index of start channel (inclusive)
         :param end_idx: index of end channel (exclusive)
         """
         super().__init__()
-        self._start_idx: Optional[int] = start_idx
-        self._end_idx: Optional[int] = end_idx
+        self._start_idx: int = start_idx
+        self._end_idx: int = end_idx
         self._channels: int = self._end_idx - self._start_idx
         self._f1_scores_sum: torch.Tensor = torch.zeros((self._channels,))
         self._f1_scores_average: torch.Tensor = torch.zeros((self._channels,))
