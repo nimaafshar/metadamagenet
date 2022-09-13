@@ -36,9 +36,11 @@ class Monitored(MonitoredImageLoss):
         self._average.update(value.item(), outputs.size(0))
         return value
 
+    @property
     def till_here(self) -> float:
         return self._average.till_here
 
+    @property
     def status_till_here(self) -> str:
         return self._average.status_till_here
 
