@@ -14,17 +14,17 @@ from torch.cuda import amp
 from ..models import Checkpoint, Metadata
 from ..models import Manager as ModelManager
 from ..augment import TestTimeAugmentor
-from ..metrics import Score, AverageMeter
+from ..metrics import ImageMetric
 from ..wrapper import ModelWrapper
 from ..logging import log
 from ..validate import Validator
-from ..losses import MonitoredLoss
+from ..losses import MonitoredImageLoss, Monitored
 
 
 @dataclass
 class ValidationInTrainingParams:
     dataloader: DataLoader
-    score: Optional[Score]
+    score: Optional[ImageMetric]
     test_time_augmentor: Optional[TestTimeAugmentor]
 
 
@@ -40,7 +40,7 @@ class Trainer:
                  lr_scheduler: MultiStepLR,
                  loss: nn.Module,
                  epochs: int,
-                 score: Score,
+                 score: ImageMetric,
                  validation_params: Optional[ValidationInTrainingParams] = None,
                  validation_interval: Optional[int] = None,
                  model_metadata: Metadata = Metadata(),
@@ -55,9 +55,9 @@ class Trainer:
         self._dataloader: DataLoader = dataloader
         self._optimizer: Optimizer = optimizer
         self._lr_scheduler: MultiStepLR = lr_scheduler
-        self._loss: nn.Module = loss
+        self._loss: MonitoredImageLoss = loss if isinstance(loss, MonitoredImageLoss) else Monitored(loss)
         self._epochs: int = epochs
-        self._score: Score = score
+        self._score: ImageMetric = score
 
         self._validation_params = validation_params
         self._validation_interval: int = validation_interval
@@ -118,7 +118,8 @@ class Trainer:
 
     def _train_epoch(self) -> None:
         self._model.train()
-        loss_meter: AverageMeter = AverageMeter()
+        self._loss.reset()
+        self._score.reset()
         iterator = tqdm(self._dataloader)
 
         i: int
@@ -134,36 +135,18 @@ class Trainer:
                 outputs: torch.Tensor = self._model(inputs)
                 loss: torch.Tensor = self._loss(outputs, targets)
 
-            loss_status: str = "--"
-            if isinstance(self._loss, MonitoredLoss) and self._loss.monitored:
-                loss_status = self._loss.last_values()
-            else:
-                loss_meter.update(loss.item(), inputs.size(0))
-                loss_status = loss_meter.status
-
             with torch.no_grad():
                 activated_outputs: torch.Tensor = self._wrapper.apply_activation(outputs)
-                self._score.update(activated_outputs, targets)
-                score_status: str = self._score.status()
+                self._score.update_batch(activated_outputs, targets)
 
             iterator.set_postfix({
-                "loss": loss_status,
-                "score": score_status,
+                "loss": self._loss.status_till_here,
+                "score": self._score.status_till_here,
                 "lr": f"{self._lr_scheduler.get_last_lr()[-1]:.7f}"
             })
-
             self._update_weights(loss)
 
-        loss_status: str = "--"
-        if isinstance(self._loss, MonitoredLoss) and self._loss.monitored:
-            loss_status = self._loss.aggregate()
-        else:
-            loss_status = loss_meter.avg_status
-
-        self._score.reset()
-
-        score_status: str = self._score.avg_status()
-        log(f"Training Results: loss: {loss_status} score:{score_status}")
+        log(f"Training Results: loss: {self._loss.status_till_here} score:{self._score.status_till_here}")
 
     def _update_weights(self, loss: torch.Tensor):
         self._optimizer.zero_grad()
