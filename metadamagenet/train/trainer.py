@@ -24,8 +24,8 @@ from ..losses import MonitoredImageLoss, Monitored
 @dataclass
 class ValidationInTrainingParams:
     dataloader: DataLoader
-    score: Optional[ImageMetric]
-    test_time_augmentor: Optional[TestTimeAugmentor]
+    score: Optional[ImageMetric] = None
+    test_time_augmentor: Optional[TestTimeAugmentor] = None
 
 
 class Trainer:
