@@ -1,17 +1,13 @@
 import abc
-from typing import Tuple, Optional
+from typing import Optional
 
 import torch
-from torch import nn
 
 from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
 from metadamagenet.models.unet import Unet
-from metadamagenet.models.metadata import Metadata
-from metadamagenet.models.checkpoint import Checkpoint
-from metadamagenet.models.manager import Manager
 from metadamagenet.models.unet import SeResnext50Unet
 from metadamagenet.models.senet import se_resnext50_32x4d, SENet
-from ..metrics import Score, F1Score
+from ..metrics import WeightedImageMetric, F1Score
 
 
 class SeResnext50Wrapper(ModelWrapper, abc.ABC):
@@ -34,7 +30,7 @@ class SeResnext50LocalizerWrapper(SeResnext50Wrapper, LocalizerModelWrapper):
 class SeResnext50ClassifierWrapper(SeResnext50Wrapper, ClassifierModelWrapper):
     data_parallel = True
     model_name = "SeResnext50UnetClassifier"
-    default_score = Score(
+    default_score = WeightedImageMetric(
         ("LocF1", F1Score(start_idx=0, end_idx=1), 0.3),
         ("F1", F1Score(start_idx=1), 0.7)
     )
