@@ -3,7 +3,7 @@ from typing import Optional
 from contextlib import nullcontext
 import gc
 
-from tqdm import tqdm
+from tqdm.autonotebook import tqdm
 import torch
 from torch import nn
 from torch.optim import Optimizer
