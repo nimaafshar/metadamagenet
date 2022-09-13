@@ -2,13 +2,12 @@ import abc
 from typing import Optional
 
 import torch
-from torch import nn
 
 from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
 from ..models.unet import Unet
 from ..models.unet import SeNet154Unet
 from ..models.senet import SENet, senet154
-from ..metrics import Score, F1Score
+from ..metrics import WeightedImageMetric, F1Score
 
 
 class SeNet154Wrapper(ModelWrapper, abc.ABC):
@@ -31,7 +30,7 @@ class SeNet154LocalizerWrapper(SeNet154Wrapper, LocalizerModelWrapper):
 class SeNet154ClassifierWrapper(SeNet154Wrapper, ClassifierModelWrapper):
     model_name = "SeNet154UnetClassifier"
     input_size = 448, 448
-    default_score = Score(
+    default_score = WeightedImageMetric(
         ("LocF1", F1Score(start_idx=0, end_idx=1), 0.3),
         ("F1", F1Score(start_idx=1), 0.7)
     )

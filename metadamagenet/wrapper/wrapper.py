@@ -8,7 +8,7 @@ from ..models import Metadata
 from ..models.unet import Unet, Localizer, Classifier
 from ..models.checkpoint import Checkpoint
 from ..models.manager import Manager as ModelManager
-from ..metrics import Score, Dice
+from ..metrics import WeightedImageMetric, Dice
 from ..logging import log
 
 
@@ -79,7 +79,7 @@ class ModelWrapper(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def default_score(self) -> Score:
+    def default_score(self) -> WeightedImageMetric:
         pass
 
 
@@ -89,7 +89,7 @@ class ClassifierModelWrapper(ModelWrapper, abc.ABC):
 
 class LocalizerModelWrapper(ModelWrapper, abc.ABC):
     unet_type = Localizer
-    default_score = Score(
+    default_score = WeightedImageMetric(
         ("Dice", Dice(threshold=0.5, channel=0), 1)
     )
 

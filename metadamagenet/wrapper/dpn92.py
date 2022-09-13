@@ -2,13 +2,12 @@ import abc
 from typing import Optional
 
 import torch
-from torch import nn
 
 from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
 from ..models.unet import Unet
 from ..models.unet import Dpn92Unet
 from ..models.dpn import DPN, dpn92
-from ..metrics import Score, F1Score
+from ..metrics import WeightedImageMetric, F1Score
 
 
 class Dpn92Wrapper(ModelWrapper, abc.ABC):
@@ -31,7 +30,7 @@ class Dpn92LocalizerWrapper(Dpn92Wrapper, LocalizerModelWrapper):
 class Dpn92ClassifierWrapper(Dpn92Wrapper, ClassifierModelWrapper):
     model_name = "Dpn92UnetClassifier"
     data_parallel = True
-    default_score = Score(
+    default_score = WeightedImageMetric(
         ("LocF1", F1Score(start_idx=0, end_idx=1), 0.3),
         ("F1", F1Score(start_idx=1), 0.7)
     )
