@@ -10,7 +10,15 @@ class MonitoredImageLoss(nn.Module, Metric, abc.ABC):
     """
     every loss that implements Metric interface is considered a monitored loss
     """
-    pass
+
+    @abc.abstractmethod
+    def forward(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        """
+        :param outputs: model outputs of shape (B,C,H,W)
+        :param targets: targets of shape (B,C,H,W)
+        :return: loss tensor
+        """
+        pass
 
 
 class Monitored(MonitoredImageLoss):
