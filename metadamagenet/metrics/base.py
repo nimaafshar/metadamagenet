@@ -8,7 +8,6 @@ class Metric:
     Interface of a metric
     """
 
-    @property
     @abc.abstractmethod
     def till_here(self) -> float:
         """
@@ -16,7 +15,6 @@ class Metric:
         """
         pass
 
-    @property
     @abc.abstractmethod
     def status_till_here(self) -> str:
         """

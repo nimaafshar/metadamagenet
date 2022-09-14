@@ -140,13 +140,13 @@ class Trainer:
                 self._score.update_batch(activated_outputs, targets)
 
             iterator.set_postfix({
-                "loss": self._loss.status_till_here,
-                "score": self._score.status_till_here,
+                "loss": self._loss.status_till_here(),
+                "score": self._score.status_till_here(),
                 "lr": f"{self._lr_scheduler.get_last_lr()[-1]:.7f}"
             })
             self._update_weights(loss)
 
-        log(f"Training Results: loss: {self._loss.status_till_here} score:{self._score.status_till_here}")
+        log(f"Training Results: loss: {self._loss.status_till_here()} score:{self._score.status_till_here()}")
 
     def _update_weights(self, loss: torch.Tensor):
         self._optimizer.zero_grad()

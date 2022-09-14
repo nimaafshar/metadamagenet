@@ -69,10 +69,10 @@ class Validator:
                     self._score.update_batch(activated_outputs, targets)
 
                 iterator.set_postfix({
-                    "loss": self._loss.status_till_here if self._loss is not None else "--",
-                    "score": self._score.status_till_here
+                    "loss": self._loss.status_till_here() if self._loss is not None else "--",
+                    "score": self._score.status_till_here()
                 })
 
-            log(f"Validation Results: loss:{self._loss.status_till_here if self._loss is not None else '--'} "
-                f"score:{self._score.status_till_here}")
-            return self._score.till_here
+            log(f"Validation Results: loss:{self._loss.status_till_here() if self._loss is not None else '--'} "
+                f"score:{self._score.status_till_here()}")
+            return self._score.till_here()

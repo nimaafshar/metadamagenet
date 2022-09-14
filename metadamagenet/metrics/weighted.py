@@ -23,15 +23,13 @@ class WeightedImageMetric(ImageMetric):
         self._average.update(weighted_sum.item(), count=outputs.size(0))
         return weighted_sum
 
-    @property
     def till_here(self) -> float:
-        return self._average.till_here
+        return self._average.till_here()
 
-    @property
     def status_till_here(self) -> str:
-        return f"Weighted: {self._average.status_till_here}[" + \
-               ",".join((f"{self._names[i]}: {metric.status_till_here}" for i, metric in enumerate(self._metrics))) + \
-               "]"
+        return f"Weighted: {self._average.status_till_here()}[" + \
+               ",".join((f"{self._names[i]}: {metric.status_till_here()}" for i, metric in enumerate(self._metrics))) \
+               + "]"
 
     def reset(self) -> None:
         self._average.reset()
