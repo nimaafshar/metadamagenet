@@ -67,7 +67,7 @@ class LocalizationDataset(Dataset):
 
         img = normalize_colors(img)
 
-        img: torch.FloatTensor = torch.from_numpy(img.transpose((2, 0, 1))).float()
-        msk: torch.IntTensor = torch.from_numpy(msk.transpose((2, 0, 1)))
+        img: torch.FloatTensor = torch.from_numpy(img.transpose((2, 0, 1)).copy()).float()
+        msk: torch.IntTensor = torch.from_numpy(msk.transpose((2, 0, 1)).copy())
 
         return img, msk
