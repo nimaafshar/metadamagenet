@@ -111,7 +111,7 @@ class ClassificationDataset(Dataset):
         img = np.concatenate([img_pre, img_post], axis=2)
         img = normalize_colors(img)
 
-        img = torch.from_numpy(img.transpose((2, 0, 1))).float()
-        msk = torch.from_numpy(msk.transpose((2, 0, 1))).long()
+        img = torch.from_numpy(img.transpose((2, 0, 1)).copy()).float()
+        msk = torch.from_numpy(msk.transpose((2, 0, 1)).copy()).long()
 
         return img, msk
