@@ -1,9 +1,6 @@
-from typing import Optional
-
 import torch
 
 from .base import ImageMetric
-from .average import AverageMetric
 from ..losses.epsilon import eps
 
 
@@ -22,16 +19,16 @@ class F1Score(ImageMetric):
         self._count: int = 0
 
     def update_batch(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
-        label_outputs = outputs[:, self._start_idx:self._end_idx, ...].argmax(dim=1)
-        label_targets = targets[:, self._start_idx:self._end_idx, ...].argmax(dim=1)
+        label_outputs = outputs.argmax(dim=1)
+        label_targets = targets.argmax(dim=1)
         targ = label_targets * (targets[:, 0, ...] > 0)  # filter targets with masks
         # IDEA: maybe filter with preloaded loc mask
         out = label_outputs * (targets[:, 0, ...] > 0)  # filter predictions with masks
         target_one_hot = torch.nn.functional.one_hot(targ.flatten())
         out_one_hot = torch.nn.functional.one_hot(out.flatten())
-        tp = torch.logical_and(out_one_hot == 1, target_one_hot == 1).sum(dim=0)
-        fn = torch.logical_and(out_one_hot != 1, target_one_hot == 1).sum(dim=0)
-        fp = torch.logical_and(out_one_hot == 1, target_one_hot != 1).sum(dim=0)
+        tp = torch.logical_and(out_one_hot == 1, target_one_hot == 1).sum(dim=0)[self._start_idx:self._end_idx]
+        fn = torch.logical_and(out_one_hot != 1, target_one_hot == 1).sum(dim=0)[self._start_idx:self._end_idx]
+        fp = torch.logical_and(out_one_hot == 1, target_one_hot != 1).sum(dim=0)[self._start_idx:self._end_idx]
         f1_scores = 2 * tp / (2 * tp + fp + fn)
         self._f1_scores_sum += f1_scores * outputs.size(0)
         self._count += outputs.size(0)
