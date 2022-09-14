@@ -4,7 +4,7 @@ import torch
 from torch import nn
 
 from .base import MonitoredImageLoss, Monitored
-from ..metrics import AverageMetric
+from ..metrics.average import AverageMetric
 
 
 class ChanneledLoss(MonitoredImageLoss):
