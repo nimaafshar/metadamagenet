@@ -50,8 +50,9 @@ class Localizer(nn.Module):
             self.res.bias.data.zero_()
 
 
-class Classifier:
+class Classifier(nn.Module):
     def __init__(self, unet: Unet):
+        super().__init__()
         self.unet: Unet = unet
         self.res: nn.Conv2d = nn.Conv2d(in_channels=self.unet.out_channels * 2,
                                         out_channels=5,
