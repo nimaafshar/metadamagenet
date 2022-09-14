@@ -296,10 +296,10 @@ class RandomCrop(AugmentationInterface):
     def _score_on_batch(msk_batch: Dict[str, npt.NDArray], crop_size: int, x0: int, y0: int,
                         weights: Dict[str, float]) -> int:
         score: int = 0
-        for key, weight in weights:
+        for key, weight in weights.items():
             msk = msk_batch.get(key)
             if msk is not None:
-                score += RandomCrop.score(msk, crop_size, x0, y0)
+                score += RandomCrop.score(msk, crop_size, x0, y0) * weight
         return score
 
     def _determine_params(self) -> ParamType:
