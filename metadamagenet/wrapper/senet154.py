@@ -32,7 +32,7 @@ class SeNet154ClassifierWrapper(SeNet154Wrapper, ClassifierModelWrapper):
     input_size = 448, 448
     default_score = WeightedImageMetric(
         ("LocF1", F1Score(start_idx=0, end_idx=1), 0.3),
-        ("F1", F1Score(start_idx=1,end_idx=5), 0.7)
+        ("F1", F1Score(start_idx=1, end_idx=5), 0.7)
     )
 
     def apply_activation(self, x: torch.Tensor) -> torch.Tensor:
