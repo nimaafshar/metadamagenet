@@ -22,13 +22,11 @@ class DiceRound(ImageMetric):
         self._average.update(dice_sc.mean().item(), output_batch.size(0))
         return dice_sc.mean()
 
-    @property
     def till_here(self) -> float:
-        return self._average.till_here
+        return self._average.till_here()
 
-    @property
     def status_till_here(self) -> str:
-        return self._average.status_till_here
+        return self._average.status_till_here()
 
     def reset(self) -> None:
         self._average.reset()
@@ -53,13 +51,11 @@ class Dice(ImageMetric):
         self._average.update(dice_scores.mean().item(), output_batch.size(0))
         return dice_scores.mean()
 
-    @property
     def till_here(self) -> float:
-        return self._average.till_here
+        return self._average.till_here()
 
-    @property
     def status_till_here(self) -> str:
-        return self._average.status_till_here
+        return self._average.status_till_here()
 
     def reset(self) -> None:
         self._average.reset()

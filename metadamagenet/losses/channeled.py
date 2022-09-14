@@ -28,14 +28,12 @@ class ChanneledLoss(MonitoredImageLoss):
         self._total_loss_meter.update(weighted_loss.item(), outputs.size(0))
         return weighted_loss
 
-    @property
     def till_here(self) -> float:
-        return self._total_loss_meter.till_here
+        return self._total_loss_meter.till_here()
 
-    @property
     def status_till_here(self) -> str:
-        return f"Weighted: {self._total_loss_meter.status_till_here}[" + \
-               ",".join((f"{self._names[i]}: {loss.status_till_here}" for i, loss in enumerate(self.losses))) + \
+        return f"Weighted: {self._total_loss_meter.status_till_here()}[" + \
+               ",".join((f"{self._names[i]}: {loss.status_till_here()}" for i, loss in enumerate(self.losses))) + \
                "]"
 
     def reset(self) -> None:

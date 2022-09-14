@@ -23,10 +23,8 @@ class AverageMetric(Metric):
         self._sum = 0
         self._count = 0
 
-    @property
     def till_here(self) -> float:
         return self._avg
 
-    @property
     def status_till_here(self) -> str:
         return f"{self._avg:.4f}"
