@@ -20,7 +20,7 @@ class WeightedLoss(MonitoredImageLoss):
     )
     """
 
-    def __init__(self, *weighted_losses: Tuple[str, nn.Module, float], monitor: bool = False):
+    def __init__(self, *weighted_losses: Tuple[str, nn.Module, float]):
         super().__init__()
         losses: Tuple[nn.Module]
         weights: Tuple[float]
