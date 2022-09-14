@@ -33,7 +33,7 @@ class ChanneledLoss(MonitoredImageLoss):
 
     def status_till_here(self) -> str:
         return f"Weighted: {self._total_loss_meter.status_till_here()}[" + \
-               ",".join((f"{self._names[i]}: {loss.status_till_here()}" for i, loss in enumerate(self.losses))) + \
+               ",".join((f"{loss.status_till_here()}" for loss in self.losses)) + \
                "]"
 
     def reset(self) -> None:
