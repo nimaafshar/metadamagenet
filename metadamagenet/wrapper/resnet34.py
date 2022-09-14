@@ -34,7 +34,7 @@ class Resnet34ClassifierWrapper(Resnet34Wrapper, ClassifierModelWrapper):
     input_size = (608, 608)
     default_score = WeightedImageMetric(
         ("LocDice", Dice(threshold=0.5, channel=0, inverse=True), 0.3),
-        ("F1", F1Score(start_idx=1,end_idx=5), 0.7)
+        ("F1", F1Score(start_idx=1, end_idx=5), 0.7)
     )
 
     def apply_activation(self, x: torch.Tensor) -> torch.Tensor:
