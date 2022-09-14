@@ -52,7 +52,7 @@ class LocalizationDataset(Dataset):
 
         # read pre_disaster image and msk
         img: npt.NDArray = cv2.imread(str(image_data.image(data_time)), cv2.IMREAD_COLOR)
-        msk: npt.NDArray = cv2.imread(str(image_data.mask(data_time)), cv2.IMREAD_UNCHANGED)
+        msk: npt.NDArray = (cv2.imread(str(image_data.mask(data_time)), cv2.IMREAD_UNCHANGED) > 0) * 1
 
         if not self._use_post_disaster_images and random.random() > self._post_version_prob:
             # replace with post_disaster version
