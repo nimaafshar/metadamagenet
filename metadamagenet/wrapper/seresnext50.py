@@ -34,6 +34,3 @@ class SeResnext50ClassifierWrapper(SeResnext50Wrapper, ClassifierModelWrapper):
         ("LocF1", F1Score(start_idx=0, end_idx=1, num_classes=5), 0.3),
         ("F1", F1Score(start_idx=1, end_idx=5, num_classes=5), 0.7)
     )
-
-    def apply_activation(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.softmax(x, dim=1)
