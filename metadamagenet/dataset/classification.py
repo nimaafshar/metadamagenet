@@ -1,47 +1,39 @@
-from typing import Optional, Dict
+from typing import Optional, List, Tuple
 
 import numpy as np
 import numpy.typing as npt
 import cv2
 import torch
-
+from torch.utils.data import Dataset
 from skimage.morphology import square, dilation
 
 from ..augment import Pipeline
 from ..utils import normalize_colors
 from .data_time import DataTime
 from .image_data import ImageData
-from .image_dataset import ImageDataset
-from .base import Dataset
-
-
-def get_one_hot(targets: npt.NDArray, nb_classes: int):
-    res = np.eye(nb_classes)[np.array(targets).reshape(-1)]
-    return res.reshape(list(targets.shape) + [nb_classes])
 
 
 class ClassificationDataset(Dataset):
     def __init__(self,
-                 image_dataset: ImageDataset,
+                 image_dataset: List[ImageData],
                  do_dilation: bool = False,
                  augmentations: Optional[Pipeline] = None):
         """
         Train Dataset
         :param do_dilation: do morphological dilation to image or not
-        :param image_dataset: dataset of images
+        :param image_dataset: list of image datas
         :param augmentations: pipeline of augmentations
         """
+        self._image_dataset: List[ImageData] = image_dataset
         self._do_dilation: bool = do_dilation
-        super().__init__(image_dataset, augmentations)
+        self._augments: Optional[Pipeline] = augmentations
 
-    def __getitem__(self, identifier: int) -> Dict[str, npt.NDArray]:
+    def __getitem__(self, identifier: int) -> Tuple[torch.FloatTensor, torch.LongTensor]:
         """
         :param identifier: # of image data
-        :return: {
-            img: (concat of pre- and post-images,
-            msk: (concat of msk0 - msk4),
-            label_msk: (a mask with damage labels)
-            }
+        :return: (inputs, targets)
+            inputs: FloatTensor of shape (6,1024,1024)
+            targets: LongTensor of shape (5,1024,1024)
         """
         image_data: ImageData = self._image_dataset[identifier]
 

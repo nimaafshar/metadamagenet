@@ -1,7 +1,8 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 import random
 
 import torch
+from torch.utils.data import Dataset
 import numpy.typing as npt
 import numpy as np
 import cv2
@@ -9,14 +10,12 @@ import cv2
 from ..utils import normalize_colors
 from ..augment import Pipeline
 from .data_time import DataTime
-from .image_dataset import ImageDataset
 from .image_data import ImageData
-from .base import Dataset
 
 
 class LocalizationDataset(Dataset):
     def __init__(self,
-                 image_dataset: ImageDataset,
+                 image_dataset: List[ImageData],
                  augmentations: Optional[Pipeline] = None,
                  post_version_prob: float = 0.985,
                  use_post_disaster_images: bool = False):
@@ -26,7 +25,8 @@ class LocalizationDataset(Dataset):
         :param augmentations: pipeline of augmentations
         :param post_version_prob: 1 - probability of replacing the image with its post version
         """
-        super(LocalizationDataset, self).__init__(image_dataset, augmentations)
+        self._image_dataset: List[ImageData] = image_dataset
+        self._augments: Optional[Pipeline] = augmentations
         if not 0 <= post_version_prob <= 1:
             raise TypeError("post_version_prob should be in [0,1]")
         self._post_version_prob: float = post_version_prob
@@ -37,7 +37,13 @@ class LocalizationDataset(Dataset):
             return 2 * len(self._image_dataset)
         return len(self._image_dataset)
 
-    def __getitem__(self, identifier: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(self, identifier: int) -> Tuple[torch.FloatTensor, torch.LongTensor]:
+        """
+        :param identifier: # of image data
+        :return: (inputs, targets)
+            inputs: FloatTensor of shape (3,1024,1024)
+            targets: LongTensor of shape (1,1024,1024)
+        """
         image_data: ImageData
         data_time: DataTime
         if self._use_post_disaster_images:
@@ -57,7 +63,7 @@ class LocalizationDataset(Dataset):
         if not self._use_post_disaster_images and random.random() > self._post_version_prob:
             # replace with post_disaster version
             img: npt.NDArray = cv2.imread(str(image_data.image(DataTime.POST)), cv2.IMREAD_COLOR)
-            msk: npt.NDArray = cv2.imread(str(image_data.mask(DataTime.POST)), cv2.IMREAD_UNCHANGED)
+            msk: npt.NDArray = (cv2.imread(str(image_data.mask(DataTime.POST)), cv2.IMREAD_UNCHANGED) > 0) * 1
             # tell the owner: previously pre-disaster masks were used for post-disaster images too
 
         if self._augments is not None:

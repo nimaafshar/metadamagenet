@@ -1,6 +1,4 @@
 from .data_time import DataTime
-from .image_data import ImageData
-from .image_dataset import ImageDataset
-from .exceptions import DatasetNotDiscovered
+from .image_data import ImageData, discover_directories, discover_directory
 from .localization import LocalizationDataset
 from .classification import ClassificationDataset
