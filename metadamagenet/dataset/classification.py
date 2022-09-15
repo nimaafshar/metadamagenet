@@ -28,6 +28,9 @@ class ClassificationDataset(Dataset):
         self._do_dilation: bool = do_dilation
         self._augments: Optional[Pipeline] = augmentations
 
+    def __len__(self):
+        return len(self._image_dataset)
+
     def __getitem__(self, identifier: int) -> Tuple[torch.FloatTensor, torch.LongTensor]:
         """
         :param identifier: # of image data
@@ -107,3 +110,4 @@ class ClassificationDataset(Dataset):
         msk = torch.from_numpy(msk.transpose((2, 0, 1)).copy()).long()
 
         return img, msk
+
