@@ -5,7 +5,7 @@ from ..losses.epsilon import eps
 
 
 class F1Score(ImageMetric):
-    def __init__(self, start_idx: int, end_idx: int):
+    def __init__(self, start_idx: int, end_idx: int, num_classes: int):
         """
         :param start_idx: index of start channel (inclusive)
         :param end_idx: index of end channel (exclusive)
@@ -17,6 +17,7 @@ class F1Score(ImageMetric):
         self._f1_scores_sum: torch.Tensor = torch.zeros((self._channels,))
         self._f1_scores_average: torch.Tensor = torch.zeros((self._channels,))
         self._count: int = 0
+        self._num_classes: int = num_classes
 
     def update_batch(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         label_outputs = outputs.argmax(dim=1)
@@ -24,12 +25,12 @@ class F1Score(ImageMetric):
         targ = label_targets * (targets[:, 0, ...] > 0)  # filter targets with masks
         # IDEA: maybe filter with preloaded loc mask
         out = label_outputs * (targets[:, 0, ...] > 0)  # filter predictions with masks
-        target_one_hot = torch.nn.functional.one_hot(targ.flatten())
-        out_one_hot = torch.nn.functional.one_hot(out.flatten())
-        tp = torch.logical_and(out_one_hot == 1, target_one_hot == 1).sum(dim=0)[self._start_idx:self._end_idx]
-        fn = torch.logical_and(out_one_hot != 1, target_one_hot == 1).sum(dim=0)[self._start_idx:self._end_idx]
-        fp = torch.logical_and(out_one_hot == 1, target_one_hot != 1).sum(dim=0)[self._start_idx:self._end_idx]
-        f1_scores = 2 * tp / (2 * tp + fp + fn)
+        target_one_hot = torch.nn.functional.one_hot(targ.flatten(), self._num_classes)
+        out_one_hot = torch.nn.functional.one_hot(out.flatten(), self._num_classes)
+        tp = torch.logical_and(out_one_hot == 1, target_one_hot == 1).sum(dim=0)
+        fn = torch.logical_and(out_one_hot != 1, target_one_hot == 1).sum(dim=0)
+        fp = torch.logical_and(out_one_hot == 1, target_one_hot != 1).sum(dim=0)
+        f1_scores = (2 * tp / (2 * tp + fp + fn))[self._start_idx:self._end_idx]
         self._f1_scores_sum += f1_scores * outputs.size(0)
         self._count += outputs.size(0)
         self._f1_scores_average = self._f1_scores_sum / self._count
