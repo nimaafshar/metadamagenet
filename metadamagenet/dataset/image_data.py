@@ -72,7 +72,7 @@ def discover_directories(directories: Iterable[pathlib.Path], check: bool = True
     results: List[ImageData] = []
     directory: pathlib.Path
     for directory in directories:
-        results.extend(discover_directory(directory))
+        results.extend(discover_directory(directory, check))
     return results
 
 
