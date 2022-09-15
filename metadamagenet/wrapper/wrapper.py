@@ -86,6 +86,9 @@ class ModelWrapper(abc.ABC):
 class ClassifierModelWrapper(ModelWrapper, abc.ABC):
     unet_type = Classifier
 
+    def apply_activation(self, x: torch.Tensor) -> torch.Tensor:
+        return torch.softmax(x, dim=1)
+
 
 class LocalizerModelWrapper(ModelWrapper, abc.ABC):
     unet_type = Localizer
