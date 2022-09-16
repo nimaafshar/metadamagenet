@@ -41,11 +41,11 @@ class ClassificationDataset(Dataset):
         image_data: ImageData = self._image_dataset[identifier]
 
         # read pre_disaster image and msk
-        img_pre: npt.NDArray = cv2.imread(str(image_data.image(DataTime.PRE)), cv2.IMREAD_COLOR)
+        img_pre: npt.NDArray = cv2.imread(str(image_data.image(DataTime.PRE)), cv2.IMREAD_COLOR).astype("uint8")
         # msk_pre: npt.NDArray = cv2.imread(str(image_data.mask(DataTime.PRE)), cv2.IMREAD_UNCHANGED)
 
         # read post_disaster image and mask
-        img_post: npt.NDArray = cv2.imread(str(image_data.image(DataTime.POST)), cv2.IMREAD_COLOR)
+        img_post: npt.NDArray = cv2.imread(str(image_data.image(DataTime.POST)), cv2.IMREAD_COLOR).astype("uint8")
         msk_post: npt.NDArray = cv2.imread(str(image_data.mask(DataTime.POST)), cv2.IMREAD_UNCHANGED).astype("uint8")
         # values 0-4
 
