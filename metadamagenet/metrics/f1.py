@@ -25,10 +25,10 @@ class F1Score(ImageMetric):
         fn = torch.logical_and(targets == 1, out != 1).flatten(start_dim=2).sum(dim=2)
         fp = torch.logical_and(targets != 1, out == 1).flatten(start_dim=2).sum(dim=2)
         f1_scores = (2 * tp / (2 * tp + fp + fn)).nan_to_num(nan=0).sum(dim=0)[self._start_idx:self._end_idx]
-        self._f1_scores_sum += f1_scores * outputs.size(0)
+        self._f1_scores_sum += f1_scores
         self._count += outputs.size(0)
         self._f1_scores_average = self._f1_scores_sum / self._count
-        return self._channels / torch.sum(1.0 / (f1_scores + eps))
+        return self._channels / torch.sum(1.0 / ((f1_scores / outputs.size(0)) + eps))
 
     def till_here(self) -> float:
         return (self._channels / torch.sum(1.0 / (self._f1_scores_average + eps))).item()
