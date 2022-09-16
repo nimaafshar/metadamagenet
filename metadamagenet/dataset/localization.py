@@ -58,12 +58,13 @@ class LocalizationDataset(Dataset):
 
         # read image and msk
         img: npt.NDArray = cv2.imread(str(image_data.image(data_time)), cv2.IMREAD_COLOR)
-        msk: npt.NDArray = ((cv2.imread(str(image_data.mask(data_time)), cv2.IMREAD_UNCHANGED) > 0) * 1).copy()
+        msk: npt.NDArray = (cv2.imread(str(image_data.mask(data_time)), cv2.IMREAD_UNCHANGED) > 0).astype("uint8")
 
         if not self._use_post_disaster_images and random.random() > self._post_version_prob:
             # replace with post_disaster version
             img: npt.NDArray = cv2.imread(str(image_data.image(DataTime.POST)), cv2.IMREAD_COLOR)
-            msk: npt.NDArray = ((cv2.imread(str(image_data.mask(DataTime.POST)), cv2.IMREAD_UNCHANGED) > 0) * 1).copy()
+            msk: npt.NDArray = (cv2.imread(str(image_data.mask(DataTime.POST)), cv2.IMREAD_UNCHANGED) > 0) \
+                .astype("uint8")
             # tell the owner: previously pre-disaster masks were used for post-disaster images too
 
         if self._augments is not None:

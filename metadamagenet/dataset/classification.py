@@ -46,7 +46,7 @@ class ClassificationDataset(Dataset):
 
         # read post_disaster image and mask
         img_post: npt.NDArray = cv2.imread(str(image_data.image(DataTime.POST)), cv2.IMREAD_COLOR)
-        msk_post: npt.NDArray = cv2.imread(str(image_data.mask(DataTime.POST)), cv2.IMREAD_UNCHANGED)  # * 255
+        msk_post: npt.NDArray = cv2.imread(str(image_data.mask(DataTime.POST)), cv2.IMREAD_UNCHANGED).astype("uint8")
         # values 0-4
 
         # convert label_mask into four black and white masks
