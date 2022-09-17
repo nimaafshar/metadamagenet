@@ -17,6 +17,7 @@ class DamageF1Score(ImageMetric):
         """
         super().__init__()
         self.f1_metric = TorchMetricsF1Score(num_classes=5, average=None, mdmc_average='samplewise')
+        self._clip_localization_mask: bool = clip_localization_mask
         self._overall: AverageMetric = AverageMetric()  # harmonic mean of classes
         self._undamaged: AverageMetric = AverageMetric()  # class 1
         self._minor: AverageMetric = AverageMetric()  # class 2
@@ -27,6 +28,8 @@ class DamageF1Score(ImageMetric):
         batch_size: int = outputs.size(0)
         target_labels: torch.LongTensor = targets.argmax(dim=1)
         output_labels: torch.LongTensor = outputs.argmax(dim=1)
+        if self._clip_localization_mask:
+            output_labels = output_labels * (target_labels > 0)
         f1_scores: torch.FloatTensor = self.f1_metric(output_labels, target_labels)  # tensor of shape (5,)
         overall_f1_score: torch.Tensor = (4 / torch.sum(1 / (f1_scores[1:] + eps)))
         self._undamaged.update(f1_scores[1].item(), batch_size)
@@ -76,4 +79,3 @@ class LocalizationF1Score(ImageMetric):
     def reset(self) -> None:
         self.f1_metric.reset()
         self._avg.reset()
-
