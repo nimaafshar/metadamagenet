@@ -1,17 +1,31 @@
 - refactor:
-  - [ ] examples
-  - [ ] classification dataset
+  - [ ] apply official scoring method
   - [ ] fix augmentations bug
-  - [ ] migrate to torchvision transforms 
-- [ ] create masks for `tier3` data
-- [ ] test classification models
-- [ ] predict and calculate accuracy on `test` and `holdout` sets
-- [ ] create Split from `ImageDataset`
-- [ ] create meta-split from `ImageDataset`
-- [ ] read *MAML* codes
-- [ ] implement *MAML* codes
-- [ ] experiment: train and test localization models with post-disaster images too
-- [ ] fix model load and save
-- [ ] experiment a localization dataset which can load both pre and post disaster images
-- [ ] integrate augmentations with torchvision
-- [ ] EfficientNet test
+  - [ ] rewrite examples
+  - [ ] create masks for `tier3` data
+  - [ ] add prediction to validator
+  - [ ] create multiple model validator
+  - [ ] migrate augmentations to `torchvision` transforms
+  - [ ] make use of one model for both classification and localization with good score
+
+- Test:
+  - [ ] test classification models
+  - [ ] test localization models
+  - [ ] on test and holdout set
+  - [ ] predict and calculate accuracy on `test` and `holdout` sets
+  
+- Improvements On Original Model
+  - [ ] train and test localization models with post-disaster images too
+  - [ ] experiment with `EfficientNet B0` and more 
+
+- *MAML*:
+  - [ ] read about MAML
+  - [ ] read *MAML* codes
+  - [ ] create tasks from dataset
+  - [ ] create meta-batch from a task
+  - [ ] overall workflow of maml training
+  - [ ] implement *MAML* algorithm
+
+- *Replite*:
+  - [ ] read about difference of *MAML* and *Replite*
+  - [ ] implement *Reptile* algorithm
