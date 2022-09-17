@@ -28,13 +28,13 @@ class DamageF1Score(ImageMetric):
         target_labels: torch.LongTensor = targets.argmax(dim=1)
         output_labels: torch.LongTensor = outputs.argmax(dim=1)
         f1_scores: torch.FloatTensor = self.f1_metric(output_labels, target_labels)  # tensor of shape (5,)
-        overall_f1_score: float = (4 / torch.sum(1 / (f1_scores[1:] + eps))).item()
+        overall_f1_score: torch.Tensor = (4 / torch.sum(1 / (f1_scores[1:] + eps)))
         self._undamaged.update(f1_scores[1].item(), batch_size)
         self._minor.update(f1_scores[2].item(), batch_size)
         self._major.update(f1_scores[3].item(), batch_size)
         self._destroyed.update(f1_scores[4].item(), batch_size)
-        self._overall.update(overall_f1_score, batch_size)
-        return f1_scores
+        self._overall.update(overall_f1_score.item(), batch_size)
+        return overall_f1_score
 
     def till_here(self) -> float:
         return self._overall.till_here()
