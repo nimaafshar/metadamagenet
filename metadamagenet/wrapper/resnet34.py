@@ -34,5 +34,5 @@ class Resnet34ClassifierWrapper(Resnet34Wrapper, ClassifierModelWrapper):
     input_size = (608, 608)
     default_score: ImageMetric = WeightedImageMetric(
         ("LocDice", Dice(threshold=0.5, channel=0, inverse=True), 0.3),
-        ("F1", DamageF1Score(clip_localization_mask=True), 0.7)
+        ("F1", DamageF1Score(), 0.7)
     )
