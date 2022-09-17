@@ -1,14 +1,13 @@
 import abc
 from typing import Optional
 
-import torch
-from torchvision.models import resnet34, ResNet
 from torchvision.models import ResNet34_Weights
+from torchvision.models import resnet34, ResNet
 
 from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
-from ..models.unet import Unet
-from ..models.unet import Resnet34Unet
 from ..metrics import WeightedImageMetric, DamageF1Score, Dice, ImageMetric
+from ..models.unet import Resnet34Unet
+from ..models.unet import Unet
 
 
 class Resnet34Wrapper(ModelWrapper, abc.ABC):

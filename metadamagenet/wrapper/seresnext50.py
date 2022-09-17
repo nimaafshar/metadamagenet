@@ -1,12 +1,10 @@
 import abc
 from typing import Optional
 
-import torch
-
-from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
-from metadamagenet.models.unet import Unet
-from metadamagenet.models.unet import SeResnext50Unet
 from metadamagenet.models.senet import se_resnext50_32x4d, SENet
+from metadamagenet.models.unet import SeResnext50Unet
+from metadamagenet.models.unet import Unet
+from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
 from ..metrics import xview2, ImageMetric
 
 
