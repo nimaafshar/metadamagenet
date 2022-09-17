@@ -8,16 +8,15 @@ eps = 1e-6
 
 
 class DamageF1Score(ImageMetric):
-    def __init__(self, clip_localization_mask: bool = False):
+    def __init__(self):
         """
-        :param clip_localization_mask: filter output damage masks with targets localization mask. \
+        this score filters output damage masks with targets localization mask. \
         this essentially removes the localization part of this metric and only the classification part remains. \
         this makes this score almost equal to one described at xview2 scoring
         TODO: filter output mask with a localization mask predicted by the respective localization model
         """
         super().__init__()
-        self.f1_metric = TorchMetricsF1Score(num_classes=5, average=None, mdmc_average='samplewise')
-        self._clip_localization_mask: bool = clip_localization_mask
+        self.f1_metric = TorchMetricsF1Score(num_classes=5, average=None)
         self._overall: AverageMetric = AverageMetric()  # harmonic mean of classes
         self._undamaged: AverageMetric = AverageMetric()  # class 1
         self._minor: AverageMetric = AverageMetric()  # class 2
@@ -28,9 +27,8 @@ class DamageF1Score(ImageMetric):
         batch_size: int = outputs.size(0)
         target_labels: torch.LongTensor = targets.argmax(dim=1)
         output_labels: torch.LongTensor = outputs.argmax(dim=1)
-        if self._clip_localization_mask:
-            output_labels = output_labels * (target_labels > 0)
-        f1_scores: torch.FloatTensor = self.f1_metric(output_labels, target_labels)  # tensor of shape (5,)
+        f1_scores: torch.FloatTensor = self.f1_metric(output_labels[target_labels > 0],
+                                                      target_labels[target_labels > 0])  # returns tensor of shape (5,)
         overall_f1_score: torch.Tensor = (4 / torch.sum(1 / (f1_scores[1:] + eps)))
         self._undamaged.update(f1_scores[1].item(), batch_size)
         self._minor.update(f1_scores[2].item(), batch_size)
