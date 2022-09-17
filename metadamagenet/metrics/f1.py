@@ -1,40 +1,62 @@
 import torch
 from torchmetrics import F1Score as TorchMetricsF1Score
-from typing import Optional
 
 from .base import ImageMetric
 from ..metrics import AverageMetric
 
+eps = 1e-6
 
-class F1Score(ImageMetric):
-    def __init__(self, num_classes: int, average: Optional[str] = 'macro'):
+
+class DamageF1Score(ImageMetric):
+    def __init__(self, clip_localization_mask: bool = False):
+        """
+        :param clip_localization_mask: filter output damage masks with targets localization mask. \
+        this essentially removes the localization part of this metric and only the classification part remains. \
+        this makes this score almost equal to one described at xview2 scoring
+        TODO: filter output mask with a localization mask predicted by the respective localization model
+        """
         super().__init__()
-        self.f1_metric = TorchMetricsF1Score(num_classes=num_classes, average=average, mdmc_average='samplewise')
-        self._avg: AverageMetric = AverageMetric()
+        self.f1_metric = TorchMetricsF1Score(num_classes=5, average=None, mdmc_average='samplewise')
+        self._overall: AverageMetric = AverageMetric()  # harmonic mean of classes
+        self._undamaged: AverageMetric = AverageMetric()  # class 1
+        self._minor: AverageMetric = AverageMetric()  # class 2
+        self._major: AverageMetric = AverageMetric()  # class 3
+        self._destroyed: AverageMetric = AverageMetric()  # class 4
 
     def update_batch(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
-        output_labels: torch.LongTensor = outputs.argmax(dim=1)
+        batch_size: int = outputs.size(0)
         target_labels: torch.LongTensor = targets.argmax(dim=1)
-        val: torch.Tensor = self.f1_metric(output_labels.flatten(start_dim=1),
-                                           target_labels.flatten(start_dim=1))
-        self._avg.update(val.item(), count=outputs.size(0))
-        return val
+        output_labels: torch.LongTensor = outputs.argmax(dim=1)
+        f1_scores: torch.FloatTensor = self.f1_metric(output_labels, target_labels)  # tensor of shape (5,)
+        overall_f1_score: float = (4 / torch.sum(1 / (f1_scores[1:] + eps))).item()
+        self._undamaged.update(f1_scores[1].item(), batch_size)
+        self._minor.update(f1_scores[2].item(), batch_size)
+        self._major.update(f1_scores[3].item(), batch_size)
+        self._destroyed.update(f1_scores[4].item(), batch_size)
+        self._overall.update(overall_f1_score, batch_size)
+        return f1_scores
 
     def till_here(self) -> float:
-        return self._avg.till_here()
+        return self._overall.till_here()
 
     def status_till_here(self) -> str:
-        return self._avg.status_till_here()
+        return f"{self._overall.status_till_here()}" \
+               f"[{self._undamaged.status_till_here()},{self._minor.status_till_here()}," \
+               f"{self._major.status_till_here()},{self._destroyed.status_till_here()}]"
 
     def reset(self) -> None:
         self.f1_metric.reset()
-        self._avg.reset()
+        self._overall.reset()
+        self._undamaged.reset()
+        self._minor.reset()
+        self._major.reset()
+        self._destroyed.reset()
 
 
 class LocalizationF1Score(ImageMetric):
-    def __init__(self, average: Optional[str] = 'macro'):
+    def __init__(self):
         super().__init__()
-        self.f1_metric = TorchMetricsF1Score(num_classes=2, average=average, mdmc_average='samplewise')
+        self.f1_metric = TorchMetricsF1Score(num_classes=2, mdmc_average='samplewise')
         self._avg: AverageMetric = AverageMetric()
 
     def update_batch(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
@@ -54,3 +76,4 @@ class LocalizationF1Score(ImageMetric):
     def reset(self) -> None:
         self.f1_metric.reset()
         self._avg.reset()
+
