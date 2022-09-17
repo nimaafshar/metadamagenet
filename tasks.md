@@ -1,6 +1,4 @@
 - refactor:
-  - [x] apply official scoring method
-  - [ ] convert metrics to `nn.Module`
   - [ ] fix augmentations bug
   - [ ] debug morphological dilation
   - [ ] rewrite examples
