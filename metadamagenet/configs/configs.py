@@ -68,4 +68,5 @@ class GeneralConfig:
 
 # enable ssl verification. ssl verification is disabled so downloading models from pretrained-models be possible
 # their certificate has expired.
+# noinspection PyProtectedMember
 ssl._create_default_https_context = ssl._create_unverified_context
