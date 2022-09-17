@@ -38,8 +38,10 @@ class LocalizationF1Score(ImageMetric):
         self._avg: AverageMetric = AverageMetric()
 
     def update_batch(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
-        val: torch.Tensor = self.f1_metric(outputs[:, 0, ...].flatten(start_dim=1),
-                                           targets[:, 0, ...].flatten(start_dim=1))
+        out_loc_labels: torch.LongTensor = (outputs.argmax(dim=1) > 0).long()
+        target_loc_labels: torch.LongTensor = (targets.argmax(dim=1) > 0).long()
+        val: torch.Tensor = self.f1_metric(out_loc_labels.flatten(start_dim=1),
+                                           target_loc_labels.flatten(start_dim=1))
         self._avg.update(val.item(), count=outputs.size(0))
         return val
 
