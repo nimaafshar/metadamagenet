@@ -29,6 +29,7 @@ class DamageF1Score(ImageMetric, torch.nn.Module):
         output_labels: torch.LongTensor = outputs.argmax(dim=1)
         f1_scores: torch.FloatTensor = self.f1_metric(output_labels[target_labels > 0],
                                                       target_labels[target_labels > 0])  # returns tensor of shape (5,)
+        f1_scores: torch.FloatTensor = torch.nan_to_num(f1_scores, nan=0.0)
         overall_f1_score: torch.Tensor = (4 / torch.sum(1 / (f1_scores[1:] + eps)))
         self._undamaged.update(f1_scores[1].item(), batch_size)
         self._minor.update(f1_scores[2].item(), batch_size)
@@ -63,8 +64,9 @@ class LocalizationF1Score(ImageMetric, torch.nn.Module):
     def update_batch(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         out_loc_labels: torch.LongTensor = (outputs.argmax(dim=1) > 0).long()
         target_loc_labels: torch.LongTensor = (targets.argmax(dim=1) > 0).long()
-        val: torch.Tensor = self.f1_metric(out_loc_labels.flatten(start_dim=1),
-                                           target_loc_labels.flatten(start_dim=1))
+        val: torch.FloatTensor = self.f1_metric(out_loc_labels.flatten(start_dim=1),
+                                                target_loc_labels.flatten(start_dim=1))
+        val: torch.FloatTensor = torch.nan_to_num(val, nan=0.0)
         self._avg.update(val.item(), count=outputs.size(0))
         return val
 
