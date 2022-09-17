@@ -10,3 +10,4 @@ scikit-learn
 imgaug
 emoji
 pyyaml
+torchmetrics==0.9.3
