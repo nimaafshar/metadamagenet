@@ -1,15 +1,15 @@
 import torch
 from torchmetrics import F1Score as TorchMetricsF1Score
+from typing import Optional
 
 from .base import ImageMetric
 from ..metrics import AverageMetric
 
 
 class F1Score(ImageMetric):
-    def __init__(self, num_classes: int):
+    def __init__(self, num_classes: int, average: Optional[str] = 'macro'):
         super().__init__()
-        self.f1_metric = TorchMetricsF1Score(num_classes=num_classes, mdmc_average='samplewise')
-        self._num_classes: int = num_classes
+        self.f1_metric = TorchMetricsF1Score(num_classes=num_classes, average=average, mdmc_average='samplewise')
         self._avg: AverageMetric = AverageMetric()
 
     def update_batch(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
@@ -32,9 +32,9 @@ class F1Score(ImageMetric):
 
 
 class LocalizationF1Score(ImageMetric):
-    def __init__(self):
+    def __init__(self, average: Optional[str] = 'macro'):
         super().__init__()
-        self.f1_metric = TorchMetricsF1Score(num_classes=2, mdmc_average='samplewise')
+        self.f1_metric = TorchMetricsF1Score(num_classes=2, average=average, mdmc_average='samplewise')
         self._avg: AverageMetric = AverageMetric()
 
     def update_batch(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
