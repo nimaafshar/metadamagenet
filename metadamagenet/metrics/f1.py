@@ -7,7 +7,7 @@ from ..metrics import AverageMetric
 eps = 1e-6
 
 
-class DamageF1Score(ImageMetric):
+class DamageF1Score(ImageMetric, torch.nn.Module):
     def __init__(self):
         """
         this score filters output damage masks with targets localization mask. \
@@ -16,7 +16,7 @@ class DamageF1Score(ImageMetric):
         TODO: filter output mask with a localization mask predicted by the respective localization model
         """
         super().__init__()
-        self.f1_metric = TorchMetricsF1Score(num_classes=5, average=None)
+        self.f1_metric: torch.nn.Module = TorchMetricsF1Score(num_classes=5, average=None)
         self._overall: AverageMetric = AverageMetric()  # harmonic mean of classes
         self._undamaged: AverageMetric = AverageMetric()  # class 1
         self._minor: AverageMetric = AverageMetric()  # class 2
@@ -54,10 +54,10 @@ class DamageF1Score(ImageMetric):
         self._destroyed.reset()
 
 
-class LocalizationF1Score(ImageMetric):
+class LocalizationF1Score(ImageMetric, torch.nn.Module):
     def __init__(self):
         super().__init__()
-        self.f1_metric = TorchMetricsF1Score(num_classes=2, mdmc_average='samplewise')
+        self.f1_metric: torch.nn.Module = TorchMetricsF1Score(num_classes=2, mdmc_average='samplewise')
         self._avg: AverageMetric = AverageMetric()
 
     def update_batch(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
