@@ -7,7 +7,7 @@ from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
 from ..models.unet import Unet
 from ..models.unet import SeNet154Unet
 from ..models.senet import SENet, senet154
-from ..metrics import WeightedImageMetric, F1Score
+from ..metrics import WeightedImageMetric, F1Score, LocalizationF1Score
 
 
 class SeNet154Wrapper(ModelWrapper, abc.ABC):
@@ -31,7 +31,6 @@ class SeNet154ClassifierWrapper(SeNet154Wrapper, ClassifierModelWrapper):
     model_name = "SeNet154UnetClassifier"
     input_size = 448, 448
     default_score = WeightedImageMetric(
-        ("LocF1", F1Score(num_classes=5), 0.3),
+        ("LocF1", LocalizationF1Score(), 0.3),
         ("F1", F1Score(num_classes=5), 0.7)
     )
-
