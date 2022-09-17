@@ -8,7 +8,7 @@ from torchvision.models import ResNet34_Weights
 from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
 from ..models.unet import Unet
 from ..models.unet import Resnet34Unet
-from ..metrics import WeightedImageMetric, F1Score, Dice
+from ..metrics import WeightedImageMetric, DamageF1Score, Dice, ImageMetric
 
 
 class Resnet34Wrapper(ModelWrapper, abc.ABC):
@@ -32,8 +32,7 @@ class Resnet34LocalizerWrapper(Resnet34Wrapper, LocalizerModelWrapper):
 class Resnet34ClassifierWrapper(Resnet34Wrapper, ClassifierModelWrapper):
     model_name = "Resnet34UnetClassifier"
     input_size = (608, 608)
-    default_score = WeightedImageMetric(
+    default_score: ImageMetric = WeightedImageMetric(
         ("LocDice", Dice(threshold=0.5, channel=0, inverse=True), 0.3),
-        ("F1", F1Score(num_classes=5), 0.7)
+        ("F1", DamageF1Score(clip_localization_mask=True), 0.7)
     )
-
