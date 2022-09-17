@@ -1,13 +1,11 @@
 import abc
 from typing import Optional
 
-import torch
-
 from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
-from ..models.unet import Unet
-from ..models.unet import SeNet154Unet
-from ..models.senet import SENet, senet154
 from ..metrics import xview2, ImageMetric
+from ..models.senet import SENet, senet154
+from ..models.unet import SeNet154Unet
+from ..models.unet import Unet
 
 
 class SeNet154Wrapper(ModelWrapper, abc.ABC):
