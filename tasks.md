@@ -1,12 +1,15 @@
 - refactor:
-  - [ ] apply official scoring method
+  - [x] apply official scoring method
+  - [ ] convert metrics to `nn.Module`
   - [ ] fix augmentations bug
+  - [ ] debug morphological dilation
   - [ ] rewrite examples
   - [ ] create masks for `tier3` data
   - [ ] add prediction to validator
   - [ ] create multiple model validator
   - [ ] migrate augmentations to `torchvision` transforms
   - [ ] make use of one model for both classification and localization with good score
+  - [ ] give weights to cce loss to give layers 2 and 3 more attention
 
 - Test:
   - [ ] test classification models
