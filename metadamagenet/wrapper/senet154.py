@@ -31,7 +31,7 @@ class SeNet154ClassifierWrapper(SeNet154Wrapper, ClassifierModelWrapper):
     model_name = "SeNet154UnetClassifier"
     input_size = 448, 448
     default_score = WeightedImageMetric(
-        ("LocF1", F1Score(start_idx=0, end_idx=1, num_classes=5), 0.3),
-        ("F1", F1Score(start_idx=1, end_idx=5, num_classes=5), 0.7)
+        ("LocF1", F1Score(num_classes=5), 0.3),
+        ("F1", F1Score(num_classes=5), 0.7)
     )
 
