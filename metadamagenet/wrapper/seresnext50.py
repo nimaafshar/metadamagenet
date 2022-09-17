@@ -7,7 +7,7 @@ from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
 from metadamagenet.models.unet import Unet
 from metadamagenet.models.unet import SeResnext50Unet
 from metadamagenet.models.senet import se_resnext50_32x4d, SENet
-from ..metrics import WeightedImageMetric, F1Score, LocalizationF1Score
+from ..metrics import xview2, ImageMetric
 
 
 class SeResnext50Wrapper(ModelWrapper, abc.ABC):
@@ -30,7 +30,4 @@ class SeResnext50LocalizerWrapper(SeResnext50Wrapper, LocalizerModelWrapper):
 class SeResnext50ClassifierWrapper(SeResnext50Wrapper, ClassifierModelWrapper):
     data_parallel = True
     model_name = "SeResnext50UnetClassifier"
-    default_score = WeightedImageMetric(
-        ("LocF1", LocalizationF1Score(), 0.3),
-        ("F1", F1Score(num_classes=5), 0.7)
-    )
+    default_score: ImageMetric = xview2.classification_score
