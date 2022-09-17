@@ -30,7 +30,7 @@ class Metric:
         pass
 
 
-class ImageMetric(Metric, abc.ABC):
+class ImageMetric(Metric, torch.nn.Module, abc.ABC):
     @abc.abstractmethod
     def update_batch(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         """

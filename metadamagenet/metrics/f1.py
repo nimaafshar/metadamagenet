@@ -7,7 +7,7 @@ from ..metrics import AverageMetric
 eps = 1e-6
 
 
-class DamageF1Score(ImageMetric, torch.nn.Module):
+class DamageF1Score(ImageMetric):
     def __init__(self):
         """
         this score filters output damage masks with targets localization mask. \
@@ -55,7 +55,7 @@ class DamageF1Score(ImageMetric, torch.nn.Module):
         self._destroyed.reset()
 
 
-class LocalizationF1Score(ImageMetric, torch.nn.Module):
+class LocalizationF1Score(ImageMetric):
     def __init__(self):
         super().__init__()
         self.f1_metric: torch.nn.Module = TorchMetricsF1Score(num_classes=2, mdmc_average='samplewise')

@@ -7,6 +7,7 @@ from ..losses.dice import dice_round, dice_batch
 
 class DiceRound(ImageMetric):
     def __init__(self, channel: int = 0, inverse: bool = False):
+        super().__init__()
         self._channel: int = channel
         self._inverse: bool = inverse
         self._average: AverageMetric = AverageMetric()
