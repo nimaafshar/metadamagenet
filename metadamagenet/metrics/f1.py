@@ -16,7 +16,7 @@ class F1Score(ImageMetric):
         output_labels: torch.LongTensor = outputs.argmax(dim=1)
         target_labels: torch.LongTensor = targets.argmax(dim=1)
         val: torch.Tensor = self.f1_metric(output_labels.flatten(start_dim=1),
-                                           target_labels.flatten(start_dim=1)).item()
+                                           target_labels.flatten(start_dim=1))
         self._avg.update(val.item(), count=outputs.size(0))
         return val
 
