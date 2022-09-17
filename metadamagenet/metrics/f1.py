@@ -10,22 +10,22 @@ class F1Score(ImageMetric):
         super().__init__()
         self.f1_metric = TorchMetricsF1Score(num_classes=num_classes, mdmc_average='samplewise')
         self._num_classes: int = num_classes
-        self._average_metric: AverageMetric = AverageMetric
+        self._avg: AverageMetric = AverageMetric()
 
     def update_batch(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         output_labels: torch.LongTensor = outputs.argmax(dim=1)
         target_labels: torch.LongTensor = targets.argmax(dim=1)
         val: torch.Tensor = self.f1_metric(output_labels.flatten(start_dim=1),
                                            target_labels.flatten(start_dim=1)).item()
-        self._average_metric.update(val.item(), count=outputs.size(0))
+        self._avg.update(val.item(), count=outputs.size(0))
         return val
 
     def till_here(self) -> float:
-        return self._average_metric.till_here()
+        return self._avg.till_here()
 
     def status_till_here(self) -> str:
-        return self._average_metric.status_till_here()
+        return self._avg.status_till_here()
 
     def reset(self) -> None:
         self.f1_metric.reset()
-        self._average_metric.reset()
+        self._avg.reset()
