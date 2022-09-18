@@ -32,9 +32,9 @@ class Transform(nn.Module, abc.ABC, Generic[StateType]):
         self._apply_to: Optional[Sequence[str]] = apply_to
 
     @abc.abstractmethod
-    def transform(self, img: torch.Tensor, state: StateType = None) -> torch.Tensor:
+    def transform(self, images: torch.Tensor, state: StateType) -> torch.Tensor:
         """
-        :param img: batch of image data with shape (B,C,H,W)
+        :param images: batch of image data with shape (B,C,H,W)
         :param state: needed parameters for transforms
         :return: augmented batch of images
         """
@@ -45,7 +45,7 @@ class Transform(nn.Module, abc.ABC, Generic[StateType]):
         for key in keys:
             inputs: torch.Tensor = img_group[key]
             assert len(inputs.size()) == 4, "inputs dimension is not 4"
-            outputs: torch.Tensor = self.transform(inputs)
+            outputs: torch.Tensor = self.transform(inputs, None)
             assert outputs.size() == inputs.size(), "outputs dimension is not the same as inputs"
             img_group[key] = outputs
         return img_group
@@ -57,7 +57,7 @@ class RandomTransform(Transform, abc.ABC):
         self._p: float = assert_prob(p)
 
     @abc.abstractmethod
-    def generate_random_state(self) -> StateType:
+    def generate_random_state(self, batch_size: int) -> StateType:
         """
         determine augmentation state parameters.
         parameter types can be different based on augmentation
@@ -78,9 +78,9 @@ class RandomTransform(Transform, abc.ABC):
             img_group[key] = torch.logical_not(do_transform) * inputs + do_transform * outputs
 
     def forward(self, img_group: ImageCollection) -> ImageCollection:
-        state: StateType = self.generate_random_state()
         example_value: torch.Tensor = next(iter(img_group.values()))
         batch_size: int = example_value.size(0)
+        state: StateType = self.generate_random_state(batch_size)
         do_transform: torch.BoolTensor = torch.rand_like(batch_size) > self._p
         return self.forward_to(img_group, state, do_transform)
 
@@ -93,7 +93,7 @@ class OneOf(Transform):
         super().__init__(apply_to=None)
         self.transforms: nn.ModuleList = nn.ModuleList(transforms)
 
-    def transform(self, img: torch.Tensor, state: StateType = None) -> torch.Tensor:
+    def transform(self, images: torch.Tensor, state: StateType) -> torch.Tensor:
         raise NotImplemented
 
     def forward(self, img_group: ImageCollection) -> ImageCollection:
@@ -106,7 +106,7 @@ class OneOf(Transform):
 
         t: RandomTransform
         for t in self.transforms:
-            state = t.generate_random_state()
+            state = t.generate_random_state(batch_size)
             randoms: torch.BoolTensor = torch.rand(batch_size) > t.prob()
             img_group = t.forward_to(img_group,
                                      state,
