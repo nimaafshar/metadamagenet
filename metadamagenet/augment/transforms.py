@@ -4,6 +4,7 @@ import torch
 
 from .base import Transform
 import kornia.geometry as kg
+import kornia.enhance.shift_rgb
 
 
 class Resize(Transform[None]):
@@ -20,4 +21,3 @@ class Resize(Transform[None]):
 
     def transform(self, images: torch.Tensor, _) -> torch.Tensor:
         return kg.resize(images, size=(self._height, self._width))
-

@@ -21,7 +21,9 @@ StateType = TypeVar('StateType')
 
 
 class Transform(nn.Module, abc.ABC, Generic[StateType]):
-    """a transform which can ba applied to a dict of str to batch of images"""
+    """a transform which can ba applied to a dict of str to batch of images
+        input values are expected to be in [0,1]
+    """
 
     def __init__(self, apply_to: Optional[Sequence[str]] = None):
         """
@@ -35,6 +37,7 @@ class Transform(nn.Module, abc.ABC, Generic[StateType]):
     def transform(self, images: torch.Tensor, state: StateType) -> torch.Tensor:
         """
         :param images: batch of image data with shape (B,C,H,W)
+                       input values are expected to be in [0,1]
         :param state: needed parameters for transforms
         :return: augmented batch of images
         """
@@ -57,7 +60,7 @@ class RandomTransform(Transform, abc.ABC):
         self._p: float = assert_prob(p)
 
     @abc.abstractmethod
-    def generate_random_state(self, batch_size: int) -> StateType:
+    def generate_random_state(self, input_shape: torch.Size) -> StateType:
         """
         determine augmentation state parameters.
         parameter types can be different based on augmentation
@@ -78,10 +81,9 @@ class RandomTransform(Transform, abc.ABC):
             img_group[key] = torch.logical_not(do_transform) * inputs + do_transform * outputs
 
     def forward(self, img_group: ImageCollection) -> ImageCollection:
-        example_value: torch.Tensor = next(iter(img_group.values()))
-        batch_size: int = example_value.size(0)
-        state: StateType = self.generate_random_state(batch_size)
-        do_transform: torch.BoolTensor = torch.rand_like(batch_size) > self._p
+        input_shape: torch.Size = next(iter(img_group.values())).size()
+        state: StateType = self.generate_random_state(input_shape)
+        do_transform: torch.BoolTensor = torch.rand_like(input_shape[0]) > self._p
         return self.forward_to(img_group, state, do_transform)
 
     def prob(self) -> float:
@@ -100,14 +102,13 @@ class OneOf(Transform):
         if not torch.rand() > self._p:
             return img_group
 
-        example_value: torch.Tensor = next(iter(img_group.values()))
-        batch_size: int = example_value.size(0)
-        applied_to: torch.BoolTensor = torch.BoolTensor(torch.zeros(batch_size))
+        input_shape: torch.Size = next(iter(img_group.values())).size()
+        applied_to: torch.BoolTensor = torch.BoolTensor(torch.zeros(input_shape[0]))
 
         t: RandomTransform
         for t in self.transforms:
-            state = t.generate_random_state(batch_size)
-            randoms: torch.BoolTensor = torch.rand(batch_size) > t.prob()
+            state = t.generate_random_state(input_shape[0])
+            randoms: torch.BoolTensor = torch.rand(input_shape[0]) > t.prob()
             img_group = t.forward_to(img_group,
                                      state,
                                      torch.logical_and(torch.logical_not(applied_to), randoms))
