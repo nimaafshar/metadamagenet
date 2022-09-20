@@ -5,6 +5,8 @@ import kornia.filters as kf
 
 from .base import Transform
 
+__all__ = ('Blur',)
+
 
 class Blur(Transform[None]):
     def __init__(self, kernel_size: Tuple[int, int] = (3, 3)):

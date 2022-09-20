@@ -8,7 +8,7 @@ from imgaug import augmenters as iaa
 import kornia
 
 
-class RandomCrop(AugmentationInterface):
+class RandomCrop():
     """
     crop image with a random square.
     does multiple tries, selects the one who is covering more of the white pixels in the mask
