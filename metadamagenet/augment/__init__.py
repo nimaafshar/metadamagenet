@@ -7,3 +7,4 @@ from .geometric import ElasticTransform, VFlip, Shift, RotateAndScale, RotateAnd
 from .intensity import GaussianNoise
 from .utils import random_float_tensor
 from .transforms import Resize
+from .morphology import Dilation
