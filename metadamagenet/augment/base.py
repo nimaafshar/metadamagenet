@@ -1,5 +1,5 @@
 import abc
-from typing import Sequence, Dict, TypeVar, Generic, Tuple, Union
+from typing import Sequence, Dict, TypeVar, Generic, Tuple, Union, Any
 
 import torch
 from torch import nn
@@ -93,7 +93,7 @@ class Random(CollectionTransform):
             input_shape: torch.Size = next(iter(img_group.values())).size()
         except StopIteration:
             raise ValueError(f"img_group should not be empty. keys are {img_group.keys()}")
-        state = self.transform.generate_state(input_shape)
+        state = self.transform.transform.generate_state(input_shape)
         apply: torch.BoolTensor = torch.rand((input_shape[0],)) <= self._p
         return self.transform(img_group, state, apply)
 
