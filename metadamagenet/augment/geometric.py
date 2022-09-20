@@ -104,7 +104,7 @@ class RotateAndScale(Transform[RotateAndScaleState]):
                                 random_float_tensor((input_shape[0],), self._center_x, device=self.device)),
                                dim=1).to(self.device),
             angle=random_float_tensor((input_shape[0],), self._angle, device=self.device),
-            scale=random_float_tensor((input_shape[0],), self._scale, device=self.device)
+            scale=random_float_tensor((input_shape[0], 2), self._scale, device=self.device)
         )
 
     def forward(self, images: torch.FloatTensor, state: RotateAndScaleState) -> torch.FloatTensor:
