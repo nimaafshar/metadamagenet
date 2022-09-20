@@ -79,10 +79,10 @@ class RotateAndScale(Transform[RotateAndScaleState]):
     """ rotate image around a center and scale"""
 
     def __init__(self,
-                 center_y: Tuple[float, float],
-                 center_x: Tuple[float, float],
-                 angle: Tuple[float, float],
-                 scale: Tuple[float, float]
+                 center_y: Tuple[float, float] = (0.2, 0.6),
+                 center_x: Tuple[float, float] = (0.2, 0.6),
+                 angle: Tuple[float, float] = (-10., 10.),
+                 scale: Tuple[float, float] = (0.9, 1.1)
                  ):
         """
         :param center_y: y-range of center of rotation relative to image height
@@ -104,14 +104,13 @@ class RotateAndScale(Transform[RotateAndScaleState]):
                                 random_float_tensor((input_shape[0],), self._center_x, device=self.device)),
                                dim=1).to(self.device),
             angle=random_float_tensor((input_shape[0],), self._angle, device=self.device),
-            scale=random_float_tensor((input_shape[0], 2), self._scale, device=self.device)
+            scale=random_float_tensor((input_shape[0], 1), self._scale, device=self.device).repeat(1, 2)
         )
 
     def forward(self, images: torch.FloatTensor, state: RotateAndScaleState) -> torch.FloatTensor:
-        transform_mat: torch.Tensor = kg.get_affine_matrix2d(torch.zeros_like(state.center, device=self.device),
-                                                             state.center, state.scale, state.angle).to(self.device)
-        return kg.warp_affine(images,
-                              transform_mat,
-                              dsize=(images.size(-2), images.size(-1)),
-                              mode='bilinear',
-                              padding_mode='reflect')
+        transform_mat: torch.Tensor = kg.get_rotation_matrix2d(state.center, state.angle, state.scale)
+        return kg.transform.warp_affine(images,
+                                        transform_mat,
+                                        dsize=(images.size(-2), images.size(-1)),
+                                        mode='bilinear',
+                                        padding_mode='reflection')
