@@ -33,7 +33,7 @@ class Rotate90(Transform[torch.IntTensor]):
 class Shift(Transform[torch.FloatTensor]):
     """shifts image. moving the shift point to (0,0). replaces empty pixels with reflection"""
 
-    def __init__(self, y: Tuple[float, float], x: Tuple[float, float]):
+    def __init__(self, y: Tuple[float, float] = (.2, .8), x: Tuple[float, float] = (.2, .8)):
         """
         :param y: shift range in y-axis (relative to image height)
         :param x: shift range in x-axis (relative to image width)
