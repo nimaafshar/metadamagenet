@@ -80,10 +80,13 @@ class OnlyOn(nn.Module):
         """
         keys = self._keys if len(self._keys) > 0 else img_group.keys()
         key: str
-        for key in keys:
-            inputs: torch.FloatTensor = img_group[key]
-            img_group[key] = ~apply * inputs + apply * self.transform(inputs, state)
-        return img_group
+        output: ImageCollection = {}
+        for key, val in img_group.items():
+            if key in keys:
+                output[key] = ~apply * val + apply * self.transform(val, state)
+            else:
+                output[key] = val
+        return output
 
 
 class Random(CollectionTransform):
