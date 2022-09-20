@@ -5,6 +5,7 @@ import torch
 import kornia.enhance as ke
 
 from .base import Transform
+from .utils import random_float_tensor
 
 __all__ = ('Clahe', 'Brightness', 'Contrast', 'Saturation', 'RGBShift', 'HSVShift')
 
@@ -28,12 +29,12 @@ class Clahe(Transform[None]):
 
 class Brightness(Transform[torch.FloatTensor]):
 
-    def __init__(self, factor_range: Tuple[float, float] = (-0.1, 0.1)):
+    def __init__(self, factor: Tuple[float, float] = (-0.1, 0.1)):
         super().__init__()
-        self._factor_range: Tuple[float, float] = factor_range
+        self._factor: Tuple[float, float] = factor
 
     def generate_state(self, input_shape: torch.Size) -> torch.FloatTensor:
-        return torch.rand((input_shape[0],)) * (self._factor_range[1] - self._factor_range[0]) + self._factor_range[0]
+        return random_float_tensor((input_shape[0],), self._factor, device=self.device)
 
     def forward(self, images: torch.FloatTensor, state: torch.FloatTensor) -> torch.FloatTensor:
         return ke.adjust_brightness(images, state)
@@ -41,24 +42,24 @@ class Brightness(Transform[torch.FloatTensor]):
 
 class Contrast(Transform[torch.FloatTensor]):
 
-    def __init__(self, factor_range: Tuple[float, float] = (0.9, 1.1)):
+    def __init__(self, factor: Tuple[float, float] = (0.9, 1.1)):
         super(Contrast, self).__init__()
-        self._factor_range: Tuple[float, float] = factor_range
+        self._factor: Tuple[float, float] = factor
 
     def generate_state(self, input_shape: torch.Size) -> torch.FloatTensor:
-        return torch.rand((input_shape[0],)) * (self._factor_range[1] - self._factor_range[0]) + self._factor_range[0]
+        return random_float_tensor((input_shape[0],), self._factor, device=self.device)
 
     def forward(self, images: torch.FloatTensor, state: torch.FloatTensor) -> torch.FloatTensor:
         return ke.adjust_contrast(images, state)
 
 
 class Saturation(Transform[torch.FloatTensor]):
-    def __init__(self, factor_range: Tuple[float, float] = (0.5, 1.5)):
+    def __init__(self, factor: Tuple[float, float] = (0.5, 1.5)):
         super(Saturation, self).__init__()
-        self._factor_range: Tuple[float, float] = factor_range
+        self._factor: Tuple[float, float] = factor
 
     def generate_state(self, input_shape: torch.Size) -> torch.FloatTensor:
-        return torch.rand((input_shape[0],)) * (self._factor_range[1] - self._factor_range[0]) + self._factor_range[0]
+        return random_float_tensor((input_shape[0],), self._factor, device=self.device)
 
     def forward(self, images: torch.Tensor, state: torch.FloatTensor) -> torch.FloatTensor:
         return ke.adjust_saturation(images, state)
@@ -82,9 +83,10 @@ class RGBShift(Transform[torch.FloatTensor]):
     def generate_state(self, input_shape: torch.Size) -> torch.FloatTensor:
         batch_size = input_shape[0]
         return torch.stack(
-            (torch.rand((batch_size,)) * (self._r_range[1] - self._r_range[0]) + self._r_range[0],
-             torch.rand((batch_size,)) * (self._g_range[1] - self._g_range[0]) + self._g_range[0],
-             torch.rand((batch_size,)) * (self._b_range[1] - self._b_range[0]) + self._b_range[0]), dim=1)
+            (random_float_tensor((batch_size,), self._r_range, device=self.device),
+             random_float_tensor((batch_size,), self._g_range, device=self.device),
+             random_float_tensor((batch_size,), self._b_range, device=self.device)), dim=1) \
+            .to(self.device)
 
     def forward(self, images: torch.FloatTensor, state: torch.FloatTensor) -> torch.FloatTensor:
         return (images + state).clamp_(min=0, max=1)
@@ -109,9 +111,10 @@ class HSVShift(Transform[torch.FloatTensor]):
     def generate_state(self, input_shape: torch.Size) -> torch.FloatTensor:
         batch_size = input_shape[0]
         return torch.stack(
-            ((torch.rand((batch_size,)) * (self._h_range[1] - self._h_range[0]) + self._h_range[0]) * (2 * torch.pi),
-             torch.rand((batch_size,)) * (self._s_range[1] - self._s_range[0]) + self._s_range[0],
-             torch.rand((batch_size,)) * (self._v_range[1] - self._v_range[0]) + self._v_range[0]), dim=1)
+            (random_float_tensor((batch_size,), self._h_range, self.device) * (2 * torch.pi),
+             random_float_tensor((batch_size,), self._s_range, self.device),
+             random_float_tensor((batch_size,), self._v_range, self.device)), dim=1) \
+            .to(self.device)
 
     def forward(self, images: torch.FloatTensor, state: torch.FloatTensor) -> torch.FloatTensor:
         return kornia.color.hsv_to_rgb(kornia.color.rgb_to_hsv(images) + state).clamp_(min=0, max=1)

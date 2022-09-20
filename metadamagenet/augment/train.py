@@ -2,13 +2,10 @@ import dataclasses
 import random
 from typing import Tuple, Type, Any, Optional, Sequence, Dict
 
-import torch
-import cv2
-from imgaug import augmenters as iaa
-import kornia
+import numpy.typing as npt
 
 
-class RandomCrop():
+class RandomCrop:
     """
     crop image with a random square.
     does multiple tries, selects the one who is covering more of the white pixels in the mask
