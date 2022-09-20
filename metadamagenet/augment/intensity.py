@@ -11,12 +11,12 @@ class GaussianNoise(Transform[None]):
     should be applied on images
     """
 
-    def __init__(self, mean: float = 0, std: float = 1):
+    def __init__(self, mean: float = 0, std: float = 0.1):
         super().__init__()
-        self._std: float = std ** 0.5
+        self._std: float = std
         self._mean: float = mean
 
-    def generate_state(self, batch_size: int) -> None:
+    def generate_state(self, input_shape: torch.Size) -> None:
         return None
 
     def forward(self, images: torch.FloatTensor, _) -> torch.FloatTensor:
