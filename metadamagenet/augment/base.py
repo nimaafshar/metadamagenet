@@ -28,6 +28,14 @@ class Transform(nn.Module, abc.ABC, Generic[StateType]):
     input values are expected to be in [0,1].
     """
 
+    def __init__(self):
+        super().__init__()
+        self.dummy_param = nn.Parameter(torch.tensor(0))
+
+    @property
+    def device(self) -> torch.device:
+        return self.dummy_param.device
+
     @abc.abstractmethod
     def generate_state(self, input_shape: torch.Size) -> StateType:
         """
