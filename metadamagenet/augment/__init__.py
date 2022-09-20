@@ -5,3 +5,4 @@ from .enhance import Clahe, Brightness, Contrast, Saturation, RGBShift, HSVShift
 from .filter import Blur
 from .geometric import ElasticTransform, VFlip, Shift, RotateAndScale, RotateAndScaleState, Rotate90
 from .intensity import GaussianNoise
+from .utils import random_float_tensor
