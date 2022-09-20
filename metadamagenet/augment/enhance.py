@@ -67,25 +67,25 @@ class Saturation(Transform[torch.FloatTensor]):
 
 class RGBShift(Transform[torch.FloatTensor]):
     def __init__(self,
-                 r: Tuple[float, float] = (-.1, .1),
-                 g: Tuple[float, float] = (-.1, .1),
-                 b: Tuple[float, float] = (-.1, .1)):
+                 r: Tuple[float, float] = (-.05, .05),
+                 g: Tuple[float, float] = (-.05, .05),
+                 b: Tuple[float, float] = (-.05, .05)):
         """
         :param r: range of R channel shift
         :param g: range of G channel shift
         :param b: range of B channel shift
         """
         super().__init__()
-        self._r_range: Tuple[int, int] = r
-        self._g_range: Tuple[int, int] = g
-        self._b_range: Tuple[int, int] = b
+        self._r_range: Tuple[float, float] = r
+        self._g_range: Tuple[float, float] = g
+        self._b_range: Tuple[float, float] = b
 
     def generate_state(self, input_shape: torch.Size) -> torch.FloatTensor:
         batch_size = input_shape[0]
         return torch.stack(
-            (random_float_tensor((batch_size,), self._r_range, device=self.device),
-             random_float_tensor((batch_size,), self._g_range, device=self.device),
-             random_float_tensor((batch_size,), self._b_range, device=self.device)), dim=1) \
+            (random_float_tensor((batch_size, 1, 1), self._r_range, device=self.device),
+             random_float_tensor((batch_size, 1, 1), self._g_range, device=self.device),
+             random_float_tensor((batch_size, 1, 1), self._b_range, device=self.device)), dim=1) \
             .to(self.device)
 
     def forward(self, images: torch.FloatTensor, state: torch.FloatTensor) -> torch.FloatTensor:
@@ -95,25 +95,25 @@ class RGBShift(Transform[torch.FloatTensor]):
 class HSVShift(Transform[torch.FloatTensor]):
 
     def __init__(self,
-                 h: Tuple[float, float] = (-.1, .1),
-                 s: Tuple[float, float] = (-.1, .1),
-                 v: Tuple[float, float] = (-.1, .1)):
+                 h: Tuple[float, float] = (-.05, .05),
+                 s: Tuple[float, float] = (-.05, .05),
+                 v: Tuple[float, float] = (-.05, .05)):
         """
         :param h: range of hue channel shift (will be multiplied by 2*pi)
         :param s: range of saturation channel shift
         :param v: range of brightness/value channel shift
         """
         super().__init__()
-        self._h_range: Tuple[int, int] = h
-        self._s_range: Tuple[int, int] = s
-        self._v_range: Tuple[int, int] = v
+        self._h_range: Tuple[float, float] = h
+        self._s_range: Tuple[float, float] = s
+        self._v_range: Tuple[float, float] = v
 
     def generate_state(self, input_shape: torch.Size) -> torch.FloatTensor:
         batch_size = input_shape[0]
         return torch.stack(
-            (random_float_tensor((batch_size,), self._h_range, self.device) * (2 * torch.pi),
-             random_float_tensor((batch_size,), self._s_range, self.device),
-             random_float_tensor((batch_size,), self._v_range, self.device)), dim=1) \
+            (random_float_tensor((batch_size, 1, 1), self._h_range, self.device) * (2 * torch.pi),
+             random_float_tensor((batch_size, 1, 1), self._s_range, self.device),
+             random_float_tensor((batch_size, 1, 1), self._v_range, self.device)), dim=1) \
             .to(self.device)
 
     def forward(self, images: torch.FloatTensor, state: torch.FloatTensor) -> torch.FloatTensor:
