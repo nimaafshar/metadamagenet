@@ -11,7 +11,7 @@ def _assert_prob(prob: float) -> float:
     """
     assert if some float is a probability
     """
-    if not 0 <= prob < 1:
+    if not 0 <= prob <= 1:
         raise ValueError(f"{prob} is not a valid probability")
     return prob
 
