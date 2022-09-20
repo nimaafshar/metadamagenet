@@ -30,7 +30,7 @@ class Transform(nn.Module, abc.ABC, Generic[StateType]):
 
     def __init__(self):
         super().__init__()
-        self.dummy_param = nn.Parameter(torch.tensor(0))
+        self.dummy_param = nn.Parameter(torch.tensor(0, requires_grad=False))
 
     @property
     def device(self) -> torch.device:
