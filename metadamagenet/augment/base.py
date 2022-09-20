@@ -57,6 +57,14 @@ class Transform(nn.Module, abc.ABC, Generic[StateType]):
 
 
 class CollectionTransform(nn.Module, abc.ABC):
+    def __init__(self):
+        super().__init__()
+        self.dummy_param = nn.Parameter(torch.empty(0))
+
+    @property
+    def device(self) -> torch.device:
+        return self.dummy_param.device
+
     @abc.abstractmethod
     def forward(self, img_group: ImageCollection) -> ImageCollection:
         pass
@@ -128,12 +136,12 @@ class OneOf(CollectionTransform):
     def forward(self, img_group: ImageCollection) -> ImageCollection:
         if isinstance(self.transforms[0], OnlyOn):
             input_shape: torch.Size = next(iter(img_group.values())).size()
-            applied_to: torch.BoolTensor = torch.BoolTensor(torch.zeros(input_shape[0], 1, 1, 1))
+            applied_to: torch.BoolTensor = torch.zeros(input_shape[0], 1, 1, 1, device=self.device).bool()
             r: OnlyOn
             prob: float
             for r, prob in zip(self.transforms, self._probs):
                 state = r.transform.generate_state(input_shape)
-                randoms: torch.BoolTensor = torch.rand(input_shape[0], 1, 1, 1) <= prob
+                randoms: torch.BoolTensor = torch.rand(input_shape[0], 1, 1, 1, device=self.device) <= prob
                 img_group = r(img_group,
                               state,
                               torch.logical_and(torch.logical_not(applied_to), randoms))
