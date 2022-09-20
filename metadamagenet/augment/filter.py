@@ -1,18 +1,18 @@
-from typing import Tuple, Optional, Sequence
+from typing import Tuple
 
 import torch
 import kornia.filters as kf
 
-from .base import RandomTransform, StateType
+from .base import Transform
 
 
-class Blur(RandomTransform[None]):
-    def __init__(self, apply_to: Optional[Sequence[str]] = None, p: float = 0, kernel_size: Tuple[int, int] = (3, 3)):
-        super().__init__(apply_to, p)
+class Blur(Transform[None]):
+    def __init__(self, kernel_size: Tuple[int, int] = (3, 3)):
+        super().__init__()
         self._kernel_size: Tuple[int, int] = kernel_size
 
-    def generate_random_state(self, input_shape: torch.Size) -> None:
+    def generate_state(self, input_shape: torch.Size) -> None:
         return None
 
-    def transform(self, images: torch.Tensor, _) -> torch.Tensor:
+    def forward(self, images: torch.FloatTensor, _) -> torch.FloatTensor:
         return kf.box_blur(images, self._kernel_size)
