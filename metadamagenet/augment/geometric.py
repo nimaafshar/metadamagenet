@@ -49,12 +49,12 @@ class Shift(Transform[torch.FloatTensor]):
 
     def forward(self, images: torch.Tensor, state: torch.FloatTensor) -> torch.Tensor:
         _, _, h, w = images.size()
-        return kg.translate(images, state * torch.FloatTensor([h, w]), padding_mode='reflect')
+        return kg.translate(images, state * torch.FloatTensor([h, w], device=self.device), padding_mode='reflect')
 
 
 class ElasticTransform(Transform[torch.FloatTensor]):
-    def __init__(self, kernel_size: Tuple[int, int] = (63, 63), sigma: Tuple[float, float] = (32., 32.),
-                 alpha: Tuple[float, float] = (1., 1.)):
+    def __init__(self, kernel_size: Tuple[int, int] = (63, 63), sigma: Tuple[float, float] = (10., 10.),
+                 alpha: Tuple[float, float] = (0.0, 0.5)):
         super().__init__()
         self._kernel_size: Tuple[int, int] = kernel_size
         self._sigma: Tuple[float, float] = sigma
@@ -108,8 +108,8 @@ class RotateAndScale(Transform[RotateAndScaleState]):
         )
 
     def forward(self, images: torch.FloatTensor, state: RotateAndScaleState) -> torch.FloatTensor:
-        transform_mat: torch.Tensor = kg.get_affine_matrix2d(torch.zeros_like(state.center),
-                                                             state.center, state.scale, state.angle)
+        transform_mat: torch.Tensor = kg.get_affine_matrix2d(torch.zeros_like(state.center, device=self.device),
+                                                             state.center, state.scale, state.angle).to(self.device)
         return kg.warp_affine(images,
                               transform_mat,
                               dsize=(images.size(-2), images.size(-1)),
