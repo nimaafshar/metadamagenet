@@ -20,5 +20,5 @@ class GaussianNoise(Transform[None]):
         return None
 
     def forward(self, images: torch.FloatTensor, _) -> torch.FloatTensor:
-        noise: torch.FloatTensor = torch.randn(images.size()) * self._std + self._mean
+        noise: torch.FloatTensor = torch.randn(images.size(), device=self.device) * self._std + self._mean
         return torch.clamp(images + noise, 0, 1)
