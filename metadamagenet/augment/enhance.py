@@ -14,7 +14,7 @@ class Clahe(Transform[None]):
     input values are expected to be in [0,1]
     """
 
-    def __init__(self, clip_limit: float = 40, grid_size: Tuple[int, int] = (8, 8)):
+    def __init__(self, clip_limit: float = 40., grid_size: Tuple[int, int] = (8, 8)):
         super().__init__()
         self._clip_limit: float = clip_limit
         self._grid_size: Tuple[int, int] = grid_size
