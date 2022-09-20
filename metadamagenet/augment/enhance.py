@@ -67,9 +67,9 @@ class Saturation(Transform[torch.FloatTensor]):
 
 class RGBShift(Transform[torch.FloatTensor]):
     def __init__(self,
-                 r: Tuple[float, float] = (-.05, .05),
-                 g: Tuple[float, float] = (-.05, .05),
-                 b: Tuple[float, float] = (-.05, .05)):
+                 r: Tuple[float, float] = (-.1, .1),
+                 g: Tuple[float, float] = (-.1, .1),
+                 b: Tuple[float, float] = (-.1, .1)):
         """
         :param r: range of R channel shift
         :param g: range of G channel shift
@@ -95,9 +95,9 @@ class RGBShift(Transform[torch.FloatTensor]):
 class HSVShift(Transform[torch.FloatTensor]):
 
     def __init__(self,
-                 h: Tuple[float, float] = (-.05, .05),
-                 s: Tuple[float, float] = (-.05, .05),
-                 v: Tuple[float, float] = (-.05, .05)):
+                 h: Tuple[float, float] = (-.1, .1),
+                 s: Tuple[float, float] = (-.1, .1),
+                 v: Tuple[float, float] = (-.1, .1)):
         """
         :param h: range of hue channel shift (will be multiplied by 2*pi)
         :param s: range of saturation channel shift
@@ -117,4 +117,4 @@ class HSVShift(Transform[torch.FloatTensor]):
             .to(self.device)
 
     def forward(self, images: torch.FloatTensor, state: torch.FloatTensor) -> torch.FloatTensor:
-        return kornia.color.hsv_to_rgb(kornia.color.rgb_to_hsv(images) + state).clamp_(min=0, max=1)
+        return kornia.color.hsv_to_rgb(kornia.color.rgb_to_hsv(images).to(self.device) + state).clamp_(min=0, max=1)
