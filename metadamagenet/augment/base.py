@@ -131,7 +131,7 @@ class OneOf(CollectionTransform):
             if not isinstance(t, type(transforms[0])):
                 raise ValueError("all transforms should be of the same type")
         self.transforms: nn.ModuleList = nn.ModuleList(transforms)
-        self._probs: probs
+        self._probs = probs
 
     def forward(self, img_group: ImageCollection) -> ImageCollection:
         if isinstance(self.transforms[0], OnlyOn):
