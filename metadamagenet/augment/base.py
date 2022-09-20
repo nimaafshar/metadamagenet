@@ -94,7 +94,7 @@ class Random(CollectionTransform):
         except StopIteration:
             raise ValueError(f"img_group should not be empty. keys are {img_group.keys()}")
         state = self.transform.transform.generate_state(input_shape)
-        apply: torch.BoolTensor = torch.rand((input_shape[0],)) <= self._p
+        apply: torch.BoolTensor = torch.rand((input_shape[0], 1, 1, 1)) <= self._p
         return self.transform(img_group, state, apply)
 
     def probability(self) -> float:
@@ -117,12 +117,12 @@ class OneOf(CollectionTransform):
     def forward(self, img_group: ImageCollection) -> ImageCollection:
         if isinstance(self.transforms[0], OnlyOn):
             input_shape: torch.Size = next(iter(img_group.values())).size()
-            applied_to: torch.BoolTensor = torch.BoolTensor(torch.zeros(input_shape[0]))
+            applied_to: torch.BoolTensor = torch.BoolTensor(torch.zeros(input_shape[0], 1, 1, 1))
             r: OnlyOn
             prob: float
             for r, prob in zip(self.transforms, self._probs):
                 state = r.transform.generate_state(input_shape)
-                randoms: torch.BoolTensor = torch.rand(input_shape[0]) <= prob
+                randoms: torch.BoolTensor = torch.rand(input_shape[0], 1, 1, 1) <= prob
                 img_group = r(img_group,
                               state,
                               torch.logical_and(torch.logical_not(applied_to), randoms))
