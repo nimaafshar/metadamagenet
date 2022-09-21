@@ -119,7 +119,7 @@ class Random(CollectionTransform):
         except StopIteration:
             raise ValueError(f"img_group should not be empty. keys are {img_group.keys()}")
         state = self.transform.transform.generate_state(input_shape)
-        apply: torch.BoolTensor = torch.rand((input_shape[0], 1, 1, 1)) <= self._p
+        apply: torch.BoolTensor = torch.rand(input_shape[0], 1, 1, 1, device=self.device) <= self._p
         return self.transform(img_group, state, apply)
 
     def probability(self) -> float:
