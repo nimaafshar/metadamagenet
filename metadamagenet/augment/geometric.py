@@ -49,7 +49,8 @@ class Shift(Transform[torch.FloatTensor]):
 
     def forward(self, images: torch.Tensor, state: torch.FloatTensor) -> torch.Tensor:
         _, _, h, w = images.size()
-        return kg.translate(images, state * torch.FloatTensor([h, w], device=self.device), padding_mode='reflection')
+        return kg.translate(images, state * torch.tensor([h, w], device=self.device, dtype=torch.float32),
+                            padding_mode='reflection')
 
 
 class ElasticTransform(Transform[torch.FloatTensor]):
