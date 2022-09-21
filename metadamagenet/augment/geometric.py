@@ -80,8 +80,8 @@ class RotateAndScale(Transform[RotateAndScaleState]):
     """ rotate image around a center and scale"""
 
     def __init__(self,
-                 center_y: Tuple[float, float] = (0.2, 0.6),
-                 center_x: Tuple[float, float] = (0.2, 0.6),
+                 center_y: Tuple[float, float] = (0.3, 0.7),
+                 center_x: Tuple[float, float] = (0.3, 0.7),
                  angle: Tuple[float, float] = (-10., 10.),
                  scale: Tuple[float, float] = (0.9, 1.1)
                  ):

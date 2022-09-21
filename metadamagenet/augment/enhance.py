@@ -67,9 +67,9 @@ class Saturation(Transform[torch.FloatTensor]):
 
 class RGBShift(Transform[torch.FloatTensor]):
     def __init__(self,
-                 r: Tuple[float, float] = (-.1, .1),
-                 g: Tuple[float, float] = (-.1, .1),
-                 b: Tuple[float, float] = (-.1, .1)):
+                 r: Tuple[float, float] = (-.01, .01),
+                 g: Tuple[float, float] = (-.01, .01),
+                 b: Tuple[float, float] = (-.01, .01)):
         """
         :param r: range of R channel shift
         :param g: range of G channel shift
@@ -95,9 +95,9 @@ class RGBShift(Transform[torch.FloatTensor]):
 class HSVShift(Transform[torch.FloatTensor]):
 
     def __init__(self,
-                 h: Tuple[float, float] = (-.1, .1),
-                 s: Tuple[float, float] = (-.1, .1),
-                 v: Tuple[float, float] = (-.1, .1)):
+                 h: Tuple[float, float] = (-.01, .01),
+                 s: Tuple[float, float] = (-.01, .01),
+                 v: Tuple[float, float] = (-.01, .01)):
         """
         :param h: range of hue channel shift (will be multiplied by 2*pi)
         :param s: range of saturation channel shift
