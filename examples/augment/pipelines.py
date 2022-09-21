@@ -1,190 +1,88 @@
 from typing import Tuple
+
+from torch import nn
+
 from metadamagenet.augment import (
     OneOf,
-    Pipeline,
-    TopDownFlip,
-    Rotation90Degree,
+    Random,
+    VFlip,
+    Rotate90,
     Shift,
     RotateAndScale,
     Resize,
-    ShiftRGB,
-    ShiftHSV,
+    RGBShift,
+    HSVShift,
     RandomCrop,
-    ElasticTransformation,
+    ElasticTransform,
     GaussianNoise,
     Clahe,
     Blur,
     Saturation,
     Brightness,
-    Contrast
+    Contrast,
+    Dilation
 )
 
 
-def dpn92_unet_double(input_shape: Tuple[int, int]) -> Pipeline:
-    return Pipeline((
-        TopDownFlip(
-            probability=0.5
-        ),
-        Rotation90Degree(
-            probability=0.0001
-        ),
-        Shift(probability=0.5,
-              y_range=(-320, 320),
-              x_range=(-320, 320)),
-        RotateAndScale(
-            probability=0.05,
-            center_x_range=(-320, 320),
-            center_y_range=(-320, 320),
-            scale_range=(0.9, 1.1),
-            angle_range=(-10, 10)
-        ),
-        RandomCrop(
+# TODO: move dilation to augments
+
+def dpn92_unet_double(input_shape: Tuple[int, int]) -> nn.Sequential:
+    return nn.Sequential(
+        Random(VFlip(), p=0.5),
+        Random(Rotate90(), p=0.9999),
+        Random(Shift(y=(.2, .8), x=(.2, .8)), p=.5),
+        Random(RotateAndScale(center_y=(0.3, 0.7), center_x=(0.3, 0.7), angle=(-10., 10.), scale=(.9, 1.1)), p=0.95),
+        RandomCrop(  # TODO: replace
             default_crop_size=input_shape[0],
             size_change_probability=0.05,
             crop_size_range=(int(input_shape[0] / 1.15), int(input_shape[0] / 0.85)),
             try_range=(1, 10),
             scoring_weights={'msk2': 5, 'msk3': 5, 'msk4': 2, 'msk1': 1}
         ),
-        Resize(
+        Resize(  # TODO: replace
             height=input_shape[0],
             width=input_shape[1],
         ),
-        OneOf((
-            ShiftRGB(
-                probability=0.9,
-                r_range=(-5, 5),
-                g_range=(-5, 5),
-                b_range=(-5, 5),
-                apply_to=('img_pre',)
-            ),
-            ShiftRGB(
-                probability=0.9,
-                r_range=(-5, 5),
-                g_range=(-5, 5),
-                b_range=(-5, 5),
-                apply_to=('img_post',)
-            ),
-        ), probability=0
+        OneOf(
+            (RGBShift().only_on('img_pre'), 0.1),
+            (RGBShift().only_on('img_post'), 0.1),
         ),
-        OneOf((
-            ShiftHSV(
-                probability=0.9,
-                h_range=(-5, 5),
-                s_range=(-5, 5),
-                v_range=(-5, 5),
-                apply_to=('img_pre',)
-            ),
-            ShiftHSV(
-                probability=0.9,
-                h_range=(-5, 5),
-                s_range=(-5, 5),
-                v_range=(-5, 5),
-                apply_to=('img_post',)
-            ),
-        ), probability=0
+        OneOf(
+            (HSVShift().only_on('img_pre'), 0.1),
+            (HSVShift().only_on('img_post'), 0.1),
         ),
-        OneOf((
-            OneOf((
-                Clahe(
-                    probability=0.9,
-                    apply_to=('img_pre',)
-                ),
-                GaussianNoise(
-                    probability=0.9,
-                    apply_to=('img_pre',)
-                ),
-                Blur(
-                    probability=0.9,
-                    apply_to=('img_post',)
-                )
-            ), probability=0.9
-            ),
-            OneOf((
-                Saturation(
-                    probability=0.9,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_pre',)
-                ),
-                Brightness(
-                    probability=0.9,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_pre',)
-                ),
-                Contrast(
-                    probability=0.9,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_pre',)
-                )
-            ), probability=0.9
-            )
-        ), probability=0
+        OneOf(
+            (OneOf(
+                (Clahe().only_on('img_pre'), 0.1),
+                (GaussianNoise().only_on('img_pre'), 0.1),
+                (Blur().only_on('img_pre'), 0.1)), 0.1),
+            (OneOf(
+                (Saturation().only_on('img_pre'), 0.1),
+                (Brightness().only_on('img_pre'), 0.1),
+                (Contrast().only_on('img_pre'), 0.1)), 0.1)
         ),
-        OneOf((
-            OneOf((
-                Clahe(
-                    probability=0.9,
-                    apply_to=('img_post',)
-                ),
-                GaussianNoise(
-                    probability=0.9,
-                    apply_to=('img_post',)
-                ),
-                Blur(
-                    probability=0.9,
-                    apply_to=('img_post',)
-                )
-            ),
-                probability=0.9
-            ),
-            OneOf((
-                Saturation(
-                    probability=0.9,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_post',)
-                ),
-                Brightness(
-                    probability=0.9,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_post',)
-                ),
-                Contrast(
-                    probability=0.9,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_post',)
-                )
-            ),
-                probability=0.9
-            )
-        ), probability=0),
-        ElasticTransformation(
-            probability=0.9,
-            apply_to=('img_pre',)
+        OneOf(
+            (OneOf(
+                (Clahe().only_on('img_post'), 0.1),
+                (GaussianNoise().only_on('img_post'), 0.1),
+                (Blur().only_on('img_post'), 0.1)), 0.1),
+            (OneOf(
+                (Saturation().only_on('img_post'), 0.1),
+                (Brightness().only_on('img_post'), 0.1),
+                (Contrast().only_on('img_post'), 0.1)), 0.1)
         ),
-        ElasticTransformation(
-            probability=0.9,
-            apply_to=('img_post',)
-        )
-    ))
+        (ElasticTransform().only_on('img_pre'), 0.1),
+        (ElasticTransform().only_on('img_post'), 0.1),
+        (Dilation().only_on('msk'), 0.9)
+    )
 
 
-def resnet34_unet_double(input_shape: Tuple[int, int]) -> Pipeline:
-    return Pipeline((
-        TopDownFlip(
-            probability=0.5
-        ),
-        Rotation90Degree(
-            probability=0.05
-        ),
-        Shift(probability=0.9,
-              y_range=(-320, 320),
-              x_range=(-320, 320)),
-        RotateAndScale(
-            probability=0.6,
-            center_x_range=(-320, 320),
-            center_y_range=(-320, 320),
-            scale_range=(0.9, 1.1),
-            angle_range=(-10, 10)
-        ),
+def resnet34_unet_double(input_shape: Tuple[int, int]) -> nn.Sequential:
+    return nn.Sequential(
+        Random(VFlip(), p=0.5),
+        Random(Rotate90(), p=0.95),
+        Random(Shift(), p=.1),
+        Random(RotateAndScale(), p=0.4),
         RandomCrop(
             default_crop_size=input_shape[0],
             size_change_probability=0.2,
@@ -196,146 +94,50 @@ def resnet34_unet_double(input_shape: Tuple[int, int]) -> Pipeline:
             height=input_shape[0],
             width=input_shape[1],
         ),
-        OneOf((
-            ShiftRGB(
-                probability=0.985,
-                r_range=(-5, 5),
-                g_range=(-5, 5),
-                b_range=(-5, 5),
-                apply_to=('img_pre',)
-            ),
-            ShiftRGB(
-                probability=0.985,
-                r_range=(-5, 5),
-                g_range=(-5, 5),
-                b_range=(-5, 5),
-                apply_to=('img_post',)
-            ),
-        ), probability=0
+        OneOf(
+            (RGBShift().only_on('img_pre'), 0.015),
+            (RGBShift().only_on('img_post'), 0.015),
         ),
-        OneOf((
-            ShiftHSV(
-                probability=0.985,
-                h_range=(-5, 5),
-                s_range=(-5, 5),
-                v_range=(-5, 5),
-                apply_to=('img_pre',)
-            ),
-            ShiftHSV(
-                probability=0.985,
-                h_range=(-5, 5),
-                s_range=(-5, 5),
-                v_range=(-5, 5),
-                apply_to=('img_post',)
-            ),
-        ), probability=0
+        OneOf(
+            (HSVShift().only_on('img_pre'), 0.015),
+            (HSVShift().only_on('img_post'), 0.015),
         ),
-        OneOf((
-            OneOf((
-                Clahe(
-                    probability=0.985,
-                    apply_to=('img_pre',)
-                ),
-                GaussianNoise(
-                    probability=0.985,
-                    apply_to=('img_pre',)
-                ),
-                Blur(
-                    probability=0.985,
-                    apply_to=('img_post',)
-                )
-            ), probability=0.98
-            ),
-            OneOf((
-                Saturation(
-                    probability=0.985,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_pre',)
-                ),
-                Brightness(
-                    probability=0.985,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_pre',)
-                ),
-                Contrast(
-                    probability=0.985,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_pre',)
-                )
-            ), probability=0.98
-            )
-        ), probability=0
+        OneOf(
+            (OneOf(
+                (Clahe().only_on('img_pre'), 0.015),
+                (GaussianNoise().only_on('img_pre'), 0.015),
+                (Blur().only_on('img_pre'), 0.1)), 0.015),
+            (OneOf(
+                (Saturation().only_on('img_pre'), 0.015),
+                (Brightness().only_on('img_pre'), 0.015),
+                (Contrast().only_on('img_pre'), 0.015)), 0.02)
         ),
-        OneOf((
-            OneOf((
-                Clahe(
-                    probability=0.985,
-                    apply_to=('img_post',)
-                ),
-                GaussianNoise(
-                    probability=0.985,
-                    apply_to=('img_post',)
-                ),
-                Blur(
-                    probability=0.985,
-                    apply_to=('img_post',)
-                )
-            ),
-                probability=0.98
-            ),
-            OneOf((
-                Saturation(
-                    probability=0.985,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_post',)
-                ),
-                Brightness(
-                    probability=0.985,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_post',)
-                ),
-                Contrast(
-                    probability=0.985,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_post',)
-                )
-            ),
-                probability=0.98
-            )
-        ), probability=0),
-        ElasticTransformation(
-            probability=0.983,
-            apply_to=('img_pre',)
+        OneOf(
+            (OneOf(
+                (Clahe().only_on('img_post'), 0.015),
+                (GaussianNoise().only_on('img_post'), 0.015),
+                (Blur().only_on('img_post'), 0.1)), 0.015),
+            (OneOf(
+                (Saturation().only_on('img_post'), 0.015),
+                (Brightness().only_on('img_post'), 0.015),
+                (Contrast().only_on('img_post'), 0.015)), 0.02)
         ),
-        ElasticTransformation(
-            probability=0.983,
-            apply_to=('img_post',)
-        )
-    ))
+        (ElasticTransform().only_on('img_pre'), 0.017),
+        (ElasticTransform().only_on('img_post'), 0.017),
+        (Dilation().only_on('msk'), 0.9)
+    )
 
 
-def senet154_unet_double(input_shape: Tuple[int, int]) -> Pipeline:
+def senet154_unet_double(input_shape: Tuple[int, int]) -> nn.Module:
     return dpn92_unet_double(input_shape)
 
 
-def seresnext50_unet_double(input_shape: Tuple[int, int]) -> Pipeline:
-    return Pipeline((
-        TopDownFlip(
-            probability=0.5
-        ),
-        Rotation90Degree(
-            probability=0.05
-        ),
-        Shift(probability=0.8,
-              y_range=(-320, 320),
-              x_range=(-320, 320)),
-        RotateAndScale(
-            probability=0.2,
-            center_x_range=(-320, 320),
-            center_y_range=(-320, 320),
-            scale_range=(0.9, 1.1),
-            angle_range=(-10, 10)
-        ),
+def seresnext50_unet_double(input_shape: Tuple[int, int]) -> nn.Sequential:
+    return nn.Sequential((
+        Random(VFlip(), p=0.5),
+        Random(Rotate90(), p=0.05),
+        Random(Shift(), p=.2),
+        Random(RotateAndScale(), p=0.8),
         RandomCrop(
             default_crop_size=input_shape[0],
             size_change_probability=0.1,
@@ -347,138 +149,47 @@ def seresnext50_unet_double(input_shape: Tuple[int, int]) -> Pipeline:
             height=input_shape[0],
             width=input_shape[1],
         ),
-        OneOf((
-            ShiftRGB(
-                probability=0.96,
-                r_range=(-5, 5),
-                g_range=(-5, 5),
-                b_range=(-5, 5),
-                apply_to=('img_pre',)
-            ),
-            ShiftRGB(
-                probability=0.96,
-                r_range=(-5, 5),
-                g_range=(-5, 5),
-                b_range=(-5, 5),
-                apply_to=('img_post',)
-            ),
-        ), probability=0
+        OneOf(
+            (RGBShift().only_on('img_pre'), 0.04),
+            (RGBShift().only_on('img_post'), 0.04),
         ),
-        OneOf((
-            ShiftHSV(
-                probability=0.96,
-                h_range=(-5, 5),
-                s_range=(-5, 5),
-                v_range=(-5, 5),
-                apply_to=('img_pre',)
-            ),
-            ShiftHSV(
-                probability=0.96,
-                h_range=(-5, 5),
-                s_range=(-5, 5),
-                v_range=(-5, 5),
-                apply_to=('img_post',)
-            ),
-        ), probability=0
+    ),
+        OneOf(
+            (HSVShift().only_on('img_pre'), 0.04),
+            (HSVShift().only_on('img_post'), 0.04),
         ),
-        OneOf((
-            OneOf((
-                Clahe(
-                    probability=0.96,
-                    apply_to=('img_pre',)
-                ),
-                GaussianNoise(
-                    probability=0.96,
-                    apply_to=('img_pre',)
-                ),
-                Blur(
-                    probability=0.96,
-                    apply_to=('img_post',)
-                )
-            ), probability=0.9
-            ),
-            OneOf((
-                Saturation(
-                    probability=0.96,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_pre',)
-                ),
-                Brightness(
-                    probability=0.96,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_pre',)
-                ),
-                Contrast(
-                    probability=0.96,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_pre',)
-                )
-            ), probability=0.9
-            )
-        ), probability=0
+        OneOf(
+            (OneOf(
+                (Clahe().only_on('img_pre'), 0.04),
+                (GaussianNoise().only_on('img_pre'), 0.04),
+                (Blur().only_on('img_pre'), 0.1)), 0.04),
+            (OneOf(
+                (Saturation().only_on('img_pre'), 0.04),
+                (Brightness().only_on('img_pre'), 0.04),
+                (Contrast().only_on('img_pre'), 0.04)), 0.1)
         ),
-        OneOf((
-            OneOf((
-                Clahe(
-                    probability=0.96,
-                    apply_to=('img_post',)
-                ),
-                GaussianNoise(
-                    probability=0.96,
-                    apply_to=('img_post',)
-                ),
-                Blur(
-                    probability=0.96,
-                    apply_to=('img_post',)
-                )
-            ),
-                probability=0.9
-            ),
-            OneOf((
-                Saturation(
-                    probability=0.96,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_post',)
-                ),
-                Brightness(
-                    probability=0.96,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_post',)
-                ),
-                Contrast(
-                    probability=0.96,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_post',)
-                )
-            ),
-                probability=0.9
-            )
-        ), probability=0),
-        ElasticTransformation(
-            probability=0.96,
-            apply_to=('img_pre',)
+        OneOf(
+            (OneOf(
+                (Clahe().only_on('img_post'), 0.04),
+                (GaussianNoise().only_on('img_post'), 0.04),
+                (Blur().only_on('img_post'), 0.1)), 0.04),
+            (OneOf(
+                (Saturation().only_on('img_post'), 0.04),
+                (Brightness().only_on('img_post'), 0.04),
+                (Contrast().only_on('img_post'), 0.04)), 0.1)
         ),
-        ElasticTransformation(
-            probability=0.96,
-            apply_to=('img_post',)
-        )
-    ))
+        (ElasticTransform().only_on('img_pre'), 0.04),
+        (ElasticTransform().only_on('img_post'), 0.04),
+        (Dilation().only_on('msk'), 0.9)
+    )
 
 
-def dpn92_unet_localization(input_shape: Tuple[int, int]) -> Pipeline:
-    return Pipeline((
-        TopDownFlip(probability=0.5),
-        Rotation90Degree(probability=0.05),
-        Shift(probability=0.9,
-              y_range=(-320, 320),
-              x_range=(-320, 320)),
-        RotateAndScale(
-            probability=0.9,
-            center_y_range=(-320, 320),
-            center_x_range=(-320, 320),
-            angle_range=(-10, 10),
-            scale_range=(0.9, 1.1)
-        ),
+def dpn92_unet_localization(input_shape: Tuple[int, int]) -> nn.Sequential:
+    return nn.Sequential(
+        Random(VFlip(), p=0.5),
+        Random(Rotate90(), p=0.95),
+        Random(Shift(y=(.2, .8), x=(.2, .8)), p=.1),
+        Random(RotateAndScale(center_y=(0.3, 0.7), center_x=(0.3, 0.7), angle=(-10., 10.), scale=(.9, 1.1)), p=0.1),
         RandomCrop(
             default_crop_size=input_shape[0],
             size_change_probability=0.5,
@@ -486,43 +197,28 @@ def dpn92_unet_localization(input_shape: Tuple[int, int]) -> Pipeline:
             try_range=(1, 5)
         ),
         Resize(*input_shape),
-        ShiftRGB(probability=0.99,
-                 r_range=(-5, 5),
-                 g_range=(-5, 5),
-                 b_range=(-5, 5)),
-        ShiftHSV(probability=0.99,
-                 h_range=(-5, 5),
-                 s_range=(-5, 5),
-                 v_range=(-5, 5)),
+        Random(RGBShift().only_on('img'), p=0.01),
+        Random(HSVShift().only_on('img'), p=0.01),
         OneOf((
-            OneOf((
-                Clahe(0.99),
-                GaussianNoise(0.99),
-                Blur(0.99)),
-                probability=0.99),
-            OneOf((
-                Saturation(0.99, (0.9, 1.1)),
-                Brightness(0.99, (0.9, 1.1)),
-                Contrast(0.99, (0.9, 1.1))),
-                probability=0.99)), probability=0),
-        ElasticTransformation(0.999)
-    ))
-
-
-def resnet34_unet_localization(input_shape: Tuple[int, int]) -> Pipeline:
-    return Pipeline((
-        TopDownFlip(probability=0.5),
-        Rotation90Degree(probability=0.05),
-        Shift(probability=0.8,
-              y_range=(-320, 320),
-              x_range=(-320, 320)),
-        RotateAndScale(
-            probability=0.2,
-            center_y_range=(-320, 320),
-            center_x_range=(-320, 320),
-            angle_range=(-10, 10),
-            scale_range=(0.9, 1.1)
+            OneOf(
+                (Clahe().only_on('img'), 0.01),
+                (GaussianNoise().only_on('img'), 0.01),
+                (Blur().only_on('img'), 0.01)), 0.01),
+            (OneOf(
+                (Saturation().only_on('img'), 0.01),
+                (Brightness().only_on('img'), 0.01),
+                (Contrast().only_on('img'), 0.01), 0.01))
         ),
+        Random(ElasticTransform(), p=0.001)
+    )
+
+
+def resnet34_unet_localization(input_shape: Tuple[int, int]) -> nn.Sequential:
+    return nn.Sequential(
+        Random(VFlip(), p=0.5),
+        Random(Rotate90(), p=0.95),
+        Random(Shift(), p=.2),
+        Random(RotateAndScale(), p=0.8),
         RandomCrop(
             default_crop_size=input_shape[0],
             size_change_probability=0.3,
@@ -530,45 +226,30 @@ def resnet34_unet_localization(input_shape: Tuple[int, int]) -> Pipeline:
             try_range=(1, 5)
         ),
         Resize(*input_shape),
-        OneOf((
-            ShiftRGB(probability=0.97,
-                     r_range=(-5, 5),
-                     g_range=(-5, 5),
-                     b_range=(-5, 5)),
-
-            ShiftHSV(probability=0.97,
-                     h_range=(-5, 5),
-                     s_range=(-5, 5),
-                     v_range=(-5, 5))), probability=0),
-        OneOf((
-            OneOf((
-                Clahe(0.97),
-                GaussianNoise(0.97),
-                Blur(0.98)),
-                probability=0.93),
-            OneOf((
-                Saturation(0.97, (0.9, 1.1)),
-                Brightness(0.97, (0.9, 1.1)),
-                Contrast(0.97, (0.9, 1.1))),
-                probability=0.93)), probability=0),
-        ElasticTransformation(0.97)
-    ))
-
-
-def senet154_unet_localization(input_shape: Tuple[int, int]) -> Pipeline:
-    return Pipeline((
-        TopDownFlip(probability=0.6),
-        Rotation90Degree(probability=0.1),
-        Shift(probability=0.7,
-              y_range=(-320, 320),
-              x_range=(-320, 320)),
-        RotateAndScale(
-            probability=0.4,
-            center_y_range=(-320, 320),
-            center_x_range=(-320, 320),
-            angle_range=(-10, 10),
-            scale_range=(0.9, 1.1)
+        OneOf(
+            (RGBShift().only_on('img'), 0.03),
+            (HSVShift().only_on('img'), 0.03)
         ),
+        OneOf((
+            OneOf(
+                (Clahe().only_on('img'), 0.03),
+                (GaussianNoise().only_on('img'), 0.03),
+                (Blur().only_on('img'), 0.02)), 0.07),
+            (OneOf(
+                (Saturation().only_on('img'), 0.03),
+                (Brightness().only_on('img'), 0.03),
+                (Contrast().only_on('img'), 0.03), 0.07))
+        ),
+        Random(ElasticTransform().only_on('img'), p=0.03)
+    )
+
+
+def senet154_unet_localization(input_shape: Tuple[int, int]) -> nn.Sequential:
+    return nn.Sequential(
+        Random(VFlip(), p=0.4),
+        Random(Rotate90(), p=0.9),
+        Random(Shift(y=(.2, .8), x=(.2, .8)), p=.3),
+        Random(RotateAndScale(center_y=(0.3, 0.7), center_x=(0.3, 0.7), angle=(-10., 10.), scale=(.9, 1.1)), p=0.6),
         RandomCrop(
             default_crop_size=input_shape[0],
             size_change_probability=0.2,
@@ -576,43 +257,28 @@ def senet154_unet_localization(input_shape: Tuple[int, int]) -> Pipeline:
             try_range=(1, 5)
         ),
         Resize(*input_shape),
-        ShiftRGB(probability=0.95,
-                 r_range=(-5, 5),
-                 g_range=(-5, 5),
-                 b_range=(-5, 5)),
-        ShiftHSV(probability=0.9597,
-                 h_range=(-5, 5),
-                 s_range=(-5, 5),
-                 v_range=(-5, 5)),
+        Random(RGBShift().only_on('img'), p=0.05),
+        Random(HSVShift().only_on('img'), p=0.04),
         OneOf((
-            OneOf((
-                Clahe(0.92),
-                GaussianNoise(0.92),
-                Blur(0.92)),
-                probability=0.92),
-            OneOf((
-                Saturation(0.92, (0.9, 1.1)),
-                Brightness(0.92, (0.9, 1.1)),
-                Contrast(0.92, (0.9, 1.1))),
-                probability=0.92)), probability=0),
-        ElasticTransformation(0.95)
-    ))
-
-
-def seresnext50_unet_localization(input_shape: Tuple[int, int]) -> Pipeline:
-    return Pipeline((
-        TopDownFlip(probability=0.5),
-        Rotation90Degree(probability=0.05),
-        Shift(probability=0.9,
-              y_range=(-320, 320),
-              x_range=(-320, 320)),
-        RotateAndScale(
-            probability=0.9,
-            center_y_range=(-320, 320),
-            center_x_range=(-320, 320),
-            angle_range=(-10, 10),
-            scale_range=(0.9, 1.1)
+            OneOf(
+                (Clahe().only_on('img'), 0.08),
+                (GaussianNoise().only_on('img'), 0.08),
+                (Blur().only_on('img'), 0.08)), 0.08),
+            (OneOf(
+                (Saturation().only_on('img'), 0.08),
+                (Brightness().only_on('img'), 0.08),
+                (Contrast().only_on('img'), 0.08), 0.08))
         ),
+        Random(ElasticTransform(), p=0.05)
+    )
+
+
+def seresnext50_unet_localization(input_shape: Tuple[int, int]) -> nn.Sequential:
+    return nn.Sequential(
+        Random(VFlip(), p=0.5),
+        Random(Rotate90(), p=0.95),
+        Random(Shift(), p=.1),
+        Random(RotateAndScale(), p=0.1),
         RandomCrop(
             default_crop_size=input_shape[0],
             size_change_probability=0.3,
@@ -620,47 +286,28 @@ def seresnext50_unet_localization(input_shape: Tuple[int, int]) -> Pipeline:
             try_range=(1, 5)
         ),
         Resize(*input_shape),
-        ShiftRGB(probability=0.99,
-                 r_range=(-5, 5),
-                 g_range=(-5, 5),
-                 b_range=(-5, 5)),
-        ShiftHSV(probability=0.99,
-                 h_range=(-5, 5),
-                 s_range=(-5, 5),
-                 v_range=(-5, 5)),
-        OneOf((
-            OneOf((
-                Clahe(0.99),
-                GaussianNoise(0.99),
-                Blur(0.99)),
-                probability=0.99),
-            OneOf((
-                Saturation(0.99, (0.9, 1.1)),
-                Brightness(0.99, (0.9, 1.1)),
-                Contrast(0.99, (0.9, 1.1))),
-                probability=0.99)), probability=0),
-        ElasticTransformation(0.999)
-    ))
+        Random(RGBShift().only_on('img'), p=0.01),
+        Random(HSVShift().only_on('img'), p=0.01),
+        OneOf(
+            (OneOf(
+                (Clahe().only_on('img'), 0.01),
+                (GaussianNoise().only_on('img'), 0.01),
+                (Blur().only_on('img'), 0.01)), 0.01),
+            (OneOf(
+                (Saturation().only_on('img'), 0.01),
+                (Brightness().only_on('img'), 0.01),
+                (Contrast().only_on('img'), 0.01), 0.01))
+        ),
+        Random(ElasticTransform().only_on('img'), p=0.001)
+    )
 
 
-def dpn92_unet_double_tune(input_shape: Tuple[int, int]) -> Pipeline:
-    return Pipeline((
-        TopDownFlip(
-            probability=0.7
-        ),
-        Rotation90Degree(
-            probability=0.3
-        ),
-        Shift(probability=0.99,
-              y_range=(-320, 320),
-              x_range=(-320, 320)),
-        RotateAndScale(
-            probability=0.5,
-            center_x_range=(-320, 320),
-            center_y_range=(-320, 320),
-            scale_range=(0.9, 1.1),
-            angle_range=(-10, 10)
-        ),
+def dpn92_unet_double_tune(input_shape: Tuple[int, int]) -> nn.Sequential:
+    return nn.Sequential(
+        Random(VFlip(), p=0.3),
+        Random(Rotate90(), p=0.7),
+        Random(Shift(), p=.01),
+        Random(RotateAndScale(), p=0.5),
         RandomCrop(
             default_crop_size=input_shape[0],
             size_change_probability=0.5,
@@ -672,142 +319,46 @@ def dpn92_unet_double_tune(input_shape: Tuple[int, int]) -> Pipeline:
             height=input_shape[0],
             width=input_shape[1],
         ),
-        OneOf((
-            ShiftRGB(
-                probability=0.99,
-                r_range=(-5, 5),
-                g_range=(-5, 5),
-                b_range=(-5, 5),
-                apply_to=('img_pre',)
-            ),
-            ShiftRGB(
-                probability=0.99,
-                r_range=(-5, 5),
-                g_range=(-5, 5),
-                b_range=(-5, 5),
-                apply_to=('img_post',)
-            ),
-        ), probability=0
+        OneOf(
+            (RGBShift().only_on('img_pre'), 0.01),
+            (RGBShift().only_on('img_post'), 0.01),
         ),
-        OneOf((
-            ShiftHSV(
-                probability=0.99,
-                h_range=(-5, 5),
-                s_range=(-5, 5),
-                v_range=(-5, 5),
-                apply_to=('img_pre',)
-            ),
-            ShiftHSV(
-                probability=0.99,
-                h_range=(-5, 5),
-                s_range=(-5, 5),
-                v_range=(-5, 5),
-                apply_to=('img_post',)
-            ),
-        ), probability=0
+        OneOf(
+            (HSVShift().only_on('img_pre'), 0.01),
+            (HSVShift().only_on('img_post'), 0.01),
         ),
-        OneOf((
-            OneOf((
-                Clahe(
-                    probability=0.99,
-                    apply_to=('img_pre',)
-                ),
-                GaussianNoise(
-                    probability=0.99,
-                    apply_to=('img_pre',)
-                ),
-                Blur(
-                    probability=0.99,
-                    apply_to=('img_post',)
-                )
-            ), probability=0.99
-            ),
-            OneOf((
-                Saturation(
-                    probability=0.99,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_pre',)
-                ),
-                Brightness(
-                    probability=0.99,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_pre',)
-                ),
-                Contrast(
-                    probability=0.99,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_pre',)
-                )
-            ), probability=0.99
-            )
-        ), probability=0
+        OneOf(
+            (OneOf(
+                (Clahe().only_on('img_pre'), 0.01),
+                (GaussianNoise().only_on('img_pre'), 0.01),
+                (Blur().only_on('img_pre'), 0.01)), 0.01),
+            (OneOf(
+                (Saturation().only_on('img_pre'), 0.01),
+                (Brightness().only_on('img_pre'), 0.01),
+                (Contrast().only_on('img_pre'), 0.01)), 0.01)
         ),
-        OneOf((
-            OneOf((
-                Clahe(
-                    probability=0.99,
-                    apply_to=('img_post',)
-                ),
-                GaussianNoise(
-                    probability=0.99,
-                    apply_to=('img_post',)
-                ),
-                Blur(
-                    probability=0.99,
-                    apply_to=('img_post',)
-                )
-            ),
-                probability=0.99
-            ),
-            OneOf((
-                Saturation(
-                    probability=0.99,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_post',)
-                ),
-                Brightness(
-                    probability=0.99,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_post',)
-                ),
-                Contrast(
-                    probability=0.99,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_post',)
-                )
-            ),
-                probability=0.99
-            )
-        ), probability=0),
-        ElasticTransformation(
-            probability=0.99,
-            apply_to=('img_pre',)
+        OneOf(
+            (OneOf(
+                (Clahe().only_on('img_post'), 0.01),
+                (GaussianNoise().only_on('img_post'), 0.01),
+                (Blur().only_on('img_post'), 0.01)), 0.01),
+            (OneOf(
+                (Saturation().only_on('img_post'), 0.01),
+                (Brightness().only_on('img_post'), 0.01),
+                (Contrast().only_on('img_post'), 0.01)), 0.01)
         ),
-        ElasticTransformation(
-            probability=0.99,
-            apply_to=('img_post',)
-        )
-    ))
+        (ElasticTransform().only_on('img_pre'), 0.01),
+        (ElasticTransform().only_on('img_post'), 0.01),
+        (Dilation().only_on('msk'), 0.9)
+    )
 
 
-def resnet34_unet_double_tune(input_shape: Tuple[int, int]) -> Pipeline:
-    return Pipeline((
-        TopDownFlip(
-            probability=0.7
-        ),
-        Rotation90Degree(
-            probability=0.3
-        ),
-        Shift(probability=0.98,
-              y_range=(-320, 320),
-              x_range=(-320, 320)),
-        RotateAndScale(
-            probability=0.5,
-            center_x_range=(-320, 320),
-            center_y_range=(-320, 320),
-            scale_range=(0.9, 1.1),
-            angle_range=(-10, 10)
-        ),
+def resnet34_unet_double_tune(input_shape: Tuple[int, int]) -> nn.Sequential:
+    return nn.Sequential(
+        Random(VFlip(), p=0.3),
+        Random(Rotate90(), p=0.7),
+        Random(Shift(), p=.02),
+        Random(RotateAndScale(), p=0.5),
         RandomCrop(
             default_crop_size=input_shape[0],
             size_change_probability=0.5,
@@ -819,146 +370,50 @@ def resnet34_unet_double_tune(input_shape: Tuple[int, int]) -> Pipeline:
             height=input_shape[0],
             width=input_shape[1],
         ),
-        OneOf((
-            ShiftRGB(
-                probability=0.99,
-                r_range=(-5, 5),
-                g_range=(-5, 5),
-                b_range=(-5, 5),
-                apply_to=('img_pre',)
-            ),
-            ShiftRGB(
-                probability=0.99,
-                r_range=(-5, 5),
-                g_range=(-5, 5),
-                b_range=(-5, 5),
-                apply_to=('img_post',)
-            ),
-        ), probability=0
+        OneOf(
+            (RGBShift().only_on('img_pre'), 0.01),
+            (RGBShift().only_on('img_post'), 0.01),
         ),
-        OneOf((
-            ShiftHSV(
-                probability=0.99,
-                h_range=(-5, 5),
-                s_range=(-5, 5),
-                v_range=(-5, 5),
-                apply_to=('img_pre',)
-            ),
-            ShiftHSV(
-                probability=0.99,
-                h_range=(-5, 5),
-                s_range=(-5, 5),
-                v_range=(-5, 5),
-                apply_to=('img_post',)
-            ),
-        ), probability=0
+        OneOf(
+            (HSVShift().only_on('img_pre'), 0.01),
+            (HSVShift().only_on('img_post'), 0.01),
         ),
-        OneOf((
-            OneOf((
-                Clahe(
-                    probability=0.99,
-                    apply_to=('img_pre',)
-                ),
-                GaussianNoise(
-                    probability=0.99,
-                    apply_to=('img_pre',)
-                ),
-                Blur(
-                    probability=0.99,
-                    apply_to=('img_post',)
-                )
-            ), probability=0.99
-            ),
-            OneOf((
-                Saturation(
-                    probability=0.99,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_pre',)
-                ),
-                Brightness(
-                    probability=0.99,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_pre',)
-                ),
-                Contrast(
-                    probability=0.99,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_pre',)
-                )
-            ), probability=0.99
-            )
-        ), probability=0
+        OneOf(
+            (OneOf(
+                (Clahe().only_on('img_pre'), 0.01),
+                (GaussianNoise().only_on('img_pre'), 0.01),
+                (Blur().only_on('img_pre'), 0.01)), 0.01),
+            (OneOf(
+                (Saturation().only_on('img_pre'), 0.01),
+                (Brightness().only_on('img_pre'), 0.01),
+                (Contrast().only_on('img_pre'), 0.01)), 0.01)
         ),
-        OneOf((
-            OneOf((
-                Clahe(
-                    probability=0.985,
-                    apply_to=('img_post',)
-                ),
-                GaussianNoise(
-                    probability=0.985,
-                    apply_to=('img_post',)
-                ),
-                Blur(
-                    probability=0.985,
-                    apply_to=('img_post',)
-                )
-            ),
-                probability=0.99
-            ),
-            OneOf((
-                Saturation(
-                    probability=0.99,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_post',)
-                ),
-                Brightness(
-                    probability=0.99,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_post',)
-                ),
-                Contrast(
-                    probability=0.99,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_post',)
-                )
-            ),
-                probability=0.99
-            )
-        ), probability=0),
-        ElasticTransformation(
-            probability=0.99,
-            apply_to=('img_pre',)
+        OneOf(
+            (OneOf(
+                (Clahe().only_on('img_post'), 0.015),
+                (GaussianNoise().only_on('img_post'), 0.015),
+                (Blur().only_on('img_post'), 0.015)), 0.01),
+            (OneOf(
+                (Saturation().only_on('img_post'), 0.01),
+                (Brightness().only_on('img_post'), 0.01),
+                (Contrast().only_on('img_post'), 0.01)), 0.01)
         ),
-        ElasticTransformation(
-            probability=0.99,
-            apply_to=('img_post',)
-        )
-    ))
+        (ElasticTransform().only_on('img_pre'), 0.01),
+        (ElasticTransform().only_on('img_post'), 0.01),
+        (Dilation().only_on('msk'), 0.9)
+    )
 
 
 def senet154_unet_double_tune(input_shape: Tuple[int, int]) -> Pipeline:
     return dpn92_unet_double_tune(input_shape)
 
 
-def seresnext50_unet_double_tune(input_shape: Tuple[int, int]) -> Pipeline:
-    return Pipeline((
-        TopDownFlip(
-            probability=0.7
-        ),
-        Rotation90Degree(
-            probability=0.3
-        ),
-        Shift(probability=0.99,
-              y_range=(-320, 320),
-              x_range=(-320, 320)),
-        RotateAndScale(
-            probability=0.5,
-            center_x_range=(-320, 320),
-            center_y_range=(-320, 320),
-            scale_range=(0.9, 1.1),
-            angle_range=(-10, 10)
-        ),
+def seresnext50_unet_double_tune(input_shape: Tuple[int, int]) -> nn.Sequential:
+    return nn.Sequential(
+        Random(VFlip(), p=0.3),
+        Random(Rotate90(), p=0.7),
+        Random(Shift(), p=.01),
+        Random(RotateAndScale(), p=0.5),
         RandomCrop(
             default_crop_size=input_shape[0],
             size_change_probability=0.5,
@@ -970,167 +425,69 @@ def seresnext50_unet_double_tune(input_shape: Tuple[int, int]) -> Pipeline:
             height=input_shape[0],
             width=input_shape[1],
         ),
-        OneOf((
-            ShiftRGB(
-                probability=0.99,
-                r_range=(-5, 5),
-                g_range=(-5, 5),
-                b_range=(-5, 5),
-                apply_to=('img_pre',)
-            ),
-            ShiftRGB(
-                probability=0.99,
-                r_range=(-5, 5),
-                g_range=(-5, 5),
-                b_range=(-5, 5),
-                apply_to=('img_post',)
-            ),
-        ), probability=0
+        OneOf(
+            (RGBShift().only_on('img_pre'), 0.01),
+            (RGBShift().only_on('img_post'), 0.01),
+        ),
+        OneOf(
+            (HSVShift().only_on('img_pre'), 0.01),
+            (HSVShift().only_on('img_post'), 0.01),
+        ),
+        OneOf(
+            (OneOf(
+                (Clahe().only_on('img_pre'), 0.04),
+                (GaussianNoise().only_on('img_pre'), 0.04),
+                (Blur().only_on('img_pre'), 0.04)), 0.01),
+            (OneOf(
+                (Saturation().only_on('img_pre'), 0.01),
+                (Brightness().only_on('img_pre'), 0.01),
+                (Contrast().only_on('img_pre'), 0.01)), 0.01)
+        ),
+        OneOf(
+            (OneOf(
+                (Clahe().only_on('img_post'), 0.01),
+                (GaussianNoise().only_on('img_post'), 0.01),
+                (Blur().only_on('img_post'), 0.01)), 0.01),
+            (OneOf(
+                (Saturation().only_on('img_post'), 0.01),
+                (Brightness().only_on('img_post'), 0.01),
+                (Contrast().only_on('img_post'), 0.01)), 0.01)
+        ),
+        (ElasticTransform().only_on('img_pre'), 0.017),
+        (ElasticTransform().only_on('img_post'), 0.017),
+        (Dilation().only_on('msk'), 0.9)
+    )
+
+
+def dpn92_unet_localization_tune(input_shape: Tuple[int, int]) -> nn.Sequential:
+    return nn.Sequential(
+        Random(VFlip(), p=0.45),
+        Random(Rotate90(), p=0.9),
+        Random(Shift(), p=.05),
+        Random(RotateAndScale(), p=0.05),
+        RandomCrop(
+            default_crop_size=input_shape[0],
+            size_change_probability=0.6,
+            crop_size_range=(int(input_shape[0] / 1.1), int(input_shape[0] / 0.9)),
+            try_range=(1, 5)
+        ),
+        Resize(*input_shape),
+        OneOf(
+            (RGBShift().only_on('img'), 0.01),
+            (HSVShift().only_on('img'), 0.01)
         ),
         OneOf((
-            ShiftHSV(
-                probability=0.99,
-                h_range=(-5, 5),
-                s_range=(-5, 5),
-                v_range=(-5, 5),
-                apply_to=('img_pre',)
-            ),
-            ShiftHSV(
-                probability=0.99,
-                h_range=(-5, 5),
-                s_range=(-5, 5),
-                v_range=(-5, 5),
-                apply_to=('img_post',)
-            ),
-        ), probability=0
+            OneOf(
+                (Clahe().only_on('img'), 0.01),
+                (GaussianNoise().only_on('img'), 0.01),
+                (Blur().only_on('img'), 0.01)), 0.01),
+            (OneOf(
+                (Saturation().only_on('img'), 0.01),
+                (Brightness().only_on('img'), 0.01),
+                (Contrast().only_on('img'), 0.01), 0.01))
         ),
-        OneOf((
-            OneOf((
-                Clahe(
-                    probability=0.96,
-                    apply_to=('img_pre',)
-                ),
-                GaussianNoise(
-                    probability=0.96,
-                    apply_to=('img_pre',)
-                ),
-                Blur(
-                    probability=0.96,
-                    apply_to=('img_post',)
-                )
-            ), probability=0.99
-            ),
-            OneOf((
-                Saturation(
-                    probability=0.99,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_pre',)
-                ),
-                Brightness(
-                    probability=0.99,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_pre',)
-                ),
-                Contrast(
-                    probability=0.99,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_pre',)
-                )
-            ), probability=0.99
-            )
-        ), probability=0
-        ),
-        OneOf((
-            OneOf((
-                Clahe(
-                    probability=0.99,
-                    apply_to=('img_post',)
-                ),
-                GaussianNoise(
-                    probability=0.99,
-                    apply_to=('img_post',)
-                ),
-                Blur(
-                    probability=0.99,
-                    apply_to=('img_post',)
-                )
-            ),
-                probability=0.99
-            ),
-            OneOf((
-                Saturation(
-                    probability=0.99,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_post',)
-                ),
-                Brightness(
-                    probability=0.99,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_post',)
-                ),
-                Contrast(
-                    probability=0.99,
-                    alpha_range=(0.9, 1.1),
-                    apply_to=('img_post',)
-                )
-            ),
-                probability=0.99
-            )
-        ), probability=0),
-        ElasticTransformation(
-            probability=0.99,
-            apply_to=('img_pre',)
-        ),
-        ElasticTransformation(
-            probability=0.99,
-            apply_to=('img_post',)
+        Random(ElasticTransform().only_on('img'), p=0.001)
         )
-    ))
-
-
-def dpn92_unet_localization_tune(input_shape: Tuple[int, int]) -> Pipeline:
-    return Pipeline(
-        (
-            TopDownFlip(probability=0.55),
-            Rotation90Degree(probability=0.1),
-            Shift(probability=0.95,
-                  y_range=(-320, 320),
-                  x_range=(-320, 320)),
-            RotateAndScale(
-                probability=0.95,
-                center_y_range=(-320, 320),
-                center_x_range=(-320, 320),
-                angle_range=(-10, 10),
-                scale_range=(0.9, 1.1)
-            ),
-            RandomCrop(
-                default_crop_size=input_shape[0],
-                size_change_probability=0.6,
-                crop_size_range=(int(input_shape[0] / 1.1), int(input_shape[0] / 0.9)),
-                try_range=(1, 5)
-            ),
-            Resize(*input_shape),
-            ShiftRGB(probability=0.99,
-                     r_range=(-5, 5),
-                     g_range=(-5, 5),
-                     b_range=(-5, 5)),
-            ShiftHSV(probability=0.99,
-                     h_range=(-5, 5),
-                     s_range=(-5, 5),
-                     v_range=(-5, 5)),
-            OneOf((
-                OneOf((
-                    Clahe(0.99),
-                    GaussianNoise(0.99),
-                    Blur(0.99)),
-                    probability=0.99),
-                OneOf((
-                    Saturation(0.99, (0.9, 1.1)),
-                    Brightness(0.99, (0.9, 1.1)),
-                    Contrast(0.99, (0.9, 1.1))),
-                    probability=0.99)), probability=0),
-            ElasticTransformation(0.999)
-        ))
 
 
 def seresnext50_unet_localization_tune(input_shape: Tuple[int, int]) -> Pipeline:
