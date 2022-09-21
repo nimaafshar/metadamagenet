@@ -55,6 +55,12 @@ class Transform(nn.Module, abc.ABC, Generic[StateType]):
         """
         pass
 
+    def only_on(self, *keys: str) -> 'OnlyOn':
+        """
+        shortcut for creating OnlyOn object
+        """
+        return OnlyOn(self, *keys)
+
 
 class CollectionTransform(nn.Module, abc.ABC):
     def __init__(self):
