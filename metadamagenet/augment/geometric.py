@@ -124,7 +124,7 @@ class RotateAndScale(Transform[RotateAndScaleState]):
 class BestCrop(CollectionTransform):
     def __init__(self,
                  samples: int = 5,
-                 size_range: Tuple[float, float] = (0.5, 0.7),
+                 size_range: Tuple[float, float] = (0.9, 1),
                  dsize: Tuple[int, int] = (512, 512),
                  msk_key: str = 'msk',
                  only_on: Optional[Sequence[str]] = None):
@@ -156,7 +156,8 @@ class BestCrop(CollectionTransform):
             .reshape(b * self._samples, c, h, w)
 
         candidate_boxes: torch.FloatTensor = self._generate_boxes(b, self._samples) * img_shape
-        candidates: torch.FloatTensor = kg.transform.crop_and_resize(repeated_msk, candidate_boxes, size=self._dsize) \
+        candidates: torch.FloatTensor = kg.transform.crop_and_resize(repeated_msk, candidate_boxes, size=self._dsize,
+                                                                     padding_mode='reflection') \
             .reshape(b, self._samples, -1)
         indices = candidates.sum(dim=2).argmax(dim=1, keepdim=True).unsqueeze(-1).repeat(1, 1, 4 * 2)
         boxes = candidate_boxes.reshape(b, self._samples, 4 * 2).gather(dim=1, index=indices).reshape(b, 4, 2)
@@ -165,7 +166,7 @@ class BestCrop(CollectionTransform):
         keys = self._only_on if self._only_on is not None else collection.keys()
         for key, val in collection.items():
             if key in keys:
-                result[key] = kg.transform.crop_and_resize(val, boxes, size=self._dsize)
+                result[key] = kg.transform.crop_and_resize(val, boxes, size=self._dsize, padding_mode='reflection')
             else:
                 result[key] = val
         return result
