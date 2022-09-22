@@ -60,7 +60,7 @@ class ImageData:
         polygons: List[Tuple[Polygon, DamageType]] = []
         for feat in json_data['features']['xy']:
             polygon: Polygon = wkt.loads(feat['wkt'])
-            subtype: DamageType = feat.get('properties', {}).get('subtype', DamageType.UN_CLASSIFIED)
+            subtype: DamageType = feat['properties']['subtype']
             if isinstance(subtype, str):
                 subtype = damage_to_damage_type[subtype]
             polygons.append((polygon, subtype))

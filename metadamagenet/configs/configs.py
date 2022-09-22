@@ -9,19 +9,19 @@ import yaml
 
 
 class DamageType(enum.Enum):
+    UN_CLASSIFIED = 0
     NO_DAMAGE = 1
     MINOR_DAMAGE = 2
     MAJOR_DAMAGE = 3
     DESTROYED = 4
-    UN_CLASSIFIED = 1
 
 
 damage_to_damage_type = {
+    "un-classified": DamageType.UN_CLASSIFIED,
     "no-damage": DamageType.NO_DAMAGE,
     "minor-damage": DamageType.MINOR_DAMAGE,
     "major-damage": DamageType.MAJOR_DAMAGE,
-    "destroyed": DamageType.DESTROYED,
-    "un-classified": DamageType.UN_CLASSIFIED
+    "destroyed": DamageType.DESTROYED
 }
 
 damage_dict = {
