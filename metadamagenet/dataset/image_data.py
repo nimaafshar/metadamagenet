@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import pathlib
 import json
-from typing import List, Tuple, Iterable
+from typing import List, Tuple, Iterable, Union
 
 from shapely.geometry import Polygon
 from shapely import wkt
@@ -49,7 +49,7 @@ class ImageData:
         """
         return self.base / GeneralConfig.get_instance().masks_dirname / f'{self.name(time)}_target.png'
 
-    def polygons(self, time: DataTime = DataTime.PRE) -> List[Tuple[Polygon, DamageType]]:
+    def polygons(self, time: DataTime = DataTime.PRE) -> List[Union[Tuple[Polygon, DamageType], Polygon]]:
         """
         list of image polygons and their subtypes
         for per disaster images it returns
@@ -57,15 +57,17 @@ class ImageData:
         with open(self.label(time)) as json_file:
             json_data = json.load(json_file)
 
-        polygons: List[Tuple[Polygon, DamageType]] = []
-        for feat in json_data['features']['xy']:
-            polygon: Polygon = wkt.loads(feat['wkt'])
-            subtype: DamageType = feat['properties']['subtype']
-            if isinstance(subtype, str):
-                subtype = damage_to_damage_type[subtype]
-            polygons.append((polygon, subtype))
+        if time == DataTime.POST:
+            results: List[Tuple[Polygon, DamageType]] = []
+            for feat in json_data['features']['xy']:
+                polygon: Polygon = wkt.loads(feat['wkt'])
+                subtype: DamageType = damage_to_damage_type[feat['properties']['subtype']]
+                results.append((polygon, subtype))
+        else:
+            assert time == DataTime.PRE, f"invalid DataTime, expected {DataTime.PRE} got {time}"
+            results: List[Polygon] = [wkt.loads(feat['wkt']) for feat in json_data['features']['xy']]
 
-        return polygons
+        return results
 
 
 def discover_directories(directories: Iterable[pathlib.Path], check: bool = True) -> List[ImageData]:
