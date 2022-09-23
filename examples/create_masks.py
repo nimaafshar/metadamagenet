@@ -44,49 +44,54 @@ def mask_for_polygon(poly: shapely.geometry.Polygon, im_size=(1024, 1024)):
     return img_mask
 
 
-def create_masks(image_data: ImageData) -> Tuple[npt.NDArray, npt.NDArray]:
+def create_loc_mask(image_data: ImageData) -> npt.NDArray:
     """
-    creates localization and classification mask for image data
+    creates localization mask for image data
     """
     localization_mask = np.zeros((1024, 1024), dtype='uint8')  # a mask-image including polygons
-    classification_mask = np.zeros((1024, 1024), dtype='uint8')  # a mask-image with damage levels
 
     for polygon in image_data.polygons(DataTime.PRE):
         _msk = mask_for_polygon(polygon)
         localization_mask[_msk > 0] = 1
 
+    return localization_mask,
+
+
+def create_cls_mask(image_data: ImageData) -> npt.NDArray:
+    classification_mask = np.zeros((1024, 1024), dtype='uint8')  # a mask-image with damage levels
     damage_type: DamageType
     for polygon, damage_type in image_data.polygons(DataTime.POST):
         _msk = mask_for_polygon(polygon)
         classification_mask[_msk > 0] = damage_type_color[damage_type]
-
-    return localization_mask, classification_mask
-
-
-def create_and_save_targets(image_data: ImageData) -> None:
-    localization_msk, classification_msk = create_masks(image_data)
-
-    cv2.imwrite(str(image_data.mask(DataTime.PRE)),
-                localization_msk,
-                [cv2.IMWRITE_PNG_COMPRESSION, 9])
-
-    cv2.imwrite(str(image_data.mask(DataTime.POST)),
-                classification_msk,
-                [cv2.IMWRITE_PNG_COMPRESSION, 9])
+    return classification_mask
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--path', type=pathlib.Path, required=True)
+    parser.add_argument('--source', type=pathlib.Path, required=True)
+    parser.add_argument('--dest', type=pathlib.Path, required=True)
     args = parser.parse_args()
-    assert args.path.exists() and args.path.is_dir(), \
-        f"path {args.path.absolute()} does not exist or its not a directory"
+    assert args.source.exists() and args.source.is_dir(), \
+        f"source {args.path.absolute()} does not exist or its not a directory"
 
-    GeneralConfig.load()
-    config = GeneralConfig.get_instance()
-    # create mask directories
-    (args.dir / config.masks_dirname).mkdir(exist_ok=True)
-    image_dataset = discover_directory(args.path)
+    assert args.dest.exists() and args.dest.is_dir(), \
+        f"source {args.path.absolute()} does not exist or its not a directory"
+
+    image_dataset = discover_directory(args.source)
+    source: pathlib.Path = args.source
+    dest: pathlib.Path = args.dest
+
+    def create_and_save_targets(image_data: ImageData) -> None:
+        localization_msk = create_loc_mask(image_data)
+        classification_msk = create_cls_mask(image_data)
+
+        cv2.imwrite(str(dest / f'{image_data.name(DataTime.PRE)}_target.png'),
+                    localization_msk,
+                    [cv2.IMWRITE_PNG_COMPRESSION, 9])
+
+        cv2.imwrite(str(source / f'{image_data.name(DataTime.POST)}_target.png'),
+                    classification_msk,
+                    [cv2.IMWRITE_PNG_COMPRESSION, 9])
 
     with Pool() as pool:
         tqdm(pool.imap(create_and_save_targets, image_dataset), total=len(image_dataset))
