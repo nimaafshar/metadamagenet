@@ -1,17 +1,16 @@
 - refactor:
-  - [ ] fix augmentations bug
-  - [ ] debug morphological dilation
+  - [ ] write preprocessors for classification and localization
+  - [ ] fix classification dataset bug
   - [ ] rewrite examples
   - [ ] create masks for `tier3` data
   - [ ] add prediction to validator
   - [ ] create multiple model validator
-  - [ ] migrate augmentations to `torchvision` transforms
-  - [ ] make use of one model for both classification and localization with good score
+  - [ ] check why localization model is used separately in classification task  
   - [ ] give weights to cce loss to give layers 2 and 3 more attention
 
 - Test:
-  - [ ] test classification models
   - [ ] test localization models
+  - [ ] test classification models
   - [ ] on test and holdout set
   - [ ] predict and calculate accuracy on `test` and `holdout` sets
   
