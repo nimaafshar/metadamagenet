@@ -1,6 +1,4 @@
-from typing import Tuple
 import argparse
-import sys
 from multiprocessing import Pool
 import pathlib
 
@@ -10,14 +8,10 @@ import cv2
 import shapely.geometry
 from tqdm.autonotebook import tqdm
 
-from metadamagenet.configs import DamageType, GeneralConfig
-from metadamagenet.utils import single_thread_numpy, set_random_seeds
+from metadamagenet.configs import DamageType
 from metadamagenet.dataset import ImageData, DataTime, discover_directory
 from metadamagenet.logging import log
 
-single_thread_numpy()
-set_random_seeds()
-sys.setrecursionlimit(10000)
 
 damage_type_color = {
     DamageType.UN_CLASSIFIED: 1,
