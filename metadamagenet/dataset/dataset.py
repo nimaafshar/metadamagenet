@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import List, Dict, Union, Sequence, Iterable
+from typing import Dict, Union, Sequence, Iterable
 from pathlib import Path
 
 import torch
