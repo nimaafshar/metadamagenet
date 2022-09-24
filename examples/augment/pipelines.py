@@ -166,7 +166,7 @@ def dpn92_unet_localization(input_size: int) -> nn.Sequential:
             (OneOf(
                 (Saturation().only_on('img'), 0.01),
                 (Brightness().only_on('img'), 0.01),
-                (Contrast().only_on('img'), 0.01), 0.01))
+                (Contrast().only_on('img'), 0.01)), 0.01)
         ),
         Random(ElasticTransform(), p=0.001)
     )
@@ -191,7 +191,7 @@ def resnet34_unet_localization(input_size: int) -> nn.Sequential:
             (OneOf(
                 (Saturation().only_on('img'), 0.03),
                 (Brightness().only_on('img'), 0.03),
-                (Contrast().only_on('img'), 0.03), 0.07))
+                (Contrast().only_on('img'), 0.03)), 0.07)
         ),
         Random(ElasticTransform().only_on('img'), p=0.03)
     )
@@ -214,7 +214,7 @@ def senet154_unet_localization(input_size: int) -> nn.Sequential:
             (OneOf(
                 (Saturation().only_on('img'), 0.08),
                 (Brightness().only_on('img'), 0.08),
-                (Contrast().only_on('img'), 0.08), 0.08))
+                (Contrast().only_on('img'), 0.08)), 0.08)
         ),
         Random(ElasticTransform(), p=0.05)
     )
@@ -237,7 +237,7 @@ def seresnext50_unet_localization(input_size: int) -> nn.Sequential:
             (OneOf(
                 (Saturation().only_on('img'), 0.01),
                 (Brightness().only_on('img'), 0.01),
-                (Contrast().only_on('img'), 0.01), 0.01))
+                (Contrast().only_on('img'), 0.01)), 0.01)
         ),
         Random(ElasticTransform().only_on('img'), p=0.001)
     )
@@ -389,7 +389,7 @@ def dpn92_unet_localization_tune(input_size: int) -> nn.Sequential:
             (OneOf(
                 (Saturation().only_on('img'), 0.01),
                 (Brightness().only_on('img'), 0.01),
-                (Contrast().only_on('img'), 0.01), 0.01))
+                (Contrast().only_on('img'), 0.01)), 0.01)
         ),
         Random(ElasticTransform().only_on('img'), p=0.001)
     )
