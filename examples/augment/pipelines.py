@@ -22,6 +22,7 @@ from metadamagenet.augment import (
     Dilation
 )
 
+
 def dpn92_unet_double(input_size: int) -> nn.Sequential:
     return nn.Sequential(
         Random(VFlip(), p=0.5),
@@ -57,9 +58,9 @@ def dpn92_unet_double(input_size: int) -> nn.Sequential:
                 (Brightness().only_on('img_post'), 0.1),
                 (Contrast().only_on('img_post'), 0.1)), 0.1)
         ),
-        (ElasticTransform().only_on('img_pre'), 0.1),
-        (ElasticTransform().only_on('img_post'), 0.1),
-        (Dilation().only_on('msk'), 0.9)
+        Random(ElasticTransform().only_on('img_pre'), p=0.1),
+        Random(ElasticTransform().only_on('img_post'), p=0.1),
+        Random(Dilation().only_on('msk'), p=0.9)
     )
 
 
@@ -98,9 +99,9 @@ def resnet34_unet_double(input_size: int) -> nn.Sequential:
                 (Brightness().only_on('img_post'), 0.015),
                 (Contrast().only_on('img_post'), 0.015)), 0.02)
         ),
-        (ElasticTransform().only_on('img_pre'), 0.017),
-        (ElasticTransform().only_on('img_post'), 0.017),
-        (Dilation().only_on('msk'), 0.9)
+        Random(ElasticTransform().only_on('img_pre'), p=0.017),
+        Random(ElasticTransform().only_on('img_post'), p=0.017),
+        Random(Dilation().only_on('msk'), p=0.9)
     )
 
 
@@ -143,9 +144,9 @@ def seresnext50_unet_double(input_size: int) -> nn.Sequential:
                 (Brightness().only_on('img_post'), 0.04),
                 (Contrast().only_on('img_post'), 0.04)), 0.1)
         ),
-        (ElasticTransform().only_on('img_pre'), 0.04),
-        (ElasticTransform().only_on('img_post'), 0.04),
-        (Dilation().only_on('msk'), 0.9)
+        Random(ElasticTransform().only_on('img_pre'), p=0.04),
+        Random(ElasticTransform().only_on('img_post'), p=0.04),
+        Random(Dilation().only_on('msk'), p=0.9)
     )
 
 
@@ -278,9 +279,9 @@ def dpn92_unet_double_tune(input_size: int) -> nn.Sequential:
                 (Brightness().only_on('img_post'), 0.01),
                 (Contrast().only_on('img_post'), 0.01)), 0.01)
         ),
-        (ElasticTransform().only_on('img_pre'), 0.01),
-        (ElasticTransform().only_on('img_post'), 0.01),
-        (Dilation().only_on('msk'), 0.9)
+        Random(ElasticTransform().only_on('img_pre'), p=0.01),
+        Random(ElasticTransform().only_on('img_post'), p=0.01),
+        Random(Dilation().only_on('msk'), p=0.9)
     )
 
 
@@ -319,9 +320,9 @@ def resnet34_unet_double_tune(input_size: int) -> nn.Sequential:
                 (Brightness().only_on('img_post'), 0.01),
                 (Contrast().only_on('img_post'), 0.01)), 0.01)
         ),
-        (ElasticTransform().only_on('img_pre'), 0.01),
-        (ElasticTransform().only_on('img_post'), 0.01),
-        (Dilation().only_on('msk'), 0.9)
+        Random(ElasticTransform().only_on('img_pre'), p=0.01),
+        Random(ElasticTransform().only_on('img_post'), p=0.01),
+        Random(Dilation().only_on('msk'), p=0.9)
     )
 
 
@@ -364,9 +365,9 @@ def seresnext50_unet_double_tune(input_size: int) -> nn.Sequential:
                 (Brightness().only_on('img_post'), 0.01),
                 (Contrast().only_on('img_post'), 0.01)), 0.01)
         ),
-        (ElasticTransform().only_on('img_pre'), 0.017),
-        (ElasticTransform().only_on('img_post'), 0.017),
-        (Dilation().only_on('msk'), 0.9)
+        Random(ElasticTransform().only_on('img_pre'), p=0.017),
+        Random(ElasticTransform().only_on('img_post'), p=0.017),
+        Random(Dilation().only_on('msk'), p=0.9)
     )
 
 
