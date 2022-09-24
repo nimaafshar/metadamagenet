@@ -1,3 +1,5 @@
+import math
+
 from .base import Metric
 
 
@@ -11,6 +13,8 @@ class AverageMetric(Metric):
         """
         consider value n times
         """
+        if math.isnan(value):
+            return
         self._sum += value * count
         self._count += count
         self._avg = self._sum / self._count
