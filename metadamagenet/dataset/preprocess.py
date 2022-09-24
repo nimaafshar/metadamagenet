@@ -27,4 +27,5 @@ class ClassificationPreprocessor(ImagePreprocessor):
         result: Dict[str, torch.FloatTensor] = self.transforms(data)
 
         return (torch.cat((result['img_pre'] * 2 - 1, result['img_post'] * 2 - 1), dim=1),
-                torch.nn.functional.one_hot(result['msk'].long(), num_classes=5).squeeze(dim=1).permute(0, 3, 1, 2))
+                torch.nn.functional.one_hot((result['msk'] * 4).long(), num_classes=5)
+                .squeeze(dim=1).permute(0, 3, 1, 2))
