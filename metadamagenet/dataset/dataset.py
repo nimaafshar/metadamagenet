@@ -70,7 +70,6 @@ class LocalizationDataset(Xview2Dataset):
 
         img: torch.FloatTensor
         msk: torch.FloatTensor
-
         img = kio.load_image(str(image_data.image(DataTime.PRE)), ImageLoadType.RGB32)
         msk = kio.load_image(str(image_data.mask(DataTime.PRE)), ImageLoadType.UNCHANGED) \
             .float().mean(dim=0, keepdim=True)
@@ -78,8 +77,6 @@ class LocalizationDataset(Xview2Dataset):
         if not self._use_post_disaster_images and torch.rand().item() > self._post_version_prob:
             img = kio.load_image(str(image_data.image(DataTime.POST)), ImageLoadType.RGB32)
             # localization mask is the same as pre-disaster version
-
-        # TODO: do normalize colors in preprocessing
 
         return {"img": img, "msk": msk}
 
