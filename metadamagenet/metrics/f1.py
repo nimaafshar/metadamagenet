@@ -7,6 +7,11 @@ from ..metrics import AverageMetric
 eps = 1e-6
 
 
+def harmonic_mean(x: torch.Tensor) -> torch.Tensor:
+    values = x[~x.isnan()]
+    return ((1 / (values + eps)).mean()) ** (-1)
+
+
 class DamageF1Score(ImageMetric):
     def __init__(self):
         """
@@ -29,8 +34,8 @@ class DamageF1Score(ImageMetric):
         output_labels: torch.LongTensor = outputs.argmax(dim=1)
         f1_scores: torch.FloatTensor = self.f1_metric(output_labels[target_labels > 0],
                                                       target_labels[target_labels > 0])  # returns tensor of shape (5,)
-        f1_scores: torch.FloatTensor = torch.nan_to_num(f1_scores, nan=0.0)
-        overall_f1_score: torch.Tensor = (4 / torch.sum(1 / (f1_scores[1:] + eps)))
+
+        overall_f1_score: torch.Tensor = harmonic_mean(f1_scores[1:])
         self._undamaged.update(f1_scores[1].item(), batch_size)
         self._minor.update(f1_scores[2].item(), batch_size)
         self._major.update(f1_scores[3].item(), batch_size)
@@ -66,7 +71,6 @@ class LocalizationF1Score(ImageMetric):
         target_loc_labels: torch.LongTensor = (targets.argmax(dim=1) > 0).long()
         val: torch.FloatTensor = self.f1_metric(out_loc_labels.flatten(start_dim=1),
                                                 target_loc_labels.flatten(start_dim=1))
-        val: torch.FloatTensor = torch.nan_to_num(val, nan=0.0)
         self._avg.update(val.item(), count=outputs.size(0))
         return val
 
