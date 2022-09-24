@@ -6,9 +6,9 @@ from torch import nn
 
 
 class ImagePreprocessor(nn.Module, abc.ABC):
-    def __init__(self, transforms: nn.Sequential):
+    def __init__(self, transforms: nn.Module = nn.Identity()):
         super().__init__()
-        self.transforms: nn.Sequential = transforms
+        self.transforms: nn.Module = transforms
 
     @abc.abstractmethod
     def forward(self, data: Dict[str, torch.FloatTensor]) -> Tuple[torch.Tensor, torch.Tensor]:
