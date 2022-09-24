@@ -10,6 +10,7 @@ from ..metrics import ImageMetric
 from ..wrapper import ModelWrapper
 from ..logging import log
 from ..losses import MonitoredImageLoss, Monitored
+from ..dataset import ImagePreprocessor
 
 
 class Validator:
@@ -17,18 +18,34 @@ class Validator:
                  model: nn.Module,
                  model_wrapper: ModelWrapper,
                  dataloader: DataLoader,
+                 preprocessor: ImagePreprocessor,
                  loss: Optional[nn.Module],
                  score: ImageMetric,
                  device: Optional[torch.device] = None,
                  test_time_augmentor: Optional[TestTimeAugmentor] = None
                  ):
+        self._device: Optional[torch.device] = device
+
         self._model: nn.Module = model
+        if self._device is not None:
+            self._model = self._model.to(device)
+
         self._wrapper: ModelWrapper = model_wrapper
         self._dataloader: DataLoader = dataloader
+
+        self._preprocessor: ImagePreprocessor = preprocessor
+        if self._device is not None:
+            self._preprocessor = self._preprocessor.to(self._device)
+
         self._loss: Optional[MonitoredImageLoss] = loss if loss is None or isinstance(loss, MonitoredImageLoss) \
             else Monitored(loss)
+        if self._device is not None:
+            self._loss = self._loss.to(self._device)
+
         self._score: ImageMetric = score
-        self._device: Optional[torch.device] = device
+        if self._device is not None:
+            self._score = self._score.to(self._device)
+
         self._test_time_augmentor: Optional[TestTimeAugmentor] = test_time_augmentor
 
     def validate(self) -> float:
@@ -46,12 +63,13 @@ class Validator:
 
         with torch.no_grad():
             i: int
-            inputs: torch.Tensor
-            targets: torch.Tensor
-            for i, (inputs, targets) in enumerate(iterator):
+            for i, data_batch in enumerate(iterator):
                 if self._device is not None:
-                    inputs = inputs.to(device=self._device, non_blocking=True)
-                    targets = targets.to(device=self._device, non_blocking=True)
+                    data_batch = {k: v.to(device=self._device, non_blocking=True) for k, v in data_batch.items()}
+
+                inputs: torch.Tensor
+                targets: torch.Tensor
+                inputs, targets = self._preprocessor(data_batch)
 
                 outputs: torch.Tensor
                 if self._test_time_augmentor is not None:
@@ -61,12 +79,11 @@ class Validator:
                 else:
                     outputs: torch.Tensor = self._model(inputs)
 
-                with torch.no_grad():
-                    if self._loss is not None:
-                        self._loss(outputs, targets)
+                if self._loss is not None:
+                    self._loss(outputs, targets)
 
-                    activated_outputs: torch.Tensor = self._wrapper.apply_activation(outputs)
-                    self._score.update_batch(activated_outputs, targets)
+                activated_outputs: torch.Tensor = self._wrapper.apply_activation(outputs)
+                self._score.update_batch(activated_outputs, targets)
 
                 iterator.set_postfix({
                     "loss": self._loss.status_till_here() if self._loss is not None else "--",
