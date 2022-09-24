@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Dict
 from contextlib import nullcontext
 import gc
 
@@ -18,12 +18,14 @@ from ..metrics import ImageMetric
 from ..wrapper import ModelWrapper
 from ..logging import log
 from ..validate import Validator
+from ..dataset import ImagePreprocessor
 from ..losses import MonitoredImageLoss, Monitored
 
 
 @dataclass
 class ValidationInTrainingParams:
     dataloader: DataLoader
+    preprocessor: ImagePreprocessor
     score: Optional[ImageMetric] = None
     test_time_augmentor: Optional[TestTimeAugmentor] = None
 
@@ -36,6 +38,7 @@ class Trainer:
                  seed: int,
                  model_wrapper: ModelWrapper,
                  dataloader: DataLoader,
+                 preprocessor: ImagePreprocessor,
                  optimizer: Optimizer,
                  lr_scheduler: MultiStepLR,
                  loss: nn.Module,
@@ -44,11 +47,15 @@ class Trainer:
                  validation_params: Optional[ValidationInTrainingParams] = None,
                  validation_interval: Optional[int] = None,
                  model_metadata: Metadata = Metadata(),
-                 device: Optional[torch.device] = None,
+                 device:
+                 Optional[torch.device] = None,
                  grad_scaler: Optional[amp.GradScaler] = amp.GradScaler(),
                  clip_grad_norm: Optional[float] = None
                  ):
-        self._model: nn.Module = model
+
+        self._device: Optional[torch.device] = device
+
+        self._model: nn.Module = model.to(self._device) if self._device is not None else model
         self._version: str = version
         self._seed: str = seed
         self._wrapper: ModelWrapper = model_wrapper
@@ -56,8 +63,17 @@ class Trainer:
         self._optimizer: Optimizer = optimizer
         self._lr_scheduler: MultiStepLR = lr_scheduler
         self._loss: MonitoredImageLoss = loss if isinstance(loss, MonitoredImageLoss) else Monitored(loss)
+        if self._device is not None:
+            self._loss = self._loss.to(self._device)
         self._epochs: int = epochs
+
         self._score: ImageMetric = score
+        if self._device is not None:
+            self._score = self._score.to(self._device)
+
+        self._preprocessor: ImagePreprocessor = preprocessor
+        if self._device is not None:
+            self._preprocessor = self._preprocessor.to(self._device)
 
         self._validation_params = validation_params
         self._validation_interval: int = validation_interval
@@ -67,7 +83,6 @@ class Trainer:
             raise ValueError("validation_params passed but validation_interval is None")
 
         self._model_metadata: Metadata = model_metadata
-        self._device: Optional[torch.device] = device
         self._grad_scaler: Optional[amp.GradScaler] = grad_scaler
         self._clip_grad_norm: Optional[float] = clip_grad_norm
 
@@ -110,6 +125,7 @@ class Trainer:
             model=self._model,
             model_wrapper=self._wrapper,
             dataloader=self._validation_params.dataloader,
+            preprocessor=self._validation_params.preprocessor,
             loss=self._loss,
             score=self._validation_params.score if self._validation_params.score is not None else self._score,
             device=self._device,
@@ -123,13 +139,15 @@ class Trainer:
         iterator = tqdm(self._dataloader)
 
         i: int
-        inputs: torch.Tensor  # (B,5,H,W) or (B,1,H,W)
-        targets: torch.Tensor  # (B,5,H,W) or (B,1,H,W)
-        for i, (inputs, targets) in enumerate(iterator):
-
+        data_batch: Dict[str, torch.FloatTensor]
+        for i, data_batch in enumerate(iterator):
             if self._device is not None:
-                inputs = inputs.to(device=self._device, non_blocking=True)
-                targets = targets.to(device=self._device, non_blocking=True)
+                data_batch = {k: v.to(device=self._device, non_blocking=True) for k, v in data_batch.items()}
+
+            inputs: torch.Tensor  # (B,5,H,W) or (B,1,H,W)
+            targets: torch.Tensor  # (B,5,H,W) or (B,1,H,W)
+            with torch.no_grad():
+                inputs, targets = self._preprocessor(data_batch)
 
             with amp.autocast() if self._grad_scaler is not None else nullcontext():
                 outputs: torch.Tensor = self._model(inputs)
