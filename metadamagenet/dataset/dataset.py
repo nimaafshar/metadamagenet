@@ -74,7 +74,7 @@ class LocalizationDataset(Xview2Dataset):
         msk = kio.load_image(str(image_data.mask(DataTime.PRE)), ImageLoadType.UNCHANGED) \
             .float().mean(dim=0, keepdim=True)
 
-        if not self._use_post_disaster_images and torch.rand().item() > self._post_version_prob:
+        if not self._use_post_disaster_images and torch.rand(1).item() > self._post_version_prob:
             img = kio.load_image(str(image_data.image(DataTime.POST)), ImageLoadType.RGB32)
             # localization mask is the same as pre-disaster version
 
