@@ -158,7 +158,7 @@ class OneOf(CollectionTransform):
             transform: CollectionTransform
             prob: float
             for transform, prob in zip(self.transforms, self._probs):
-                if torch.rand() <= prob:
+                if torch.rand(1) <= prob:
                     img_group = transform(img_group)
                     break
         return img_group
