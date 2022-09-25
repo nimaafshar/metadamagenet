@@ -1,8 +1,6 @@
 import abc
 from typing import Optional
 
-import torch
-
 from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
 from ..models.unet import Unet
 from ..models.unet import Dpn92Unet
