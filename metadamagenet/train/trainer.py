@@ -47,8 +47,7 @@ class Trainer:
                  validation_params: Optional[ValidationInTrainingParams] = None,
                  validation_interval: Optional[int] = None,
                  model_metadata: Metadata = Metadata(),
-                 device:
-                 Optional[torch.device] = None,
+                 device: Optional[torch.device] = None,
                  grad_scaler: Optional[amp.GradScaler] = amp.GradScaler(),
                  clip_grad_norm: Optional[float] = None
                  ):
