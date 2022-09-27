@@ -1,13 +1,11 @@
 torch
 torchvision
 numpy
-pandas
 Shapely
 scikit-image
 opencv-python
-tqdm
+tqdm==4.64.1
 scikit-learn
-imgaug
 emoji
 pyyaml
 torchmetrics==0.9.3
