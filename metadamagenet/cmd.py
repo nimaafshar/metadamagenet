@@ -2,6 +2,7 @@ import abc
 import dataclasses
 from typing import Optional, Callable, Tuple, Type
 
+import torch
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
 from torch.optim import Optimizer
@@ -99,6 +100,8 @@ class Train(Command):
     validation: Optional[ValidateInTraining] = None
 
     def run(self):
+        torch.manual_seed(self.random_seed)
+
         model, metadata = self.model()
         print("metadata:", metadata)
         optimizer = self.optimizer(model)
