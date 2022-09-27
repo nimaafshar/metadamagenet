@@ -33,11 +33,11 @@ class EfficientUnetB0(Unet):
         self._initialize_weights()
 
         self.conv1 = backbone.stem
-        self.conv2 = backbone.layers[0]
-        self.conv3 = nn.Sequential(
-            backbone.layers[1],
-            backbone.layers[2]
+        self.conv2 = nn.Sequential(
+            backbone.layers[0],
+            backbone.layers[1]
         )
+        self.conv3 = backbone.layers[2]
         self.conv4 = nn.Sequential(
             backbone.layers[3],
             backbone.layers[4]
