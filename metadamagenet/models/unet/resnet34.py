@@ -12,7 +12,7 @@ class Resnet34Unet(Unet):
     def __init__(self, resnet: torchvision.models.ResNet):
         super(Resnet34Unet, self).__init__()
         encoder_filters = [64, 64, 128, 256, 512]
-        decoder_filters = np.asarray([48, 64, 96, 160, 320])
+        decoder_filters = [48, 64, 96, 160, 320]
         self.encoder_filters = encoder_filters
         self.decoder_filters = decoder_filters
 
