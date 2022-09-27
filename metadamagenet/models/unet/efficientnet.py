@@ -80,6 +80,6 @@ class EfficientUnetB0(Unet):
 
 
 def efficientnet_b0(pretrained: bool = False):
-    return torch.hub.load(repo='NVIDIA/DeepLearningExamples:torchhub',
+    return torch.hub.load(repo_or_dir='NVIDIA/DeepLearningExamples:torchhub',
                           model='nvidia_efficientnet_b0',
                           pretrained=pretrained)
