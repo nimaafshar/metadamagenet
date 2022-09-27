@@ -72,8 +72,11 @@ class ValidateInTraining:
     test_time_augment: Optional[TestTimeAugmentor] = None
 
     def validation_params(self) -> ValidationInTrainingParams:
-        return ValidationInTrainingParams(self.data.dataloader(), self.preprocessor, self.interval, self.score,
-                                          self.test_time_augment)
+        return ValidationInTrainingParams(dataloader=self.data.dataloader(),
+                                          preprocessor=self.preprocessor,
+                                          interval=self.interval,
+                                          score=self.score,
+                                          test_time_augmentor=self.test_time_augment)
 
 
 @dataclasses.dataclass
