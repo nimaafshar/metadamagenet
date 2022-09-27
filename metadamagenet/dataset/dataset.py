@@ -21,6 +21,8 @@ class Xview2Dataset(Dataset, ABC):
             self._image_dataset = discover_directory(source, check)
         elif isinstance(source, Iterable) and isinstance(source[0], Path):
             self._image_dataset = discover_directories(source, check)
+        else:
+            raise TypeError(f"invalid type {type(source)} for source.")
 
 
 class LocalizationDataset(Xview2Dataset):
