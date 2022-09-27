@@ -10,6 +10,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import MultiStepLR
 from torch.cuda import amp
+from torch.backends import cudnn
 
 from ..models import Checkpoint, Metadata
 from ..models import Manager as ModelManager
@@ -26,12 +27,12 @@ from ..losses import MonitoredImageLoss, Monitored
 class ValidationInTrainingParams:
     dataloader: DataLoader
     preprocessor: ImagePreprocessor
+    interval: int = 1
     score: Optional[ImageMetric] = None
     test_time_augmentor: Optional[TestTimeAugmentor] = None
 
 
 class Trainer:
-
     def __init__(self,
                  model: nn.Module,
                  version: str,
@@ -45,10 +46,9 @@ class Trainer:
                  epochs: int,
                  score: ImageMetric,
                  validation_params: Optional[ValidationInTrainingParams] = None,
-                 validation_interval: Optional[int] = None,
                  model_metadata: Metadata = Metadata(),
                  device: Optional[torch.device] = None,
-                 grad_scaler: Optional[amp.GradScaler] = amp.GradScaler(),
+                 grad_scaler: Optional[amp.GradScaler] = None,
                  clip_grad_norm: Optional[float] = None
                  ):
 
@@ -75,17 +75,12 @@ class Trainer:
             self._preprocessor = self._preprocessor.to(self._device)
 
         self._validation_params = validation_params
-        self._validation_interval: int = validation_interval
-        if validation_params is None and validation_interval is not None:
-            raise ValueError("cannot validate without validation_params")
-        if validation_params is not None and validation_interval is None:
-            raise ValueError("validation_params passed but validation_interval is None")
-
         self._model_metadata: Metadata = model_metadata
         self._grad_scaler: Optional[amp.GradScaler] = grad_scaler
         self._clip_grad_norm: Optional[float] = clip_grad_norm
 
     def train(self) -> None:
+        cudnn.benchmark = True
         log(f':arrow_forward: starting to train model {self._wrapper.model_name}'
             f" version='{self._version}' seed='{self._seed}'")
         log(f'steps_per_epoch: {len(self._dataloader)}')
@@ -99,7 +94,7 @@ class Trainer:
             gc.collect()
             self._train_epoch()
             self._lr_scheduler.step()
-            if self._validation_interval is not None and epoch % self._validation_interval == 0:
+            if self._validation_params is not None and epoch % self._validation_params.interval == 0:
                 torch.cuda.empty_cache()
                 log(f"======>:fearful: validation")
                 validator: Validator = self._make_validator()
