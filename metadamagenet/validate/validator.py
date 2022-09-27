@@ -59,7 +59,7 @@ class Validator:
         if self._loss is not None:
             self._loss.reset()
         self._score.reset()
-        iterator = tqdm(self._dataloader)
+        iterator = tqdm(self._dataloader, leave=False)
 
         with torch.no_grad():
             i: int
