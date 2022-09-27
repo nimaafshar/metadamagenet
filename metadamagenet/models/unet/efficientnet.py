@@ -13,8 +13,8 @@ class EfficientUnetB0(Unet):
         (https://github.com/NVIDIA/DeepLearningExamples/tree/master/PyTorch/Classification/ConvNets/efficientnet)
         """
         super().__init__()
-        encoder_filters = [32, 16, 40, 112, 320]
-        decoder_filters = [32, 16, 32, 96, 256]
+        encoder_filters = [16, 24, 40, 112, 320]
+        decoder_filters = [48, 64, 96, 160, 320]  # same as Resnet34Unet
         self.encoder_filters = encoder_filters
         self.decoder_filters = decoder_filters
 
@@ -32,11 +32,11 @@ class EfficientUnetB0(Unet):
 
         self._initialize_weights()
 
-        self.conv1 = backbone.stem
-        self.conv2 = nn.Sequential(
-            backbone.layers[0],
-            backbone.layers[1]
+        self.conv1 = nn.Sequential(
+            backbone.stem,
+            backbone.layers[0]
         )
+        self.conv2 = backbone.layers[1]
         self.conv3 = backbone.layers[2]
         self.conv4 = nn.Sequential(
             backbone.layers[3],
