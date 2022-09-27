@@ -2,9 +2,6 @@ import abc
 from typing import Optional
 
 import torch
-from torchvision.models import ResNet34_Weights
-from torchvision.models import resnet34, ResNet
-
 from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
 from ..metrics import WeightedImageMetric, DamageF1Score, Dice, ImageMetric
 from ..models.unet import EfficientUnetB0, efficientnet_b0
