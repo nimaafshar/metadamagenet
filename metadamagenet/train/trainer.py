@@ -130,7 +130,7 @@ class Trainer:
         self._model.train()
         self._loss.reset()
         self._score.reset()
-        iterator = tqdm(self._dataloader)
+        iterator = tqdm(self._dataloader,leave=False)
 
         i: int
         data_batch: Dict[str, torch.FloatTensor]
