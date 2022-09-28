@@ -100,7 +100,8 @@ class Train(Command):
     validation: Optional[ValidateInTraining] = None
 
     def run(self):
-        torch.manual_seed(self.random_seed)
+        print(f"random seed: {self.random_seed + self.seed}")
+        torch.manual_seed(self.random_seed + self.seed)
 
         model, metadata = self.model()
         print("metadata:", metadata)
