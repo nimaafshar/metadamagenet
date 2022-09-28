@@ -1,3 +1,6 @@
+import abc
+from typing import List
+
 import torch
 from torch import nn
 import torch.nn.functional as F
@@ -7,6 +10,22 @@ from .modules import ConvRelu
 
 
 class EfficientUnet(Unet):
+    @property
+    @abc.abstractmethod
+    def encoder_filters(self) -> List[int]:
+        """
+        :return: 5 encoder filters
+        """
+        pass
+
+    @property
+    @abc.abstractmethod
+    def decoder_filters(self) -> List[int]:
+        """
+        :return: 5 decoder filters
+        """
+        pass
+
     def __init__(self, backbone: nn.Module):
         """
         :param backbone: EfficientNet instance from
@@ -82,7 +101,7 @@ class EfficientUnetB0(EfficientUnet):
 
 
 class EfficientUnetB4(EfficientUnet):
-    encoder_filters = [24, 32, 50, 160, 448]
+    encoder_filters = [24, 32, 56, 160, 448]
     decoder_filters = [48, 64, 96, 160, 320]  # same as Resnet34Unet
 
 
