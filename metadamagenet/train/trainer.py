@@ -93,7 +93,7 @@ class Trainer:
             torch.cuda.empty_cache()
             gc.collect()
             self._train_epoch()
-            self._lr_scheduler.step(epoch)
+            self._lr_scheduler.step()
             if self._validation_params is not None and epoch % self._validation_params.interval == 0:
                 torch.cuda.empty_cache()
                 log(f"======>:fearful: validation")
