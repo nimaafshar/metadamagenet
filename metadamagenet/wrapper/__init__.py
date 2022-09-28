@@ -5,5 +5,4 @@ from .senet154 import SeNet154Wrapper, SeNet154LocalizerWrapper, SeNet154Classif
 from .seresnext50 import SeResnext50Wrapper, SeResnext50ClassifierWrapper, SeResnext50LocalizerWrapper
 from .efficient import (
     EfficientUnetB0Wrapper, EfficientUnetB0LocalizerWrapper,
-    EfficientUnetB0SmallWrapper, EfficientUnetB0SmallLocalizerWrapper,
     EfficientUnetB4Wrapper, EfficientUnetB4LocalizerWrapper)
