@@ -162,7 +162,7 @@ class Preprocessors:
         Random(ElasticTransform(), p=0.001)
     ))
 
-    RESNEXT34_LOC = ClassificationPreprocessor(nn.Sequential(
+    RESNET34_LOC = LocalizationPreprocessor(nn.Sequential(
         Random(VFlip(), p=0.5),
         Random(Rotate90(), p=0.95),
         Random(Shift(), p=.2),
