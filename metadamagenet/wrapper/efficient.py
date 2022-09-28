@@ -2,9 +2,8 @@ import abc
 from typing import Optional
 
 import torch
-from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
-from ..metrics import WeightedImageMetric, DamageF1Score, Dice, ImageMetric
-from ..models.unet import EfficientUnetB0, efficientnet_b0, EfficientUnetB0Small, EfficientUnetB4, efficientnet_b4
+from .wrapper import ModelWrapper, LocalizerModelWrapper
+from ..models.unet import EfficientUnetB0, efficientnet_b0, EfficientUnetB4, efficientnet_b4
 from ..models.unet import Unet
 
 
@@ -23,24 +22,6 @@ class EfficientUnetB0Wrapper(ModelWrapper, abc.ABC):
 
 class EfficientUnetB0LocalizerWrapper(EfficientUnetB0Wrapper, LocalizerModelWrapper):
     model_name = "EfficientUnetB0Localizer"
-    input_size = (736, 736)
-
-
-class EfficientUnetB0SmallWrapper(ModelWrapper, abc.ABC):
-    unet_class = EfficientUnetB0Small
-    data_parallel = True
-
-    def empty_unet(self) -> Unet:
-        return EfficientUnetB0Small(efficientnet_b0(pretrained=False))
-
-    def unet_with_pretrained_backbone(self, backbone: Optional[torch.nn.Module] = None) -> Unet:
-        if backbone is not None:
-            return EfficientUnetB0Small(backbone)
-        return EfficientUnetB0Small(efficientnet_b0(pretrained=True))
-
-
-class EfficientUnetB0SmallLocalizerWrapper(EfficientUnetB0SmallWrapper, LocalizerModelWrapper):
-    model_name = "EfficientUnetB0SmallLocalizer"
     input_size = (736, 736)
 
 

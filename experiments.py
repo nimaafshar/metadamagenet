@@ -30,7 +30,7 @@ configs: Dict[str, Command] = {
             batch_size=16,
             num_workers=6
         ),
-        preprocessor=Preprocessors.RESNEXT34_LOC,
+        preprocessor=Preprocessors.RESNET34_LOC,
         optimizer=lambda model: AdamW(model.parameters(), lr=0.00015, weight_decay=1e-6),
         lr_scheduler=lambda optimizer: MultiStepLR(optimizer,
                                                    milestones=[5, 11, 17, 25, 33, 47, 50, 60, 70, 90, 110, 130, 150,

@@ -46,9 +46,9 @@ class EfficientUnet(Unet):
 
     def forward(self, x: torch.Tensor):
         """
-                :param x: batch_size, C, H, W = x.shape
-                :return:
-                """
+        :param x: batch_size, C, H, W = x.shape
+        :return:
+        """
         enc1 = self.conv1(x)
         enc2 = self.conv2(enc1)
         enc3 = self.conv3(enc2)
@@ -79,11 +79,6 @@ class EfficientUnet(Unet):
 class EfficientUnetB0(EfficientUnet):
     encoder_filters = [16, 24, 40, 112, 320]
     decoder_filters = [48, 64, 96, 160, 320]  # same as Resnet34Unet
-
-
-class EfficientUnetB0Small(EfficientUnet):
-    encoder_filters = [16, 24, 40, 112, 320]
-    decoder_filters = [16, 24, 40, 112, 320]  # same as Resnet34Unet
 
 
 class EfficientUnetB4(EfficientUnet):

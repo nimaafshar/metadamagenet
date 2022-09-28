@@ -3,4 +3,4 @@ from .resnet34 import Resnet34Unet
 from .seresnext50 import SeResnext50Unet
 from .dpn92 import Dpn92Unet
 from .senet154 import SeNet154Unet
-from .efficientnet import EfficientUnetB0, EfficientUnetB0Small, EfficientUnetB4, efficientnet_b0, efficientnet_b4
+from .efficientnet import EfficientUnetB0, EfficientUnetB4, efficientnet_b0, efficientnet_b4
