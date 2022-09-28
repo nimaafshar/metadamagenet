@@ -6,17 +6,16 @@ from .base import Unet
 from .modules import ConvRelu
 
 
-class EfficientUnetB0(Unet):
+class EfficientUnet(Unet):
     def __init__(self, backbone: nn.Module):
         """
-        :param backbone: EfficientNet B0 instance from
+        :param backbone: EfficientNet instance from
         (https://github.com/NVIDIA/DeepLearningExamples/tree/master/PyTorch/Classification/ConvNets/efficientnet)
         """
         super().__init__()
-        encoder_filters = [16, 24, 40, 112, 320]
-        decoder_filters = [48, 64, 96, 160, 320]  # same as Resnet34Unet
-        self.encoder_filters = encoder_filters
-        self.decoder_filters = decoder_filters
+
+        encoder_filters = self.encoder_filters
+        decoder_filters = self.decoder_filters
 
         self.conv6 = ConvRelu(encoder_filters[-1], decoder_filters[-1])
         self.conv6_2 = ConvRelu(decoder_filters[-1] + encoder_filters[-2], decoder_filters[-1])
@@ -27,8 +26,6 @@ class EfficientUnetB0(Unet):
         self.conv9 = ConvRelu(decoder_filters[-3], decoder_filters[-4])
         self.conv9_2 = ConvRelu(decoder_filters[-4] + encoder_filters[-5], decoder_filters[-4])
         self.conv10 = ConvRelu(decoder_filters[-4], decoder_filters[-5])
-
-        # res
 
         self._initialize_weights()
 
@@ -79,8 +76,30 @@ class EfficientUnetB0(Unet):
         return self.decoder_filters[-5]
 
 
+class EfficientUnetB0(EfficientUnet):
+    encoder_filters = [16, 24, 40, 112, 320]
+    decoder_filters = [48, 64, 96, 160, 320]  # same as Resnet34Unet
+
+
+class EfficientUnetB0Small(EfficientUnet):
+    encoder_filters = [16, 24, 40, 112, 320]
+    decoder_filters = [16, 24, 40, 112, 320]  # same as Resnet34Unet
+
+
+class EfficientUnetB4(EfficientUnet):
+    encoder_filters = [24, 32, 50, 160, 448]
+    decoder_filters = [48, 64, 96, 160, 320]  # same as Resnet34Unet
+
+
 def efficientnet_b0(pretrained: bool = False):
     return torch.hub.load(repo_or_dir='NVIDIA/DeepLearningExamples:torchhub',
                           model='nvidia_efficientnet_b0',
+                          pretrained=pretrained,
+                          trust_repo=True)
+
+
+def efficientnet_b4(pretrained: bool = False):
+    return torch.hub.load(repo_or_dir='NVIDIA/DeepLearningExamples:torchhub',
+                          model='nvidia_efficientnet_b4',
                           pretrained=pretrained,
                           trust_repo=True)
