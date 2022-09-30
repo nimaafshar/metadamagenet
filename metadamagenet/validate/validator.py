@@ -6,7 +6,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from ..augment import TestTimeAugmentor
-from ..metrics import ImageMetric
+from torchmetrics import Metric
 from ..wrapper import ModelWrapper
 from ..logging import log
 from ..losses import MonitoredImageLoss, Monitored
@@ -20,7 +20,7 @@ class Validator:
                  dataloader: DataLoader,
                  preprocessor: ImagePreprocessor,
                  loss: Optional[nn.Module],
-                 score: ImageMetric,
+                 score: Metric,
                  device: Optional[torch.device] = None,
                  test_time_augmentor: Optional[TestTimeAugmentor] = None
                  ):
@@ -42,7 +42,7 @@ class Validator:
         if self._device is not None:
             self._loss = self._loss.to(self._device)
 
-        self._score: ImageMetric = score
+        self._score: Metric = score
         if self._device is not None:
             self._score = self._score.to(self._device)
 
@@ -83,13 +83,13 @@ class Validator:
                     self._loss(outputs, targets)
 
                 activated_outputs: torch.Tensor = self._wrapper.apply_activation(outputs)
-                self._score.update_batch(activated_outputs, targets)
+                current_score: torch.Tensor = self._score(activated_outputs, targets)
 
                 iterator.set_postfix({
                     "loss": self._loss.status_till_here() if self._loss is not None else "--",
-                    "score": self._score.status_till_here()
+                    "score": current_score
                 })
 
             log(f"Validation Results: loss:{self._loss.status_till_here() if self._loss is not None else '--'} "
-                f"score:{self._score.status_till_here()}")
-            return self._score.till_here()
+                f"score:{self._score.compute()}")
+            return self._score.compute()
