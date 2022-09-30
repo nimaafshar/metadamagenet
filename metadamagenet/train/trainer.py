@@ -62,7 +62,7 @@ class Trainer:
         self._optimizer: Optimizer = optimizer
         self._lr_scheduler: MultiStepLR = lr_scheduler
         self._loss: MonitoredImageLoss = loss if isinstance(loss, MonitoredImageLoss) else Monitored(loss)
-        if self._device is not None:
+        if self._loss is not None and self._device is not None:
             self._loss = self._loss.to(self._device)
         self._epochs: int = epochs
 

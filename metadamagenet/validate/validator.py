@@ -39,7 +39,7 @@ class Validator:
 
         self._loss: Optional[MonitoredImageLoss] = loss if loss is None or isinstance(loss, MonitoredImageLoss) \
             else Monitored(loss)
-        if self._device is not None:
+        if self._loss is not None and self._device is not None:
             self._loss = self._loss.to(self._device)
 
         self._score: Metric = score
