@@ -87,9 +87,9 @@ class Validator:
 
                 iterator.set_postfix({
                     "loss": self._loss.status_till_here() if self._loss is not None else "--",
-                    "score": current_score
+                    "score": current_score.item()
                 })
 
             log(f"Validation Results: loss:{self._loss.status_till_here() if self._loss is not None else '--'} "
-                f"score:{self._score.compute()}")
-            return self._score.compute()
+                f"score:{self._score.compute().item()}")
+            return self._score.compute().item()
