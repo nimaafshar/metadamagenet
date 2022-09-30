@@ -153,12 +153,12 @@ class Trainer:
 
             iterator.set_postfix({
                 "loss": self._loss.status_till_here(),
-                "score": current_score,
+                "score": current_score.item(),
                 "lr": f"{self._lr_scheduler.get_last_lr()[-1]:.7f}"
             })
             self._update_weights(loss)
 
-        log(f"Training Results: loss: {self._loss.status_till_here()} score:{self._score.compute()}")
+        log(f"Training Results: loss: {self._loss.status_till_here()} score:{self._score.compute().item()}")
 
     def _update_weights(self, loss: torch.Tensor):
         self._optimizer.zero_grad()
