@@ -15,7 +15,7 @@ from torch.backends import cudnn
 from ..models import Checkpoint, Metadata
 from ..models import Manager as ModelManager
 from ..augment import TestTimeAugmentor
-from ..metrics import ImageMetric
+from torchmetrics import Metric
 from ..wrapper import ModelWrapper
 from ..logging import log
 from ..validate import Validator
@@ -28,7 +28,7 @@ class ValidationInTrainingParams:
     dataloader: DataLoader
     preprocessor: ImagePreprocessor
     interval: int = 1
-    score: Optional[ImageMetric] = None
+    score: Optional[Metric] = None
     test_time_augmentor: Optional[TestTimeAugmentor] = None
 
 
@@ -44,7 +44,7 @@ class Trainer:
                  lr_scheduler: MultiStepLR,
                  loss: nn.Module,
                  epochs: int,
-                 score: ImageMetric,
+                 score: Metric,
                  validation_params: Optional[ValidationInTrainingParams] = None,
                  model_metadata: Metadata = Metadata(),
                  device: Optional[torch.device] = None,
@@ -66,7 +66,7 @@ class Trainer:
             self._loss = self._loss.to(self._device)
         self._epochs: int = epochs
 
-        self._score: ImageMetric = score
+        self._score: Metric = score
         if self._device is not None:
             self._score = self._score.to(self._device)
 
@@ -130,7 +130,7 @@ class Trainer:
         self._model.train()
         self._loss.reset()
         self._score.reset()
-        iterator = tqdm(self._dataloader,leave=False)
+        iterator = tqdm(self._dataloader, leave=False)
 
         i: int
         data_batch: Dict[str, torch.FloatTensor]
@@ -149,16 +149,16 @@ class Trainer:
 
             with torch.no_grad():
                 activated_outputs: torch.Tensor = self._wrapper.apply_activation(outputs)
-                self._score.update_batch(activated_outputs, targets)
+                current_score: torch.Tensor = self._score(activated_outputs, targets)
 
             iterator.set_postfix({
                 "loss": self._loss.status_till_here(),
-                "score": self._score.status_till_here(),
+                "score": current_score,
                 "lr": f"{self._lr_scheduler.get_last_lr()[-1]:.7f}"
             })
             self._update_weights(loss)
 
-        log(f"Training Results: loss: {self._loss.status_till_here()} score:{self._score.status_till_here()}")
+        log(f"Training Results: loss: {self._loss.status_till_here()} score:{self._score.compute()}")
 
     def _update_weights(self, loss: torch.Tensor):
         self._optimizer.zero_grad()
