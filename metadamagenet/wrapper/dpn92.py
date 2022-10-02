@@ -5,7 +5,6 @@ from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
 from ..models.unet import Unet
 from ..models.unet import Dpn92Unet
 from ..models.dpn import DPN, dpn92
-from ..metrics import xview2, ImageMetric
 
 
 class Dpn92Wrapper(ModelWrapper, abc.ABC):
@@ -28,4 +27,3 @@ class Dpn92LocalizerWrapper(Dpn92Wrapper, LocalizerModelWrapper):
 class Dpn92ClassifierWrapper(Dpn92Wrapper, ClassifierModelWrapper):
     model_name = "Dpn92UnetClassifier"
     data_parallel = True
-    default_score: ImageMetric = xview2.classification_score

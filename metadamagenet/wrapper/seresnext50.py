@@ -5,7 +5,6 @@ from ..models.senet import se_resnext50_32x4d, SENet
 from ..models.unet import SeResnext50Unet
 from ..models.unet import Unet
 from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
-from ..metrics import xview2, ImageMetric
 
 
 class SeResnext50Wrapper(ModelWrapper, abc.ABC):
@@ -28,4 +27,3 @@ class SeResnext50LocalizerWrapper(SeResnext50Wrapper, LocalizerModelWrapper):
 class SeResnext50ClassifierWrapper(SeResnext50Wrapper, ClassifierModelWrapper):
     data_parallel = True
     model_name = "SeResnext50UnetClassifier"
-    default_score: ImageMetric = xview2.classification_score

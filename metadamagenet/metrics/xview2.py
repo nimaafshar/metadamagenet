@@ -1,10 +1,3 @@
-from .base import ImageMetric
-from .f1 import LocalizationF1Score, DamageF1Score
-from .weighted import WeightedImageMetric
+from torchmetrics import Dice
 
-classification_score: ImageMetric = WeightedImageMetric(
-    ("F1Loc", LocalizationF1Score(), 0.3),
-    ("F1Damage", DamageF1Score(), 0.7)
-)
-
-localization_score: ImageMetric = LocalizationF1Score()
+localization_score = Dice(multiclass=False, threshold=0.5, zero_division=0, average='micro')
