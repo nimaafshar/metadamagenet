@@ -1,99 +1,40 @@
 import torch
-from .epsilon import eps
+from torch import nn
+from torch.nn import functional as tf
 
 
-def dice(im1: torch.BoolTensor, im2: torch.BoolTensor, empty_score: float = 1.0) -> float:
+def binary_dice_with_logits(logits: torch.Tensor, true: torch.Tensor, eps: float = 1e-8) -> torch.Tensor:
     """
-    Computes the Dice coefficient, a measure of set similarity.
-    Parameters
-    ----------
-    im1 : torch.BoolTensor
-        Mask 1
-    im2 : torch.BoolTensor
-        Mask 2
-    empty_score: float
-        Return Value if Union is empty
-    Returns
-    -------
-    dice : float
-        Dice coefficient as a float on range [0,1].
-        Maximum similarity = 1
-        No similarity = 0
-        Both are empty (sum eq to zero) = empty_score
+    micro average soft dice score
+    sigmoid activation function is applied
+    loss is mean score for class 0 and 1
 
-    Notes
-    -----
-    The order of inputs for `dice` is irrelevant. The result will be
-    identical if `im1` and `im2` are switched.
-
+    :param logits: (N,1,H,W) float tensor
+    :param true: (
+    :param eps: epsilon for numerical stability
+    :return: loss, torch.Tensor
     """
-
-    if im1.shape != im2.shape:
-        raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
-
-    im_sum: torch.Tensor = im1.sum() + im2.sum()
-    if im_sum == 0:
-        return empty_score
-
-    # Compute Dice coefficient
-    intersection: torch.Tensor = torch.logical_and(im1, im2)
-
-    return float(2. * intersection.sum() / im_sum)
-
-
-def dice_batch(msk_batch1: torch.BoolTensor, msk_batch2: torch.BoolTensor,
-               empty_score: float = 1.0) -> torch.FloatTensor:
-    """
-    batch version of dice function
-    :param msk_batch1: torch.BoolTensor [B,H,W]
-    :param msk_batch2: torch.BoolTensor [B,H,W]
-    :param empty_score: if both masks are empty
-
-    :return dices: torch.FloatTensor [W]
-    """
-
-    if msk_batch1.shape != msk_batch2.shape:
-        raise ValueError("Shape mismatch: msk_batch1 and msk_batch2 must have the same shape. "
-                         f"got msk_batch1.shape={msk_batch1.shape} msk_batch2.shape={msk_batch2.shape}")
-
-    msk_sum_batch: torch.Tensor = msk_batch1.sum(dim=(1, 2)) + msk_batch2.sum(dim=(1, 2))
-
-    intersection_batch: torch.Tensor = torch.logical_and(msk_batch1, msk_batch2).sum(dim=(1, 2))
-
-    dices = 2 * intersection_batch / msk_sum_batch
-
-    dices[dices.isinf() | dices.isnan()] = empty_score
-
-    return dices
+    assert logits.shape[1] == 1, "num_classes (logits.shape[1]) should be 1"
+    true_1_hot = torch.eye(2)[true.squeeze(1)]
+    true_1_hot = true_1_hot.permute(0, 3, 1, 2).float()
+    true_1_hot_f = true_1_hot[:, 0:1, :, :]
+    true_1_hot_s = true_1_hot[:, 1:2, :, :]
+    true_1_hot = torch.cat([true_1_hot_s, true_1_hot_f], dim=1)
+    pos_prob = torch.sigmoid(logits)
+    neg_prob = 1 - pos_prob
+    probas = torch.cat([pos_prob, neg_prob], dim=1)
+    true_1_hot = true_1_hot.type(logits.type())
+    dims = (0,) + tuple(range(2, true.ndimension()))
+    intersection = torch.sum(probas * true_1_hot, dims)
+    cardinality = torch.sum(probas + true_1_hot, dims)
+    dice_score = (2. * intersection / (cardinality + eps)).mean()
+    return 1 - dice_score
 
 
-def soft_dice_loss(outputs: torch.Tensor, targets: torch.Tensor, per_image=False) -> torch.Tensor:
-    batch_size = outputs.size()[0]
-    if not per_image:
-        batch_size = 1
-    dice_target = targets.contiguous().view(batch_size, -1).float()
-    dice_output = outputs.contiguous().view(batch_size, -1)
-    intersection = torch.sum(dice_output * dice_target, dim=1)
-    union = torch.sum(dice_output, dim=1) + torch.sum(dice_target, dim=1) + eps
-    loss = (1 - (2 * intersection + eps) / union).mean()
-    return loss
-
-
-def dice_round(preds, trues, per_image: bool = False) -> torch.Tensor:
-    preds = preds.float()
-    return soft_dice_loss(preds, trues, per_image)
-
-
-class DiceLoss(torch.nn.Module):
-    """
-    expects sigmoid output
-    """
-
-    def __init__(self, weight=None, size_average=True, per_image=False):
+class BinaryDiceLossWithLogits(nn.Module):
+    def __init__(self, eps: float = 1e-8):
         super().__init__()
-        self.size_average = size_average
-        self.register_buffer('weight', weight)
-        self.per_image = per_image
+        self._eps: float = eps
 
-    def forward(self, outputs, targets):
-        return soft_dice_loss(outputs, targets, per_image=self.per_image)
+    def forward(self, logits: torch.Tensor, outputs: torch.Tensor):
+        return binary_dice_with_logits(logits, outputs, self._eps)

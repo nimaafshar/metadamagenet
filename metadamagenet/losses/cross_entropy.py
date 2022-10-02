@@ -4,7 +4,7 @@ import torch
 from torch import nn
 
 
-class SegCCE(nn.Module):
+class SegmentationCCE(nn.Module):
     def __init__(self, weights: Optional[torch.Tensor] = None):
         super().__init__()
         self.ce: nn.CrossEntropyLoss = nn.CrossEntropyLoss(weights)
