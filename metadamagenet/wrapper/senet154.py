@@ -2,7 +2,6 @@ import abc
 from typing import Optional
 
 from .wrapper import ModelWrapper, LocalizerModelWrapper, ClassifierModelWrapper
-from ..metrics import xview2, ImageMetric
 from ..models.senet import SENet, senet154
 from ..models.unet import SeNet154Unet
 from ..models.unet import Unet
@@ -28,4 +27,3 @@ class SeNet154LocalizerWrapper(SeNet154Wrapper, LocalizerModelWrapper):
 class SeNet154ClassifierWrapper(SeNet154Wrapper, ClassifierModelWrapper):
     model_name = "SeNet154UnetClassifier"
     input_size = 448, 448
-    default_score: ImageMetric = xview2.classification_score
