@@ -55,8 +55,6 @@ class Validator:
         log(f':arrow_forward: starting to validate model {self._wrapper.model_name} ...')
         log(f'steps: {len(self._dataloader)}')
         self._model.eval()
-        if self._loss is not None:
-            self._loss.reset()
         loss_mean: MeanMetric = MeanMetric().to(self._device)
         self._score.reset()
         iterator = tqdm(self._dataloader, leave=False)
