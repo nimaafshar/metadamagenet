@@ -128,7 +128,6 @@ class Trainer:
 
     def _train_epoch(self) -> None:
         self._model.train()
-        self._loss.reset()
         self._score.reset()
         loss_mean: MeanMetric = MeanMetric().to(self._device)
         iterator = tqdm(self._dataloader, leave=False)
