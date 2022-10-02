@@ -8,11 +8,10 @@ from torch.utils.data import Dataset, DataLoader
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import MultiStepLR
 from torch.cuda import amp
+from torchmetrics import Metric
 
 from metadamagenet.wrapper import ModelWrapper
 from metadamagenet.augment import TestTimeAugmentor
-from metadamagenet.losses import MonitoredImageLoss
-from metadamagenet.metrics import ImageMetric
 from metadamagenet.models import Metadata
 from metadamagenet.dataset import ImagePreprocessor
 from metadamagenet.validate import Validator
@@ -51,8 +50,8 @@ class Validate(Command):
     wrapper: ModelWrapper
     data: Data
     preprocessor: ImagePreprocessor
-    score: ImageMetric
-    loss: Optional[MonitoredImageLoss] = None
+    score: Metric
+    loss: Optional[nn.Module] = None
     device: Optional[str] = 'cuda'
     test_time_augmentor: Optional[TestTimeAugmentor] = None
 
@@ -69,7 +68,7 @@ class ValidateInTraining:
     data: Data
     preprocessor: ImagePreprocessor
     interval: int = 1
-    score: Optional[ImageMetric] = None
+    score: Optional[Metric] = None
     test_time_augment: Optional[TestTimeAugmentor] = None
 
     def validation_params(self) -> ValidationInTrainingParams:
@@ -90,8 +89,8 @@ class Train(Command):
     preprocessor: ImagePreprocessor
     optimizer: Callable[[nn.Module], Optimizer]
     lr_scheduler: Callable[[Optimizer], MultiStepLR]
-    loss: MonitoredImageLoss
-    score: ImageMetric
+    loss: nn.Module
+    score: Metric
     epochs: int
     random_seed: int
     device: Optional[str] = "cuda"
