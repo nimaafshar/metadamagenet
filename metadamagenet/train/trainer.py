@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import MultiStepLR
 from torch.cuda import amp
 from torch.backends import cudnn
+from torchmetrics import MeanMetric
 
 from ..models import Checkpoint, Metadata
 from ..models import Manager as ModelManager
@@ -20,7 +21,6 @@ from ..wrapper import ModelWrapper
 from ..logging import log
 from ..validate import Validator
 from ..dataset import ImagePreprocessor
-from ..losses import MonitoredImageLoss, Monitored
 
 
 @dataclass
@@ -61,7 +61,7 @@ class Trainer:
         self._dataloader: DataLoader = dataloader
         self._optimizer: Optimizer = optimizer
         self._lr_scheduler: MultiStepLR = lr_scheduler
-        self._loss: MonitoredImageLoss = loss if isinstance(loss, MonitoredImageLoss) else Monitored(loss)
+        self._loss: nn.Module = loss
         if self._loss is not None and self._device is not None:
             self._loss = self._loss.to(self._device)
         self._epochs: int = epochs
@@ -130,6 +130,7 @@ class Trainer:
         self._model.train()
         self._loss.reset()
         self._score.reset()
+        loss_mean: MeanMetric = MeanMetric().to(self._device)
         iterator = tqdm(self._dataloader, leave=False)
 
         i: int
@@ -150,15 +151,16 @@ class Trainer:
             with torch.no_grad():
                 activated_outputs: torch.Tensor = self._wrapper.apply_activation(outputs)
                 current_score: torch.Tensor = self._score(activated_outputs, targets)
+                loss_mean.update(loss)
 
             iterator.set_postfix({
-                "loss": self._loss.status_till_here(),
+                "loss": loss.item(),
                 "score": current_score.item(),
                 "lr": f"{self._lr_scheduler.get_last_lr()[-1]:.7f}"
             })
             self._update_weights(loss)
 
-        log(f"Training Results: loss: {self._loss.status_till_here()} score:{self._score.compute().item()}")
+        log(f"Training Results: loss: {loss_mean.compute().item()} score:{self._score.compute().item()}")
 
     def _update_weights(self, loss: torch.Tensor):
         self._optimizer.zero_grad()

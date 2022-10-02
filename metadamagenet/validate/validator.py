@@ -4,12 +4,12 @@ from tqdm.autonotebook import tqdm
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
+from torchmetrics import MeanMetric
 
 from ..augment import TestTimeAugmentor
 from torchmetrics import Metric
 from ..wrapper import ModelWrapper
 from ..logging import log
-from ..losses import MonitoredImageLoss, Monitored
 from ..dataset import ImagePreprocessor
 
 
@@ -37,8 +37,7 @@ class Validator:
         if self._device is not None:
             self._preprocessor = self._preprocessor.to(self._device)
 
-        self._loss: Optional[MonitoredImageLoss] = loss if loss is None or isinstance(loss, MonitoredImageLoss) \
-            else Monitored(loss)
+        self._loss: Optional[nn.Module] = loss
         if self._loss is not None and self._device is not None:
             self._loss = self._loss.to(self._device)
 
@@ -58,6 +57,7 @@ class Validator:
         self._model.eval()
         if self._loss is not None:
             self._loss.reset()
+        loss_mean: MeanMetric = MeanMetric().to(self._device)
         self._score.reset()
         iterator = tqdm(self._dataloader, leave=False)
 
@@ -80,16 +80,17 @@ class Validator:
                     outputs: torch.Tensor = self._model(inputs)
 
                 if self._loss is not None:
-                    self._loss(outputs, targets)
+                    loss = self._loss(outputs, targets)
+                    loss_mean.update(loss)
 
                 activated_outputs: torch.Tensor = self._wrapper.apply_activation(outputs)
                 current_score: torch.Tensor = self._score(activated_outputs, targets)
 
                 iterator.set_postfix({
-                    "loss": self._loss.status_till_here() if self._loss is not None else "--",
+                    "loss": loss.item() if self._loss is not None else "--",
                     "score": current_score.item()
                 })
 
-            log(f"Validation Results: loss:{self._loss.status_till_here() if self._loss is not None else '--'} "
+            log(f"Validation Results: loss:{loss_mean.compute().item() if self._loss is not None else '--'} "
                 f"score:{self._score.compute().item()}")
             return self._score.compute().item()
