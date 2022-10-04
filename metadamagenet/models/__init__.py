@@ -1,3 +1,2 @@
-from .metadata import Metadata
-from .checkpoint import Checkpoint
-from .manager import Manager
+from .manager import Metadata, Checkpoint, ModelManager
+from .base import BaseModel, Classifier, Localizer

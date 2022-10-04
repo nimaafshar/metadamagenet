@@ -17,6 +17,12 @@ class BaseModel(nn.Module, metaclass=abc.ABCMeta):
 
     @classmethod
     def from_pretrained(cls, version: str, seed: int, data_parallel: bool = False) -> Self:
+        """
+        :param version: model version
+        :param seed: random seed used to train model
+        :param data_parallel: whether or not model is saved in data parallel mode
+        :return: model
+        """
         log(":eyes: loading from checkpoint")
         checkpoint = Checkpoint(
             model_name=cls.name(),
@@ -31,6 +37,10 @@ class BaseModel(nn.Module, metaclass=abc.ABCMeta):
         if data_parallel:
             empty_model = nn.DataParallel(empty_model)
         empty_model.load_state_dict(state_dict, strict=True)
+        if data_parallel:
+            model: BaseModel = empty_model.module
+            model.metadata = metadata
+            return model
         empty_model.metadata = metadata
         return empty_model
 
