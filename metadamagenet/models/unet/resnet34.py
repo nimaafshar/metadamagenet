@@ -1,20 +1,20 @@
-import numpy as np
 import torch
 import torchvision
 from torch import nn
 import torch.nn.functional as F
 
 from .modules import ConvRelu
-from .base import Unet
+from .base import UnetBase
 
 
-class Resnet34Unet(Unet):
-    def __init__(self, resnet: torchvision.models.ResNet):
-        super(Resnet34Unet, self).__init__()
-        encoder_filters = [64, 64, 128, 256, 512]
-        decoder_filters = [48, 64, 96, 160, 320]
-        self.encoder_filters = encoder_filters
-        self.decoder_filters = decoder_filters
+class Resnet34Unet(UnetBase):
+    encoder_filters = [64, 64, 128, 256, 512]
+    decoder_filters = [48, 64, 96, 160, 320]
+
+    def __init__(self, pretrained_backbone: bool = False):
+        super(Resnet34Unet, self).__init__(pretrained_backbone)
+        encoder_filters = self.encoder_filters
+        decoder_filters = self.decoder_filters
 
         self.conv6 = ConvRelu(encoder_filters[-1], decoder_filters[-1])
         self.conv6_2 = ConvRelu(decoder_filters[-1] + encoder_filters[-2], decoder_filters[-1])
@@ -27,6 +27,9 @@ class Resnet34Unet(Unet):
         self.conv10 = ConvRelu(decoder_filters[-4], decoder_filters[-5])
 
         self._initialize_weights()
+
+        resnet: torchvision.models.ResNet = torchvision.models.resnet34(
+            weights=torchvision.models.ResNet34_Weights.DEFAULT if pretrained_backbone else None)
 
         self.conv1 = nn.Sequential(
             resnet.conv1,
@@ -65,7 +68,3 @@ class Resnet34Unet(Unet):
         dec10 = self.conv10(F.interpolate(dec9, scale_factor=2))
 
         return dec10
-
-    @property
-    def out_channels(self) -> int:
-        return self.decoder_filters[-5]

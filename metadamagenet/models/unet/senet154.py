@@ -1,21 +1,21 @@
-import numpy as np
 import torch
 from torch import nn
 import torch.nn.functional as F
 
-from .base import Unet
+from .base import UnetBase
 from .modules import ConvRelu
-from ..senet import SENet
+from ..senet import SENet, senet154
 
 
-class SeNet154Unet(Unet):
+class SeNet154Unet(UnetBase):
+    encoder_filters = [128, 256, 512, 1024, 2048]
+    decoder_filters = [48, 64, 96, 160, 320]
 
-    def __init__(self, se_net: SENet):
-        super(SeNet154Unet, self).__init__()
-        encoder_filters = [128, 256, 512, 1024, 2048]
-        decoder_filters = np.asarray([48, 64, 96, 160, 320])
-        self.encoder_filters = encoder_filters
-        self.decoder_filters = decoder_filters
+    def __init__(self, pretrained_backbone: bool = False):
+        super(SeNet154Unet, self).__init__(pretrained_backbone)
+
+        encoder_filters = self.encoder_filters
+        decoder_filters = self.decoder_filters
 
         self.conv6 = ConvRelu(encoder_filters[-1], decoder_filters[-1])
         self.conv6_2 = ConvRelu(decoder_filters[-1] + encoder_filters[-2], decoder_filters[-1])
@@ -27,6 +27,8 @@ class SeNet154Unet(Unet):
         self.conv9_2 = ConvRelu(decoder_filters[-4] + encoder_filters[-5], decoder_filters[-4])
         self.conv10 = ConvRelu(decoder_filters[-4], decoder_filters[-5])
         self._initialize_weights()
+
+        se_net: SENet = senet154(pretrained='imagenet' if pretrained_backbone else None)
         self.conv1 = nn.Sequential(
             se_net.layer0.conv1,
             se_net.layer0.bn1,
@@ -71,7 +73,3 @@ class SeNet154Unet(Unet):
         dec10 = self.conv10(F.interpolate(dec9, scale_factor=2))
 
         return dec10
-
-    @property
-    def out_channels(self) -> int:
-        return self.decoder_filters[-5]

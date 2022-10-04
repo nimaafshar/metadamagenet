@@ -1,52 +1,39 @@
 import abc
-from typing import List
-
 import torch
 from torch import nn
-import torch.nn.functional as F
 
-from .base import Unet
-from .modules import ConvRelu
+from .base import UnetBase
+from .modules import DecoderModule, FinalDecoderModule
 
 
-class EfficientUnet(Unet):
-    @property
-    @abc.abstractmethod
-    def encoder_filters(self) -> List[int]:
-        """
-        :return: 5 encoder filters
-        """
-        pass
+class EfficientUnet(UnetBase, metaclass=abc.ABCMeta):
 
-    @property
-    @abc.abstractmethod
-    def decoder_filters(self) -> List[int]:
-        """
-        :return: 5 decoder filters
-        """
-        pass
-
-    def __init__(self, backbone: nn.Module):
-        """
-        :param backbone: EfficientNet instance from
-        (https://github.com/NVIDIA/DeepLearningExamples/tree/master/PyTorch/Classification/ConvNets/efficientnet)
-        """
-        super().__init__()
+    def __init__(self, pretrained_backbone: bool = False):
+        super().__init__(pretrained_backbone)
 
         encoder_filters = self.encoder_filters
         decoder_filters = self.decoder_filters
 
-        self.conv6 = ConvRelu(encoder_filters[-1], decoder_filters[-1])
-        self.conv6_2 = ConvRelu(decoder_filters[-1] + encoder_filters[-2], decoder_filters[-1])
-        self.conv7 = ConvRelu(decoder_filters[-1], decoder_filters[-2])
-        self.conv7_2 = ConvRelu(decoder_filters[-2] + encoder_filters[-3], decoder_filters[-2])
-        self.conv8 = ConvRelu(decoder_filters[-2], decoder_filters[-3])
-        self.conv8_2 = ConvRelu(decoder_filters[-3] + encoder_filters[-4], decoder_filters[-3])
-        self.conv9 = ConvRelu(decoder_filters[-3], decoder_filters[-4])
-        self.conv9_2 = ConvRelu(decoder_filters[-4] + encoder_filters[-5], decoder_filters[-4])
-        self.conv10 = ConvRelu(decoder_filters[-4], decoder_filters[-5])
+        self.conv6 = DecoderModule(in_channels=decoder_filters[-1],
+                                   injected_channels=encoder_filters[-2],
+                                   out_channels=decoder_filters[-1])
+        self.conv7 = DecoderModule(in_channels=decoder_filters[-1],
+                                   injected_channels=encoder_filters[-3],
+                                   out_channels=decoder_filters[-2])
+
+        self.conv8 = DecoderModule(in_channels=decoder_filters[-2],
+                                   injected_channels=encoder_filters[-4],
+                                   out_channels=decoder_filters[-3])
+        self.conv9 = DecoderModule(in_channels=decoder_filters[-3],
+                                   injected_channels=encoder_filters[-5],
+                                   out_channels=decoder_filters[-4])
+
+        self.conv10 = FinalDecoderModule(in_channels=decoder_filters[-4],
+                                         out_channels=decoder_filters[-5])
 
         self._initialize_weights()
+
+        backbone: nn.Module = self.get_backbone(pretrained_backbone)
 
         self.conv1 = nn.Sequential(
             backbone.stem,
@@ -74,46 +61,36 @@ class EfficientUnet(Unet):
         enc4 = self.conv4(enc3)
         enc5 = self.conv5(enc4)
 
-        dec6 = self.conv6(F.interpolate(enc5, scale_factor=2))
-        dec6 = self.conv6_2(torch.cat([dec6, enc4], 1))
+        dec = self.conv6(enc5, enc4)
+        dec = self.conv7(dec, enc3)
+        dec = self.conv8(dec, enc2)
+        dec = self.conv9(dec, enc1)
+        dec = self.conv10(dec)
 
-        dec7 = self.conv7(F.interpolate(dec6, scale_factor=2))
-        dec7 = self.conv7_2(torch.cat([dec7, enc3], 1))
+        return dec
 
-        dec8 = self.conv8(F.interpolate(dec7, scale_factor=2))
-        dec8 = self.conv8_2(torch.cat([dec8, enc2], 1))
-
-        dec9 = self.conv9(F.interpolate(dec8, scale_factor=2))
-        dec9 = self.conv9_2(torch.cat([dec9, enc1], 1))
-
-        dec10 = self.conv10(F.interpolate(dec9, scale_factor=2))
-
-        return dec10
-
-    @property
-    def out_channels(self) -> int:
-        return self.decoder_filters[-5]
+    @abc.abstractmethod
+    def get_backbone(self, pretrained: bool) -> nn.Module:
+        pass
 
 
 class EfficientUnetB0(EfficientUnet):
     encoder_filters = [16, 24, 40, 112, 320]
     decoder_filters = [48, 64, 96, 160, 320]  # same as Resnet34Unet
 
+    def get_backbone(self, pretrained: bool) -> nn.Module:
+        return torch.hub.load(repo_or_dir='NVIDIA/DeepLearningExamples:torchhub',
+                              model='nvidia_efficientnet_b0',
+                              pretrained=pretrained,
+                              trust_repo=True)
+
 
 class EfficientUnetB4(EfficientUnet):
     encoder_filters = [24, 32, 56, 160, 448]
     decoder_filters = [48, 64, 96, 160, 320]  # same as Resnet34Unet
 
-
-def efficientnet_b0(pretrained: bool = False):
-    return torch.hub.load(repo_or_dir='NVIDIA/DeepLearningExamples:torchhub',
-                          model='nvidia_efficientnet_b0',
-                          pretrained=pretrained,
-                          trust_repo=True)
-
-
-def efficientnet_b4(pretrained: bool = False):
-    return torch.hub.load(repo_or_dir='NVIDIA/DeepLearningExamples:torchhub',
-                          model='nvidia_efficientnet_b4',
-                          pretrained=pretrained,
-                          trust_repo=True)
+    def get_backbone(self, pretrained: bool):
+        return torch.hub.load(repo_or_dir='NVIDIA/DeepLearningExamples:torchhub',
+                              model='nvidia_efficientnet_b4',
+                              pretrained=pretrained,
+                              trust_repo=True)

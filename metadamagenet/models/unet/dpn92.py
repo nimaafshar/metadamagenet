@@ -1,22 +1,21 @@
-import numpy as np
 import torch
 from torch import nn
 import torch.nn.functional as F
 
-from .base import Unet
+from .base import UnetBase
 from .modules import ConvRelu
 from ..senet import SCSEModule
-from ..dpn import DPN
+from ..dpn import DPN, dpn92
 
 
-class Dpn92Unet(Unet):
+class Dpn92Unet(UnetBase):
+    encoder_filters = [64, 336, 704, 1552, 2688]
+    decoder_filters = [i // 2 for i in [64, 96, 128, 256, 512]]
 
-    def __init__(self, dpn: DPN):
-        super(Dpn92Unet, self).__init__()
-        encoder_filters = [64, 336, 704, 1552, 2688]
-        decoder_filters = np.asarray([64, 96, 128, 256, 512]) // 2
-        self.encoder_filters = encoder_filters
-        self.decoder_filters = decoder_filters
+    def __init__(self, pretrained_backbone: bool = False):
+        super(Dpn92Unet, self).__init__(pretrained_backbone)
+        encoder_filters = self.encoder_filters
+        decoder_filters = self.decoder_filters
         self.conv6 = ConvRelu(encoder_filters[-1], decoder_filters[-1])
         self.conv6_2 = nn.Sequential(
             ConvRelu(decoder_filters[-1] + encoder_filters[-2], decoder_filters[-1]),
@@ -39,6 +38,8 @@ class Dpn92Unet(Unet):
         )
         self.conv10 = ConvRelu(decoder_filters[-4] * 2, decoder_filters[-5])
         self._initialize_weights()
+
+        dpn: DPN = dpn92(pretrained='imagenet+5k' if pretrained_backbone else None)
         self.conv1 = nn.Sequential(
             dpn.blocks['conv1_1'].conv,  # conv
             dpn.blocks['conv1_1'].bn,  # bn
@@ -82,7 +83,3 @@ class Dpn92Unet(Unet):
 
         dec10 = self.conv10(F.interpolate(dec9, scale_factor=2))
         return dec10
-
-    @property
-    def out_channels(self) -> int:
-        return self.decoder_filters[-5]

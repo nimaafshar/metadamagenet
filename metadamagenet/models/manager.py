@@ -1,19 +1,72 @@
+from dataclasses import dataclass
 import json
 from typing import Tuple
+import pathlib
 
 import torch
+from typing_extensions import Self
 
-from .checkpoint import Checkpoint
-from .metadata import Metadata
+from ..configs import GeneralConfig
+
+config = GeneralConfig.get_instance()
 
 
-class Manager:
-    _instance: 'Manager' = None
+@dataclass
+class Checkpoint:
+    model_name: str
+    version: str
+    seed: int
+
+    @property
+    def path(self) -> pathlib.Path:
+        return config.models_root / pathlib.Path(self.name)
+
+    @property
+    def name(self) -> str:
+        return f"{self.model_name.lower()}V{self.version.lower()}S{str(self.seed)}"
+
+    @property
+    def model_path(self) -> pathlib.Path:
+        return self.path / "model.pth"
+
+    @property
+    def metadata_path(self) -> pathlib.Path:
+        return self.path / "metadata.json"
+
+    @property
+    def exists(self) -> bool:
+        return (self.path.exists() and
+                self.path.is_dir() and
+                self.model_path.exists() and
+                self.metadata_path.exists())
+
+
+@dataclass
+class Metadata:
+    best_score: float = 0
+    trained_epochs: int = 0
 
     @classmethod
-    def get_instance(cls) -> 'Manager':
+    def from_dict(cls, d: dict) -> Self:
+        return Metadata(
+            best_score=d['best_score'],
+            trained_epochs=d['trained_epochs']
+        )
+
+    def to_dict(self) -> dict:
+        return {
+            "best_score": self.best_score,
+            "trained_epochs": self.trained_epochs
+        }
+
+
+class ModelManager:
+    _instance: Self = None
+
+    @classmethod
+    def get_instance(cls) -> Self:
         if not cls._instance:
-            cls._instance = Manager()
+            cls._instance = ModelManager()
         return cls._instance
 
     def load_checkpoint(self, checkpoint: Checkpoint) -> Tuple[dict, Metadata]:
