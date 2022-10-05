@@ -13,6 +13,7 @@ from torch.cuda import amp
 from torch.backends import cudnn
 from torchmetrics import MeanMetric
 
+from .base import Runner
 from ..models import Checkpoint, Metadata, ModelManager, BaseModel
 from ..augment import TestTimeAugmentor
 from torchmetrics import Metric
@@ -29,7 +30,7 @@ class ValidationInTrainingParams:
     test_time_augmentor: Optional[TestTimeAugmentor] = None
 
 
-class Trainer:
+class Trainer(Runner):
     def __init__(self,
                  model: BaseModel,
                  version: str,
@@ -66,7 +67,7 @@ class Trainer:
         self._grad_scaler: Optional[amp.GradScaler] = grad_scaler
         self._clip_grad_norm: Optional[float] = clip_grad_norm
 
-    def train(self) -> None:
+    def run(self) -> None:
         cudnn.benchmark = True
         log(f':arrow_forward: starting to train model {self._model.name()}'
             f" version='{self._version}' seed='{self._seed}'")
@@ -86,7 +87,7 @@ class Trainer:
                 gc.collect()
                 log(f"======>:fearful: validation")
                 validator: Validator = self._make_validator()
-                score: float = validator.validate()
+                score: float = validator.run()
                 if self._score_improved(best_score, score):
                     best_score = score
                     self._save_model(epoch, best_score)
