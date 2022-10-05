@@ -1,7 +1,7 @@
-from typing import Literal, Optional
+from typing import Literal, Optional, List
+
 import torch
 from torch import nn
-
 import torch.nn.functional as tf
 
 
@@ -43,12 +43,12 @@ class BinaryFocalLoss2d(nn.Module):
 
 class FocalLoss2d(nn.Module):
     def __init__(self, gamma=2., size_average=True, eps=1e-8, reduction: Literal['sum', 'mean', None] = 'mean',
-                 class_weight: Optional[torch.Tensor] = None):
+                 class_weight: Optional[List[float]] = None):
         super(FocalLoss2d, self).__init__()
         self._gamma: float = gamma
         self._eps: float = eps
         self._reduction: Literal['sum', 'mean', None] = reduction
-        self._class_weight: Optional[torch.Tensor] = class_weight
+        self._class_weight: Optional[List[float]] = class_weight
 
     def forward(self, logits: torch.Tensor, targets: torch.Tensor):
         target = targets.view(-1, 1).long()
