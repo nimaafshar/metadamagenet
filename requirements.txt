@@ -11,3 +11,4 @@ pyyaml
 torchmetrics==0.9.3
 kornia==0.6.7
 kornia-rs==0.0.5
+typing-extensions==4.3.0
