@@ -29,13 +29,10 @@ class Validator(Runner):
             self._device = device
         else:
             self._device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
         self._model: BaseModel = model.to(self._device)
-
         self._transform: nn.Module = transform.to(self._device)
-
         self._dataloader: DataLoader = dataloader
-
+        self._dataloader.pin_memory = True
         self._loss: Optional[nn.Module] = loss
         if self._loss is not None:
             self._loss = self._loss.to(self._device)
