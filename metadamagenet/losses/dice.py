@@ -1,3 +1,5 @@
+from typing import List
+
 import torch
 from torch import nn
 from torch.nn import functional as tf
@@ -38,3 +40,9 @@ class BinaryDiceLossWithLogits(nn.Module):
 
     def forward(self, logits: torch.Tensor, outputs: torch.Tensor):
         return binary_dice_with_logits(logits, outputs, self._eps)
+
+
+class DiceLoss(nn.Module):
+    def __init__(self, class_weights: List[float]):
+        super().__init__()
+        raise NotImplementedError()
