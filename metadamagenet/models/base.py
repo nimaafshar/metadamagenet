@@ -45,7 +45,7 @@ class BaseModel(nn.Module, metaclass=abc.ABCMeta):
         return empty_model
 
     @abc.abstractmethod
-    def activate(cls, outputs: Tensor) -> Tensor:
+    def activate(self, outputs: Tensor) -> Tensor:
         pass
 
     @abc.abstractmethod
