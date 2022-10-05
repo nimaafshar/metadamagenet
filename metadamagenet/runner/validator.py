@@ -8,42 +8,38 @@ from torchmetrics import MeanMetric
 
 from ..augment import TestTimeAugmentor
 from torchmetrics import Metric
-from ..wrapper import ModelWrapper
 from ..logging import log
-from ..dataset import ImagePreprocessor
+from ..models import BaseModel
 
 
 class Validator:
     def __init__(self,
                  model: nn.Module,
-                 model_wrapper: ModelWrapper,
                  dataloader: DataLoader,
-                 preprocessor: ImagePreprocessor,
-                 loss: Optional[nn.Module],
                  score: Metric,
+                 transform: Optional[nn.Module],
+                 loss: Optional[nn.Module],
                  device: Optional[torch.device] = None,
                  test_time_augmentor: Optional[TestTimeAugmentor] = None
                  ):
-        self._device: Optional[torch.device] = device
 
-        self._model: nn.Module = model
-        if self._device is not None:
-            self._model = self._model.to(device)
+        self._device: torch.device
+        if device is not None:
+            self._device = device
+        else:
+            self._device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-        self._wrapper: ModelWrapper = model_wrapper
+        self._model: BaseModel = model.to(self._device)
+
+        self._transform: nn.Module = transform.to(self._device)
+
         self._dataloader: DataLoader = dataloader
 
-        self._preprocessor: ImagePreprocessor = preprocessor
-        if self._device is not None:
-            self._preprocessor = self._preprocessor.to(self._device)
-
         self._loss: Optional[nn.Module] = loss
-        if self._loss is not None and self._device is not None:
+        if self._loss is not None:
             self._loss = self._loss.to(self._device)
 
-        self._score: Metric = score
-        if self._device is not None:
-            self._score = self._score.to(self._device)
+        self._score: Metric = score.to(self._device)
 
         self._test_time_augmentor: Optional[TestTimeAugmentor] = test_time_augmentor
 
@@ -52,7 +48,7 @@ class Validator:
         validate model with given data
         :return: score
         """
-        log(f':arrow_forward: starting to validate model {self._wrapper.model_name} ...')
+        log(f':arrow_forward: starting to validate model {self._model.name()} ...')
         log(f'steps: {len(self._dataloader)}')
         self._model.eval()
         loss_mean: MeanMetric = MeanMetric().to(self._device)
@@ -65,9 +61,12 @@ class Validator:
                 if self._device is not None:
                     data_batch = {k: v.to(device=self._device, non_blocking=True) for k, v in data_batch.items()}
 
+                if self._transform is not None:
+                    data_batch = self._transform(data_batch)
+
                 inputs: torch.Tensor
                 targets: torch.Tensor
-                inputs, targets = self._preprocessor(data_batch)
+                inputs, targets = self._model.preprocess(data_batch)
 
                 outputs: torch.Tensor
                 if self._test_time_augmentor is not None:
@@ -81,7 +80,7 @@ class Validator:
                     loss = self._loss(outputs, targets)
                     loss_mean.update(loss)
 
-                activated_outputs: torch.Tensor = self._wrapper.apply_activation(outputs)
+                activated_outputs: torch.Tensor = self._model.activate(outputs)
                 current_score: torch.Tensor = self._score(activated_outputs, targets)
 
                 iterator.set_postfix({

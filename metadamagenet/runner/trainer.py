@@ -13,33 +13,29 @@ from torch.cuda import amp
 from torch.backends import cudnn
 from torchmetrics import MeanMetric
 
-from ..models import Checkpoint, Metadata
-from ..models import Manager as ModelManager
+from ..models import Checkpoint, Metadata, ModelManager, BaseModel
 from ..augment import TestTimeAugmentor
 from torchmetrics import Metric
-from ..wrapper import ModelWrapper
 from ..logging import log
-from ..validate import Validator
-from ..dataset import ImagePreprocessor
+from .validator import Validator
 
 
 @dataclass
 class ValidationInTrainingParams:
     dataloader: DataLoader
-    preprocessor: ImagePreprocessor
     interval: int = 1
+    transform: Optional[nn.Module] = None
     score: Optional[Metric] = None
     test_time_augmentor: Optional[TestTimeAugmentor] = None
 
 
 class Trainer:
     def __init__(self,
-                 model: nn.Module,
+                 model: BaseModel,
                  version: str,
                  seed: int,
-                 model_wrapper: ModelWrapper,
                  dataloader: DataLoader,
-                 preprocessor: ImagePreprocessor,
+                 transform: nn.Module,
                  optimizer: Optimizer,
                  lr_scheduler: MultiStepLR,
                  loss: nn.Module,
@@ -52,43 +48,34 @@ class Trainer:
                  clip_grad_norm: Optional[float] = None
                  ):
 
-        self._device: Optional[torch.device] = device
+        self._device: Optional[torch.device] = device if device is not None else (
+            torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        )
 
-        self._model: nn.Module = model.to(self._device) if self._device is not None else model
+        self._model: BaseModel = model.to(self._device) if self._device is not None else model
         self._version: str = version
         self._seed: str = seed
-        self._wrapper: ModelWrapper = model_wrapper
         self._dataloader: DataLoader = dataloader
+        self._transform: nn.Module = transform.to(self._device)
         self._optimizer: Optimizer = optimizer
         self._lr_scheduler: MultiStepLR = lr_scheduler
-        self._loss: nn.Module = loss
-        if self._loss is not None and self._device is not None:
-            self._loss = self._loss.to(self._device)
+        self._loss: nn.Module = loss.to(self._device)
         self._epochs: int = epochs
-
-        self._score: Metric = score
-        if self._device is not None:
-            self._score = self._score.to(self._device)
-
-        self._preprocessor: ImagePreprocessor = preprocessor
-        if self._device is not None:
-            self._preprocessor = self._preprocessor.to(self._device)
-
+        self._score: Metric = score.to(self._device)
         self._validation_params = validation_params
-        self._model_metadata: Metadata = model_metadata
         self._grad_scaler: Optional[amp.GradScaler] = grad_scaler
         self._clip_grad_norm: Optional[float] = clip_grad_norm
 
     def train(self) -> None:
         cudnn.benchmark = True
-        log(f':arrow_forward: starting to train model {self._wrapper.model_name}'
+        log(f':arrow_forward: starting to train model {self._model.name()}'
             f" version='{self._version}' seed='{self._seed}'")
         log(f'steps_per_epoch: {len(self._dataloader)}')
 
-        best_score: float = self._model_metadata.best_score
-        for epoch in range(self._model_metadata.trained_epochs + 1,
-                           self._model_metadata.trained_epochs + 1 + self._epochs):
-            log(f"===> :repeat_one: epoch {epoch}/{self._model_metadata.trained_epochs + self._epochs}")
+        best_score: float = self._model.metadata.best_score
+        for epoch in range(self._model.metadata.trained_epochs + 1,
+                           self._model.metadata.trained_epochs + 1 + self._epochs):
+            log(f"===> :repeat_one: epoch {epoch}/{self._model.metadata.trained_epochs + self._epochs}")
             log(f"======>:relieved: training")
             torch.cuda.empty_cache()
             gc.collect()
@@ -96,6 +83,7 @@ class Trainer:
             self._lr_scheduler.step()
             if self._validation_params is not None and epoch % self._validation_params.interval == 0:
                 torch.cuda.empty_cache()
+                gc.collect()
                 log(f"======>:fearful: validation")
                 validator: Validator = self._make_validator()
                 score: float = validator.validate()
@@ -117,9 +105,8 @@ class Trainer:
     def _make_validator(self) -> Validator:
         return Validator(
             model=self._model,
-            model_wrapper=self._wrapper,
             dataloader=self._validation_params.dataloader,
-            preprocessor=self._validation_params.preprocessor,
+            transform=self._validation_params.transform,
             loss=self._loss,
             score=self._validation_params.score if self._validation_params.score is not None else self._score,
             device=self._device,
@@ -135,20 +122,21 @@ class Trainer:
         i: int
         data_batch: Dict[str, torch.FloatTensor]
         for i, data_batch in enumerate(iterator):
-            if self._device is not None:
-                data_batch = {k: v.to(device=self._device, non_blocking=True) for k, v in data_batch.items()}
+            data_batch = {k: v.to(device=self._device, non_blocking=True) for k, v in data_batch.items()}
 
             inputs: torch.Tensor  # (B,5,H,W) or (B,1,H,W)
             targets: torch.Tensor  # (B,5,H,W) or (B,1,H,W)
             with torch.no_grad():
-                inputs, targets = self._preprocessor(data_batch)
+                if self._transform is not None:
+                    data_batch = self._transform(data_batch)
+                inputs, targets = self._model.preprocess(data_batch)
 
             with amp.autocast() if self._grad_scaler is not None else nullcontext():
                 outputs: torch.Tensor = self._model(inputs)
                 loss: torch.Tensor = self._loss(outputs, targets)
 
             with torch.no_grad():
-                activated_outputs: torch.Tensor = self._wrapper.apply_activation(outputs)
+                activated_outputs: torch.Tensor = self._model.activate(outputs)
                 current_score: torch.Tensor = self._score(activated_outputs, targets)
                 loss_mean.update(loss)
 
@@ -177,12 +165,13 @@ class Trainer:
                 torch.nn.utils.clip_grad_norm_(self._model.parameters(), self._clip_grad_norm)
 
     def _save_model(self, epochs_trained: int, score: float) -> None:
-        metadata: Metadata = Metadata(best_score=score, trained_epochs=epochs_trained)
+        self._model.metadata.best_score = score
+        self._model.metadata.trained_epochs = epochs_trained
         checkpoint: Checkpoint = Checkpoint(
-            model_name=self._wrapper.model_name,
+            model_name=self._model.name(),
             version=self._version,
             seed=self._seed
         )
         manager: ModelManager = ModelManager.get_instance()
-        manager.save_checkpoint(checkpoint, self._model.state_dict(), metadata)
+        manager.save_checkpoint(checkpoint, self._model.state_dict(), self._model.metadata)
         log(f"======> model saved at {checkpoint}")
