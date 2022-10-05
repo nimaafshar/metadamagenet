@@ -13,7 +13,7 @@ from .unet import UnetBase
 class BaseModel(nn.Module, metaclass=abc.ABCMeta):
     def __init__(self):
         super().__init__()
-        self.metadata: float = Metadata()
+        self.metadata: Metadata = Metadata()
 
     @classmethod
     def from_pretrained(cls, version: str, seed: int, data_parallel: bool = False) -> Self:
