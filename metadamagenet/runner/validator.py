@@ -6,13 +6,14 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torchmetrics import MeanMetric
 
+from .base import Runner
 from ..augment import TestTimeAugmentor
 from torchmetrics import Metric
 from ..logging import log
 from ..models import BaseModel
 
 
-class Validator:
+class Validator(Runner):
     def __init__(self,
                  model: nn.Module,
                  dataloader: DataLoader,
@@ -43,7 +44,7 @@ class Validator:
 
         self._test_time_augmentor: Optional[TestTimeAugmentor] = test_time_augmentor
 
-    def validate(self) -> float:
+    def run(self) -> float:
         """
         validate model with given data
         :return: score
