@@ -57,6 +57,7 @@ class Trainer(Runner):
         self._version: str = version
         self._seed: str = seed
         self._dataloader: DataLoader = dataloader
+        self._dataloader.pin_memory = True
         self._transform: nn.Module = transform.to(self._device)
         self._optimizer: Optimizer = optimizer
         self._lr_scheduler: MultiStepLR = lr_scheduler
