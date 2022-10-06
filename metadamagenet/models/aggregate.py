@@ -1,4 +1,5 @@
 from typing import Dict, Tuple
+from typing_extensions import Self
 
 import torch
 from torch import Tensor, nn
@@ -29,3 +30,7 @@ class Mean(BaseModel):
         for model in self.models:
             self.mean.update(model(x))
         return self.mean.compute()
+
+    @classmethod
+    def from_pretrained(cls, version: str, seed: int, data_parallel: bool = False) -> Self:
+        raise NotImplementedError("loading pretrained is not supported for Mean aggregator")
