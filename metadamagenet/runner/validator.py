@@ -18,8 +18,8 @@ class Validator(Runner):
                  model: nn.Module,
                  dataloader: DataLoader,
                  score: Metric,
-                 transform: Optional[nn.Module],
-                 loss: Optional[nn.Module],
+                 transform: Optional[nn.Module] = None,
+                 loss: Optional[nn.Module] = None,
                  device: Optional[torch.device] = None,
                  test_time_augmentor: Optional[TestTimeAugmentor] = None
                  ):
@@ -30,7 +30,9 @@ class Validator(Runner):
         else:
             self._device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self._model: BaseModel = model.to(self._device)
-        self._transform: nn.Module = transform.to(self._device)
+        self._transform: nn.Module = transform
+        if self._transform is not None:
+            self._transform = self._transform.to(self._device)
         self._dataloader: DataLoader = dataloader
         self._dataloader.pin_memory = True
         self._loss: Optional[nn.Module] = loss
