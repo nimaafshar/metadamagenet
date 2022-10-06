@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 from tqdm.autonotebook import tqdm
 import torch
@@ -10,12 +10,12 @@ from .base import Runner
 from ..augment import TestTimeAugmentor
 from torchmetrics import Metric
 from ..logging import log
-from ..models import BaseModel
+from ..models import BaseModel, ModelAggregator
 
 
 class Validator(Runner):
     def __init__(self,
-                 model: nn.Module,
+                 model: Union[BaseModel, ModelAggregator],
                  dataloader: DataLoader,
                  score: Metric,
                  transform: Optional[nn.Module] = None,
@@ -29,7 +29,7 @@ class Validator(Runner):
             self._device = device
         else:
             self._device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-        self._model: BaseModel = model.to(self._device)
+        self._model: Union[BaseModel, ModelAggregator] = model.to(self._device)
         self._transform: nn.Module = transform
         if self._transform is not None:
             self._transform = self._transform.to(self._device)
@@ -42,6 +42,11 @@ class Validator(Runner):
         self._score: Metric = score.to(self._device)
 
         self._test_time_augmentor: Optional[TestTimeAugmentor] = test_time_augmentor
+        if self._test_time_augmentor is not None and isinstance(self._model, ModelAggregator):
+            raise ValueError("test time augment cannot be used with model aggregators")
+
+        if self._loss is not None and isinstance(self._model, ModelAggregator):
+            raise ValueError("loss calculation cannot be used with model aggregators")
 
     def run(self) -> float:
         """
@@ -67,22 +72,26 @@ class Validator(Runner):
                 inputs: torch.Tensor
                 targets: torch.Tensor
                 inputs, targets = self._model.preprocess(data_batch)
+                activated_outputs: torch.Tensor
+                if isinstance(self._model, BaseModel):
+                    outputs: torch.Tensor
+                    if self._test_time_augmentor is not None:
+                        augmented_inputs: torch.Tensor = self._test_time_augmentor.augment(inputs)
+                        augmented_outputs: torch.Tensor = self._model(augmented_inputs)
+                        outputs: torch.Tensor = self._test_time_augmentor.aggregate(augmented_outputs)
+                    else:
+                        outputs: torch.Tensor = self._model(inputs)
 
-                outputs: torch.Tensor
-                if self._test_time_augmentor is not None:
-                    augmented_inputs: torch.Tensor = self._test_time_augmentor.augment(inputs)
-                    augmented_outputs: torch.Tensor = self._model(augmented_inputs)
-                    outputs: torch.Tensor = self._test_time_augmentor.aggregate(augmented_outputs)
+                    if self._loss is not None:
+                        loss = self._loss(outputs, targets)
+                        loss_mean.update(loss)
+
+                    activated_outputs = self._model.activate(outputs)
                 else:
-                    outputs: torch.Tensor = self._model(inputs)
+                    assert isinstance(self._model, ModelAggregator)
+                    activated_outputs = self._model(inputs)
 
-                if self._loss is not None:
-                    loss = self._loss(outputs, targets)
-                    loss_mean.update(loss)
-
-                activated_outputs: torch.Tensor = self._model.activate(outputs)
                 current_score: torch.Tensor = self._score(activated_outputs, targets)
-
                 iterator.set_postfix({
                     "loss": loss.item() if self._loss is not None else "--",
                     "score": current_score.item()
