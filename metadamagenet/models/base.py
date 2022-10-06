@@ -1,5 +1,5 @@
 import abc
-from typing import Generic, TypeVar, Optional, Tuple, Dict, get_args
+from typing import Generic, TypeVar, Optional, Tuple, Dict, get_args, Type
 
 from typing_extensions import Self
 import torch
@@ -66,15 +66,18 @@ UnetType = TypeVar('UnetType', bound=UnetBase)
 
 
 class Localizer(BaseModel, Generic[UnetType]):
+    @classmethod
+    def get_unet_type(cls) -> Type[UnetType]:
+        return get_args(cls.__orig_bases__[0])[0]
 
     @classmethod
     def name(cls) -> str:
-        return get_args(cls.__orig_bases__[0])[0].name() + "Localizer"
+        return cls.get_unet_type().name() + "Localizer"
 
-    def __init__(self, unet: Optional[UnetType]):
+    def __init__(self, unet: Optional[UnetType] = None):
         super(Localizer, self).__init__()
-        self.unet: UnetType = unet if unet is not None else UnetType()
-        self.res: nn.Conv2d = nn.Conv2d(in_channels=UnetType.out_channels,
+        self.unet: UnetType = unet if unet is not None else self.get_unet_type()()
+        self.res: nn.Conv2d = nn.Conv2d(in_channels=self.unet.out_channels,
                                         out_channels=1,
                                         kernel_size=1,
                                         stride=1,
@@ -111,13 +114,17 @@ class Localizer(BaseModel, Generic[UnetType]):
 
 class Classifier(BaseModel, Generic[UnetType]):
     @classmethod
-    def name(cls) -> str:
-        return get_args(cls.__orig_bases__[0])[0].name() + "Classifier"
+    def get_unet_type(cls) -> Type[UnetType]:
+        return get_args(cls.__orig_bases__[0])[0]
 
-    def __init__(self, unet: Optional[UnetType]):
+    @classmethod
+    def name(cls) -> str:
+        return cls.get_unet_type().name() + "Classifier"
+
+    def __init__(self, unet: Optional[UnetType] = None):
         super().__init__()
-        self.unet: UnetType = unet if unet is not None else UnetType()
-        self.res: nn.Conv2d = nn.Conv2d(in_channels=UnetType.out_channels * 2,
+        self.unet: UnetType = unet if unet is not None else self.get_unet_type()()
+        self.res: nn.Conv2d = nn.Conv2d(in_channels=self.unet.out_channels * 2,
                                         out_channels=5,
                                         kernel_size=1,
                                         stride=1,
