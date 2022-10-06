@@ -4,8 +4,7 @@ import torch
 from torch import nn
 
 from .base import UnetBase
-from .modules import (DecoderModule, FinalDecoderModule, SCSEDecoderModule,
-                      DecoderModuleBN, FinalDecoderModuleBN, SCSEDecoderModuleBN)
+from .modules import (DecoderModule, FinalDecoderModule, SCSEDecoderModule)
 
 
 class EfficientUnet(UnetBase, metaclass=abc.ABCMeta):
@@ -78,11 +77,6 @@ class EfficientUnet(UnetBase, metaclass=abc.ABCMeta):
         pass
 
 
-class EfficientUnetBN(EfficientUnet, metaclass=abc.ABCMeta):
-    DecoderModuleType = DecoderModuleBN
-    FinalDecoderModuleType = FinalDecoderModuleBN
-
-
 class EfficientUnetSCSE(EfficientUnet, metaclass=abc.ABCMeta):
     DecoderModuleType = SCSEDecoderModule
     FinalDecoderModuleType = FinalDecoderModule
@@ -94,17 +88,6 @@ models based on EfficientNetB0
 
 
 class EfficientUnetB0(EfficientUnet):
-    encoder_filters = [16, 24, 40, 112, 320]
-    decoder_filters = [48, 64, 96, 160, 320]  # same as Resnet34Unet
-
-    def get_backbone(self, pretrained: bool) -> nn.Module:
-        return torch.hub.load(repo_or_dir='NVIDIA/DeepLearningExamples:torchhub',
-                              model='nvidia_efficientnet_b0',
-                              pretrained=pretrained,
-                              trust_repo=True)
-
-
-class EfficientUnetB0BN(EfficientUnetBN):
     encoder_filters = [16, 24, 40, 112, 320]
     decoder_filters = [48, 64, 96, 160, 320]  # same as Resnet34Unet
 
