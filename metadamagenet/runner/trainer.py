@@ -75,9 +75,8 @@ class Trainer(Runner):
         log(f'steps_per_epoch: {len(self._dataloader)}')
 
         best_score: float = self._model.metadata.best_score
-        for epoch in range(self._model.metadata.trained_epochs + 1,
-                           self._model.metadata.trained_epochs + 1 + self._epochs):
-            log(f"===> :repeat_one: epoch {epoch}/{self._model.metadata.trained_epochs + self._epochs}")
+        for epoch in range(self._epochs):
+            log(f"===> :repeat_one: epoch {epoch}/{self._epochs}")
             log(f"======>:relieved: training")
             torch.cuda.empty_cache()
             gc.collect()
