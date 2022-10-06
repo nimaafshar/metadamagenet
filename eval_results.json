@@ -128,6 +128,22 @@
             "test": 0.7402129173278809
           }
         ]
+      },
+      {
+        "model": "EfficientUnetB0(No BN, Not Wide-SE, not SCSEDecoder",
+        "version": "00",
+        "results": {
+          "seed": 0,
+          "validation": 0.75733
+        }
+      },
+      {
+        "model": "EfficientUnetB0(BN, Not Wide SE, not SCSEDecoder)",
+        "version": "00",
+        "result": {
+          "seed": 0,
+          "validation": 0.75896
+        }
       }
     ]
   }
