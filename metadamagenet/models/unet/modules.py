@@ -43,7 +43,7 @@ class DecoderModule(nn.Module):
     """
     Simple Decoder Module In Unet
     """
-    ConvType: ClassVar[Type[nn.Module]] = ConvRelu
+    ConvType: ClassVar[Type[nn.Module]] = ConvReluBN
 
     def __init__(self, in_channels: int, injected_channels: int, out_channels: int):
         super().__init__()
@@ -64,10 +64,6 @@ class DecoderModule(nn.Module):
         return self.conv2(torch.cat((out1, injected), dim=1))
 
 
-class DecoderModuleBN(DecoderModule):
-    ConvType = ConvReluBN
-
-
 class SCSEDecoderModule(DecoderModule):
     """
     Spatial and Channel Squeeze and Excitation Decoder Module In Unet
@@ -82,15 +78,11 @@ class SCSEDecoderModule(DecoderModule):
         )
 
 
-class SCSEDecoderModuleBN(SCSEDecoderModule):
-    ConvType = ConvReluBN
-
-
 class FinalDecoderModule(nn.Module):
     """
     Final Decoder Module In Unet Which only uses one conv
     """
-    ConvType: ClassVar[Type[nn.Module]] = ConvRelu
+    ConvType: ClassVar[Type[nn.Module]] = ConvReluBN
 
     def __init__(self, in_channels: int, out_channels: int):
         super().__init__()
@@ -104,7 +96,3 @@ class FinalDecoderModule(nn.Module):
         :return: torch.Tensor of shape (N,out_channels,H,H)
         """
         return self.conv(tf.interpolate(inputs, scale_factor=2))
-
-
-class FinalDecoderModuleBN(FinalDecoderModule):
-    ConvType = ConvReluBN
