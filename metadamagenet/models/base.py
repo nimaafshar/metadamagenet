@@ -1,5 +1,5 @@
 import abc
-from typing import Generic, TypeVar, Optional, Tuple, Dict
+from typing import Generic, TypeVar, Optional, Tuple, Dict, get_args
 
 from typing_extensions import Self
 import torch
@@ -69,7 +69,7 @@ class Localizer(BaseModel, Generic[UnetType]):
 
     @classmethod
     def name(cls) -> str:
-        return UnetType.name() + "Localizer"
+        return get_args(cls)[0].name() + "Localizer"
 
     def __init__(self, unet: Optional[UnetType]):
         super(Localizer, self).__init__()
