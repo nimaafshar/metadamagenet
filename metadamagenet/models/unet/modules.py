@@ -1,3 +1,4 @@
+from typing import ClassVar, Type
 import torch
 from torch import nn
 import torch.nn.functional as tf
@@ -42,6 +43,7 @@ class DecoderModule(nn.Module):
     """
     Simple Decoder Module In Unet
     """
+    ConvType: ClassVar[Type[nn.Module]] = ConvRelu
 
     def __init__(self, in_channels: int, injected_channels: int, out_channels: int):
         super().__init__()
@@ -49,8 +51,8 @@ class DecoderModule(nn.Module):
         self.injected_channels: int = injected_channels
         self.out_channels: int = out_channels
 
-        self.conv1: nn.Module = ConvRelu(in_channels, out_channels)
-        self.conv2: nn.Module = ConvRelu(out_channels + injected_channels, out_channels)
+        self.conv1: nn.Module = self.ConvType(in_channels, out_channels)
+        self.conv2: nn.Module = self.ConvType(out_channels + injected_channels, out_channels)
 
     def forward(self, inputs: torch.Tensor, injected: torch.Tensor) -> torch.Tensor:
         """
@@ -62,16 +64,39 @@ class DecoderModule(nn.Module):
         return self.conv2(torch.cat((out1, injected), dim=1))
 
 
+class DecoderModuleBN(DecoderModule):
+    ConvType = ConvReluBN
+
+
+class SCSEDecoderModule(DecoderModule):
+    """
+    Spatial and Channel Squeeze and Excitation Decoder Module In Unet
+    """
+
+    def __init__(self, in_channels: int, injected_channels: int, out_channels: int):
+        super(DecoderModule, self).__init__()
+        self.conv1 = self.ConvType(in_channels, out_channels)
+        self.conv2 = nn.Sequential(
+            self.ConvType(out_channels + injected_channels, out_channels),
+            SCSEModule(out_channels, reduction=16, concat=True)
+        )
+
+
+class SCSEDecoderModuleBN(SCSEDecoderModule):
+    ConvType = ConvReluBN
+
+
 class FinalDecoderModule(nn.Module):
     """
     Final Decoder Module In Unet Which only uses one conv
     """
+    ConvType: ClassVar[Type[nn.Module]] = ConvRelu
 
     def __init__(self, in_channels: int, out_channels: int):
         super().__init__()
         self.in_channels: int = in_channels
         self.out_channels: int = out_channels
-        self.conv: nn.Module = ConvRelu(in_channels, out_channels)
+        self.conv: nn.Module = self.ConvType(in_channels, out_channels)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         """
@@ -81,24 +106,5 @@ class FinalDecoderModule(nn.Module):
         return self.conv(tf.interpolate(inputs, scale_factor=2))
 
 
-class SCSEDecoderModule(nn.Module):
-    """
-    Spatial and Channel Squeeze and Excitation Decoder Module In Unet
-    """
-
-    def __init__(self, in_channels: int, injected_channels: int, out_channels: int):
-        super().__init__()
-        self.conv1 = ConvRelu(in_channels, out_channels)
-        self.conv2 = nn.Sequential(
-            ConvRelu(out_channels + injected_channels, out_channels),
-            SCSEModule(out_channels, reduction=16, concat=True)
-        )
-
-    def forward(self, inputs: torch.Tensor, injected: torch.Tensor) -> torch.Tensor:
-        """
-        :param inputs: torch.Tensor of shape (N,in_channels,H/2,H/2)
-        :param injected: torch.Tensor of shape (N,injected_channels,H,H)
-        :return: torch.Tensor of shape (N,out_channels,H,H)
-        """
-        out1: torch.Tensor = self.conv1(tf.interpolate(inputs, scale_factor=2))
-        return self.conv2(torch.cat((out1, injected), dim=1))
+class FinalDecoderModuleBN(FinalDecoderModule):
+    ConvType = ConvReluBN
