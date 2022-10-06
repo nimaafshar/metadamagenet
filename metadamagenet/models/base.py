@@ -23,12 +23,12 @@ class BaseModel(nn.Module, metaclass=abc.ABCMeta):
         :param data_parallel: whether or not model is saved in data parallel mode
         :return: model
         """
-        log(":eyes: loading from checkpoint")
         checkpoint = Checkpoint(
             model_name=cls.name(),
             version=version,
             seed=seed
         )
+        log(f":eyes: loading from checkpoint {checkpoint}")
         manager = ModelManager.get_instance()
         state_dict: dict
         metadata: Metadata
