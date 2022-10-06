@@ -69,7 +69,7 @@ class Localizer(BaseModel, Generic[UnetType]):
 
     @classmethod
     def name(cls) -> str:
-        return get_args(cls)[0].name() + "Localizer"
+        return get_args(cls.__orig_bases__[0])[0].name() + "Localizer"
 
     def __init__(self, unet: Optional[UnetType]):
         super(Localizer, self).__init__()
