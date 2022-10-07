@@ -67,6 +67,7 @@ class DecoderModule(nn.Module):
 class SCSEDecoderModule(DecoderModule):
     """
     Spatial and Channel Squeeze and Excitation Decoder Module In Unet
+    No Concat
     """
 
     def __init__(self, in_channels: int, injected_channels: int, out_channels: int):
@@ -74,7 +75,7 @@ class SCSEDecoderModule(DecoderModule):
         self.conv1 = self.ConvType(in_channels, out_channels)
         self.conv2 = nn.Sequential(
             self.ConvType(out_channels + injected_channels, out_channels),
-            SCSEModule(out_channels, reduction=16, concat=True)
+            SCSEModule(out_channels, reduction=16, concat=False)
         )
 
 
