@@ -118,55 +118,108 @@ further.
 - My 1st place solution from "SpaceNet 4: Off-Nadir Building Footprint Detection Challenge" (some ideas came from
   here): https://github.com/SpaceNetChallenge/SpaceNet_Off_Nadir_Solutions/tree/master/cannab
 
-# Results
+# Evaluation Results
 
-## Localization
+on dataset `test` (used for validation):
 
-- test set :`test`
-- only pre-disaster images
+<table>
+<thead>
+  <td colspan="1">model</td>
+  <td colspan="1">version</td>
+  <td colspan="8">Localization</td>
+  <td colspan="8">Classification</td>
+</thead>
+<thead>
+  <td colspan="2">seed</td>
+  <td colspan="2">0</td>
+  <td colspan="2">1</td>
+  <td colspan="2">2</td>
+  <td colspan="2">mean</td>
+  <td colspan="2">0</td>
+  <td colspan="2">1</td>
+  <td colspan="2">2</td>
+  <td colspan="2">mean</td>
+</thead>
+<thead>
+  <td colspan="2"> TTA </td>
 
-### Resnet34UnetLocalization
-#### seed: 0
-test-time-augment: yes
-dice score: 0.834663
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
 
-test-time-augment: no
-dice score: 0.828468
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
 
-#### seed: 1
-test-time-augment: yes
-dice score: 0.835425
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
 
-test-time-augment: no
-dice score: 0.831219
+  <td colspan="2"> - </td>
 
-#### seed: 2
-test-time-augment: yes
-dice score: 0.839881
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
 
-test-time-augment: no
-dice score: 0.827673
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
 
-### SEResnext50UnetLocalization
-### seed: 0
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
 
-test_time_augment: yes 
-dice score: 0.843261
+  <td colspan="2"> - </td>
+</thead>
+<tr>
+  <td>Resnet34Unet</td>
+  <td>1</td>
+  <td>0.6555</td>
+  <td>0.6593</td>
 
-test_time_augment: no
-dice score: 0.836489
+  <td>0.6675</td>
+  <td>0.6742</td>
 
-### seed: 1
+  <td>0.6820</td>
+  <td>0.6837</td>
 
-test_time_augment: yes 
-dice score: 0.849304
+  <td colspan="2">0.6731</td>
+</tr>
+<tr>
+  <td>SeResnext50Unet</td>
+  <td>tuned</td>
+  <td>0.6943</td>
+  <td>0.6917</td>
 
-test_time_augment: no
-dice score: 0.841374
+  <td>0.6922</td>
+  <td>0.6952</td>
 
-### seed: 2
-test_time_augment: yes
-dice score: 0.843076
+  <td>0.7000</td>
+  <td>0.7030</td>
 
-test_time_augment: no
-dice score: 0.837324
+  <td colspan="2">0.7017</td>
+</tr>
+<tr>
+  <td>Dpn92Unet</td>
+  <td>tuned</td>
+  <td>0.6774</td>
+  <td>0.6825</td>
+
+  <td>0.6338</td>
+  <td>0.6313</td>
+
+  <td>0.6654</td>
+  <td>0.6720</td>
+
+  <td colspan="2">0.6644</td>
+</tr>
+<tr>
+  <td>SeNet154Unet</td>
+  <td>1</td>
+
+  <td>0.7246</td>
+  <td>0.7289</td>
+
+  <td>0.7107</td>
+  <td>0.7168</td>
+
+  <td>0.7221</td>
+  <td>0.7244</td>
+
+  <td colspan="2">0.7282</td>
+</tr>
+</table>
