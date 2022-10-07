@@ -17,7 +17,7 @@ class EfficientUnet(UnetBase, metaclass=abc.ABCMeta):
         encoder_filters = self.encoder_filters
         decoder_filters = self.decoder_filters
 
-        self.conv6 = self.DecoderModuleType(in_channels=decoder_filters[-1],
+        self.conv6 = self.DecoderModuleType(in_channels=encoder_filters[-1],
                                             injected_channels=encoder_filters[-2],
                                             out_channels=decoder_filters[-1])
         self.conv7 = self.DecoderModuleType(in_channels=decoder_filters[-1],
