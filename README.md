@@ -2,6 +2,18 @@
 
 1st place solution for "xView2: Assess Building Damage" challenge. https://www.xview2.org
 
+# Architecture
+
+## Model
+![Model](./res/model.png)
+
+## Unet
+![Unet](./res/unet-architecture.png)
+
+### Module
+![Decoder Modules](./res/decoder.png)
+
+
 # Introduction to Solution
 
 Solution developed using this environment:
