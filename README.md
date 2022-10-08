@@ -1,46 +1,44 @@
-# xview2 1st place solution
+# MetaDamageNet
+#### Using Deep Learning To Identify And Classify Damage In Aerial Imagery
 
-1st place solution for "xView2: Assess Building Damage" challenge. https://www.xview2.org
+Some ideas from this project is borrowed from [xview2 first place solution](https://github.com/vdurnov/xview2_1st_place_solution) 
+repository. I used that repository as a baseline.
+Thus, this code covers models and experiments of the mentioned repo and 
+contributes more research into the same problem of damage assessment in aerial imagery. 
+
+## Usage
+
+### environment setup
+
+```bash
+git clone https://github.com/nimaafshar/metadamagenet.git
+cd metadamagenet/
+pip install -r requirements.txt
+```
+
+### examples
+
+- [create segmentation masks from json labels](./create_masks.py)
+- [`Resnet34Unet` training and tuning](./example_resnet34.py)
+- [`SeResnext50Unet` training and tuning](./example_seresnext50.py)
+- [`Dpn92Unet` training and tuning](./example_dpn92.py)
+- [`SeNet154Unet` training and tuning](./example_dpn92.py)
 
 # Architecture
 
 ## Model
+
 ![Model](./res/model.png)
 
 ## Unet
+
 ![Unet](./res/unet-architecture.png)
 
 ### Module
+
 ![Decoder Modules](./res/decoder.png)
 
 
-# Introduction to Solution
-
-Solution developed using this environment:
-
-- Python 3 (based on Anaconda installation)
-- Pytorch 1.1.0+ and torchvision 0.3.0+
-- Nvidia apex https://github.com/NVIDIA/apex
-- https://github.com/skvark/opencv-python
-- https://github.com/aleju/imgaug
-
-Hardware:
-Current training batch size requires at least 2 GPUs with 12GB each. (Initially trained on Titan V GPUs). For 1 GPU
-batch size and learning rate should be found in practice and changed accordingly.
-
-"train", "tier3" and "test" folders from competition dataset should be placed to the current folder.
-
-Use "train.sh" script to train all the models. (~7 days on 2 GPUs).
-To generate predictions/submission file use "predict.sh".
-"evalution-docker-container" folder contains code for docker container used for final evalution on hold out set (CPU
-version).
-
-# Trained models
-
-Trained model weights available here: https://vdurnov.s3.amazonaws.com/xview2_1st_weights.zip
-
-(Please Note: the code was developed during the competition and designed to perform separate experiments on different
-models. So, published as is without additional refactoring to provide fully training reproducibility).
 
 # Data Cleaning Techniques
 
@@ -116,19 +114,19 @@ Predictions averaged with equal coefficients for both localization and classific
 
 Different thresholds for localization used for damaged and undamaged classes (lower for damaged).
 
+## Augmentations
+
+## Test-Time Augment
+
+## Unet Models
+
+## MetaLearning
+
 # Conclusion and Acknowledgments
 
 Thank you to xView2 team for creating and releasing this amazing dataset and opportunity to invent a solution that can
 help to response to the global natural disasters faster. I really hope it will be usefull and the idea will be improved
 further.
-
-# References
-
-- Competition and Dataset: https://www.xview2.org
-- UNet: https://arxiv.org/pdf/1505.04597.pdf
-- Pretrained models for Pytorch: https://github.com/Cadene/pretrained-models.pytorch
-- My 1st place solution from "SpaceNet 4: Off-Nadir Building Footprint Detection Challenge" (some ideas came from
-  here): https://github.com/SpaceNetChallenge/SpaceNet_Off_Nadir_Solutions/tree/master/cannab
 
 # Evaluation Results
 
@@ -234,4 +232,217 @@ on dataset `test` (used for validation):
 
   <td colspan="2">0.7282</td>
 </tr>
+<tr>
+  <td>EfficientUnetB0</td>
+  <td>00</td>
+  <td>0.75896</td>
+</tr>
+<tr>
+  <td>EfficientUnetWideSEB0</td>
+  <td>00</td>
+  <td>0.75884</td>
+</tr>
+<tr>
+  <td>EfficientUnetB0SCSE</td>
+  <td>00</td>
+  <td>0.75886</td>
+</tr>
+<tr>
+  <td>EfficientUnetB4</td>
+  <td>00</td>
+  <td>0.76844</td>
+</tr>
+<tr>
+  <td>EfficientUnetB4SCSE</td>
+  <td>00</td>
+  <td>0.76553</td>
+</tr>
 </table>
+
+on dataset `hold` (used for testing):
+<table>
+<thead>
+  <td colspan="1">model</td>
+  <td colspan="1">version</td>
+  <td colspan="8">Localization</td>
+  <td colspan="8">Classification</td>
+</thead>
+<thead>
+  <td colspan="2">seed</td>
+  <td colspan="2">0</td>
+  <td colspan="2">1</td>
+  <td colspan="2">2</td>
+  <td colspan="2">mean</td>
+  <td colspan="2">0</td>
+  <td colspan="2">1</td>
+  <td colspan="2">2</td>
+  <td colspan="2">mean</td>
+</thead>
+<thead>
+  <td colspan="2"> TTA </td>
+
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
+
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
+
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
+
+  <td colspan="2"> - </td>
+
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
+
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
+
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
+
+  <td colspan="2"> - </td>
+</thead>
+<tr>
+  <td>Resnet34Unet</td>
+  <td>1</td>
+
+  <td>0.6609</td>
+  <td>0.6667</td>
+
+  <td>0.6685</td>
+  <td>0.6779</td>
+
+  <td>0.6842</td>
+  <td>0.6882</td>
+
+  <td colspan="2">0.7085</td>
+</tr>
+<tr>
+  <td>SeResnext50Unet</td>
+  <td>tuned</td>
+
+  <td>0.6953</td>
+  <td>0.6964</td>
+
+  <td>0.7020</td>
+  <td>0.7115</td>
+
+  <td>0.7049</td>
+  <td>0.7095</td>
+
+  <td colspan="2">0.7093</td>
+</tr>
+<tr>
+  <td>Dpn92Unet</td>
+  <td>tuned</td>
+
+  <td>0.6812</td>
+  <td>0.6832</td>
+
+  <td>0.6294</td>
+  <td>0.6317</td>
+
+  <td>0.6688</td>
+  <td>0.6732</td>
+
+  <td colspan="2">0.6646</td>
+</tr>
+<tr>
+  <td>SeNet154Unet</td>
+  <td>1</td>
+
+  <td>0.7340</td>
+  <td>0.7394</td>
+
+  <td>0.7244</td>
+  <td>0.7306</td>
+
+  <td>0.7347</td>
+  <td>0.7392</td>
+
+  <td colspan="2">0.7402</td>
+</tr>
+</table>
+
+
+Unet Models:
+<table>
+  <tr>
+    <td rowspan="1" colspan="2">model</td>
+    <td rowspan="2" colspan="1">#params</td>
+    <td rowspan="2" colspan="1">Batch Normalization</td>
+    <td rowspan="2" colspan="1">DecoderType</td>
+  </tr>
+  <tr>
+    <td colspan="1">name</td>
+    <td colspan="1">backbone</td>
+  </tr>
+  <tr>
+    <td>Resnet34Unet</td>
+    <td>resnet_34</td>
+    <td>25,728,112</td>
+    <td> No </td>
+    <td>Normal</td>
+  </tr>
+  <tr>
+    <td>SeResnext50Unet</td>
+    <td>se_resnext50_32x4d</td>
+    <td>34,559,728</td>
+    <td>No</td>
+    <td>Normal</td>
+  </tr>
+  <tr>
+    <td>Dpn92Unet</td>
+    <td>dpn_92</td>
+    <td>47,408,735</td>
+    <td>No</td>
+    <td>SCSE - concat</td>
+  </tr>
+  <tr>
+    <td>SeNet154Unet</td>
+    <td>senet_154</td>
+    <td>124,874,656</td>
+    <td>No</td>
+    <td>Normal</td>
+  </tr>
+  <tr>
+    <td>EfficientUnetB0</td>
+    <td rowspan="2">efficientnet_b0</td>
+    <td>6,884,876</td>
+    <td>Yes</td>
+    <td>Normal</td>
+  </tr>
+  <tr>
+    <td>EfficientUnetB0SCSE</td>
+    <td>6,903,860</td>
+    <td>Yes</td>
+    <td>SCSE - no concat</td>
+  </tr>
+  <tr>
+    <td>EfficientUnetWideSEB0</td>
+    <td>efficientnet_widese_b0</td>
+    <td>10,020,176</td>
+    <td>Yes</td>
+    <td>Normal</td>
+  </tr>
+  <tr>
+    <td>EfficientUnetB4</td>
+    <td rowspan="2">efficientnet_b0</td>
+    <td>20,573,144</td>
+    <td>Yes</td>
+    <td>Normal</td>
+  </tr>
+  <tr>
+    <td>EfficientUnetB4SCSE</td>
+    <td>20,592,128</td>
+    <td>Yes</td>
+    <td>SCSE- no concat</td>
+  </tr>
+</table>
+
+## References
+- Competition and Dataset: [Xview2 org.](https://www.xview2.org)
+- [Xview2 First Place Solution](https://github.com/vdurnov/xview2_1st_place_solution)
+- [U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597)
+- [Cadene/Pretrained models for Pytorch](https://github.com/Cadene/pretrained-models.pytorch)
