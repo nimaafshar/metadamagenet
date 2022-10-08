@@ -27,9 +27,6 @@ class DamageLocalizationMetric(Dice):
         targets_binary = (targets > 0).long()
         super().update(logits, targets_binary)
 
-    def compute(self) -> torch.Tensor:
-        return self.dice.compute()
-
 
 class DamageClassificationMetric(Dice):
     def __init__(self, **kwargs: Any):
