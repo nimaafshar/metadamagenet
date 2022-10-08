@@ -20,6 +20,14 @@ train_dir = Path('/datasets/xview2/train')
 test_dir = Path('/datasets/xview2/test')
 
 
+class Resnet34Localizer(Localizer[Resnet34Unet]):
+    pass
+
+
+class Resnet34Classifier(Classifier[Resnet34Unet]):
+    pass
+
+
 def train_localizer(seed: int):
     set_random_seeds(545 + seed)
 
@@ -46,7 +54,7 @@ def train_localizer(seed: int):
         Random(ElasticTransform().only_on('img'), p=0.03)
     )
     Trainer(
-        model=Localizer[Resnet34Unet](Resnet34Unet(pretrained_backbone=True)),
+        model=Resnet34Localizer(Resnet34Unet(pretrained_backbone=True)),
         version='1',
         seed=seed,
         dataloader=DataLoader(
@@ -123,7 +131,7 @@ def train_classifier(seed: int):
         Random(Dilation().only_on('msk'), p=0.9)
     )
 
-    model = Classifier[Resnet34Unet](Localizer[Resnet34Unet].from_pretrained(version='1', seed=0).unet)
+    model = Resnet34Classifier(Resnet34Localizer.from_pretrained(version='1', seed=0).unet)
     opt = AdamW(model.parameters(), lr=0.0002, weight_decay=1e-6)
     lrs = MultiStepLR(opt,
                       milestones=[5, 11, 17, 23, 29, 33, 47, 50, 60, 70, 90, 110, 130, 150,
@@ -207,7 +215,7 @@ def tune_classifier(seed: int):
         Random(Dilation().only_on('msk'), p=0.9)
     )
 
-    model = Classifier[Resnet34Unet].from_checkpoint(version='1', seed=0)
+    model = Resnet34Classifier.from_checkpoint(version='1', seed=0)
     optimizer = AdamW(model.parameters(), lr=0.000008, weight_decay=1e-6)
     lr_scheduler = MultiStepLR(optimizer,
                                milestones=[1, 2, 3, 4, 5, 7, 9, 11, 17, 23, 29, 33, 47, 50, 60, 70,
