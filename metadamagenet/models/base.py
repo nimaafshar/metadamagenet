@@ -151,7 +151,7 @@ class Classifier(BaseModel, Generic[UnetType]):
         return self.res(dec10)
 
     def activate(cls, outputs: Tensor) -> Tensor:
-        torch.softmax(outputs, dim=1)
+        return torch.softmax(outputs, dim=1)
 
     def preprocess(self, data: Dict[str, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
         """
