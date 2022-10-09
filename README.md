@@ -188,6 +188,17 @@ on dataset `test` (used for validation):
   <td>0.6837</td>
 
   <td colspan="2">0.6731</td>
+
+  <td>0.3608</td>
+  <td>0.3203</td>
+
+  <td>0.4566</td>
+  <td>0.4603</td>
+
+  <td>0.4284</td>
+  <td>0.4310</td>
+
+  <td colspan="2">0.4164</td>
 </tr>
 <tr>
   <td>SeResnext50Unet</td>
@@ -202,6 +213,17 @@ on dataset `test` (used for validation):
   <td>0.7030</td>
 
   <td colspan="2">0.7017</td>
+
+  <td>0.6751</td>
+  <td>0.6712</td>
+
+  <td>0.6428</td>
+  <td>0.6419</td>
+
+  <td>0.6601</td>
+  <td>0.6703</td>
+
+  <td colspan="2">0.6687</td>
 </tr>
 <tr>
   <td>Dpn92Unet</td>
@@ -216,6 +238,17 @@ on dataset `test` (used for validation):
   <td>0.6720</td>
 
   <td colspan="2">0.6644</td>
+
+  <td>0.6747</td>
+  <td>0.6818</td>
+
+  <td>0.6292</td>
+  <td>0.6264</td>
+
+  <td>0.6397</td>
+  <td>0.6485</td>
+
+  <td colspan="2">0.6689</td>
 </tr>
 <tr>
   <td>SeNet154Unet</td>
@@ -231,6 +264,17 @@ on dataset `test` (used for validation):
   <td>0.7244</td>
 
   <td colspan="2">0.7282</td>
+
+  <td>0.6963</td>
+  <td>0.7012</td>
+
+  <td>0.6153</td>
+  <td>0.6418</td>
+
+  <td>0.6862</td>
+  <td>0.6838</td>
+
+  <td colspan="2">0.6982</td>
 </tr>
 <tr>
   <td>EfficientUnetB0</td>
