@@ -1,6 +1,4 @@
 - refactor:
-  - [ ] fix xview2 localization score bug (f1-loc)  
-  - [ ] check f1 score with old version.
   - [ ] add prediction to validator
   
 
