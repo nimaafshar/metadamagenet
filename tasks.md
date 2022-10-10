@@ -1,7 +1,4 @@
 - refactor:
-  - [ ] fix xview2 localization score bug (f1-loc)  
-  - [ ] check f1 score with old version.
-  - [ ] create multiple model validator
   - [ ] add prediction to validator
   
 
@@ -13,6 +10,7 @@
   
 - Improvements On Original Model
   - [ ] train and test localization models with post-disaster images too
+  - [ ] `SegFormer`
 
 - *MAML*:
   - [ ] read about MAML

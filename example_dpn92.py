@@ -21,6 +21,14 @@ train_dir = Path('/datasets/xview2/train')
 test_dir = Path('/datasets/xview2/test')
 
 
+class Dpn92Localizer(Localizer[Dpn92Unet]):
+    pass
+
+
+class Dpn92Classifier(Classifier[Dpn92Unet]):
+    pass
+
+
 def train_localizer(seed: int):
     set_random_seeds(111 + seed)
 
@@ -45,7 +53,7 @@ def train_localizer(seed: int):
         Random(ElasticTransform(), p=0.001)
     )
 
-    model = Localizer[Dpn92Unet](Dpn92Unet(pretrained_backbone=True))
+    model = Dpn92Localizer(Dpn92Unet(pretrained_backbone=True))
     optimizer = AdamW(model.parameters(), lr=0.00015, weight_decay=1e-6)
     lr_scheduler = MultiStepLR(optimizer,
                                milestones=[15, 29, 43, 53, 65, 80, 90, 100, 110, 130, 150, 170, 180,
@@ -114,7 +122,7 @@ def tune_localizer(seed: int):
         Random(ElasticTransform().only_on('img'), p=0.001)
     )
 
-    model = Localizer[Dpn92Unet].from_checkpoint(version='0', seed=0)
+    model = Dpn92Localizer.from_checkpoint(version='0', seed=0)
     optimizer = AdamW(model.parameters(), lr=0.00004, weight_decay=1e-6)
     lr_scheduler = MultiStepLR(optimizer,
                                milestones=[1, 2, 3, 4, 5, 7, 9, 11, 17, 23, 29, 33, 47, 50, 60, 70,
@@ -197,7 +205,7 @@ def train_classifier(seed: int):
         Random(Dilation().only_on('msk'), p=0.9)
     )
 
-    model = Classifier[Dpn92Unet](Localizer[Dpn92Unet].from_pretrained(version='0', seed=0).unet)
+    model = Dpn92Classifier(Dpn92Localizer.from_pretrained(version='0', seed=0).unet)
     optimizer = AdamW(model.parameters(), lr=0.0002, weight_decay=1e-6)
     lr_scheduler = MultiStepLR(optimizer,
                                milestones=[5, 11, 17, 23, 29, 33, 47, 50, 60, 70, 90, 110, 130, 150,
@@ -282,7 +290,7 @@ def tune_classifier(seed: int):
         Random(Dilation().only_on('msk'), p=0.9)
     )
 
-    model = Classifier[Dpn92Unet].from_pretrained(version='1', seed=0)
+    model = Dpn92Classifier.from_pretrained(version='1', seed=0)
     optimizer = AdamW(model.parameters(), lr=0.000008, weight_decay=1e-6)
     lr_scheduler = MultiStepLR(optimizer,
                                milestones=[1, 2, 3, 4, 5, 7, 9, 11, 17, 23, 29, 33, 47, 50, 60, 70,

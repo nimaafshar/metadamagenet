@@ -1,34 +1,44 @@
-# xview2 1st place solution
+# MetaDamageNet
+#### Using Deep Learning To Identify And Classify Damage In Aerial Imagery
 
-1st place solution for "xView2: Assess Building Damage" challenge. https://www.xview2.org
+Some ideas from this project is borrowed from [xview2 first place solution](https://github.com/vdurnov/xview2_1st_place_solution) 
+repository. I used that repository as a baseline.
+Thus, this code covers models and experiments of the mentioned repo and 
+contributes more research into the same problem of damage assessment in aerial imagery. 
 
-# Introduction to Solution
+## Usage
 
-Solution developed using this environment:
+### environment setup
 
-- Python 3 (based on Anaconda installation)
-- Pytorch 1.1.0+ and torchvision 0.3.0+
-- Nvidia apex https://github.com/NVIDIA/apex
-- https://github.com/skvark/opencv-python
-- https://github.com/aleju/imgaug
+```bash
+git clone https://github.com/nimaafshar/metadamagenet.git
+cd metadamagenet/
+pip install -r requirements.txt
+```
 
-Hardware:
-Current training batch size requires at least 2 GPUs with 12GB each. (Initially trained on Titan V GPUs). For 1 GPU
-batch size and learning rate should be found in practice and changed accordingly.
+### examples
 
-"train", "tier3" and "test" folders from competition dataset should be placed to the current folder.
+- [create segmentation masks from json labels](./create_masks.py)
+- [`Resnet34Unet` training and tuning](./example_resnet34.py)
+- [`SeResnext50Unet` training and tuning](./example_seresnext50.py)
+- [`Dpn92Unet` training and tuning](./example_dpn92.py)
+- [`SeNet154Unet` training and tuning](./example_dpn92.py)
 
-Use "train.sh" script to train all the models. (~7 days on 2 GPUs).
-To generate predictions/submission file use "predict.sh".
-"evalution-docker-container" folder contains code for docker container used for final evalution on hold out set (CPU
-version).
+# Architecture
 
-# Trained models
+## Model
 
-Trained model weights available here: https://vdurnov.s3.amazonaws.com/xview2_1st_weights.zip
+![Model](./res/model.png)
 
-(Please Note: the code was developed during the competition and designed to perform separate experiments on different
-models. So, published as is without additional refactoring to provide fully training reproducibility).
+## Unet
+
+![Unet](./res/unet-architecture.png)
+
+### Module
+
+![Decoder Modules](./res/decoder.png)
+
+
 
 # Data Cleaning Techniques
 
@@ -104,69 +114,379 @@ Predictions averaged with equal coefficients for both localization and classific
 
 Different thresholds for localization used for damaged and undamaged classes (lower for damaged).
 
+## Augmentations
+
+## Test-Time Augment
+
+## Unet Models
+
+## MetaLearning
+
 # Conclusion and Acknowledgments
 
 Thank you to xView2 team for creating and releasing this amazing dataset and opportunity to invent a solution that can
 help to response to the global natural disasters faster. I really hope it will be usefull and the idea will be improved
 further.
 
-# References
+# Evaluation Results
 
-- Competition and Dataset: https://www.xview2.org
-- UNet: https://arxiv.org/pdf/1505.04597.pdf
-- Pretrained models for Pytorch: https://github.com/Cadene/pretrained-models.pytorch
-- My 1st place solution from "SpaceNet 4: Off-Nadir Building Footprint Detection Challenge" (some ideas came from
-  here): https://github.com/SpaceNetChallenge/SpaceNet_Off_Nadir_Solutions/tree/master/cannab
+on dataset `test` (used for validation):
 
-# Results
+<table>
+<thead>
+  <td colspan="1">model</td>
+  <td colspan="1">version</td>
+  <td colspan="8">Localization</td>
+  <td colspan="8">Classification</td>
+</thead>
+<thead>
+  <td colspan="2">seed</td>
+  <td colspan="2">0</td>
+  <td colspan="2">1</td>
+  <td colspan="2">2</td>
+  <td colspan="2">mean</td>
+  <td colspan="2">0</td>
+  <td colspan="2">1</td>
+  <td colspan="2">2</td>
+  <td colspan="2">mean</td>
+</thead>
+<thead>
+  <td colspan="2"> TTA </td>
 
-## Localization
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
 
-- test set :`test`
-- only pre-disaster images
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
 
-### Resnet34UnetLocalization
-#### seed: 0
-test-time-augment: yes
-dice score: 0.834663
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
 
-test-time-augment: no
-dice score: 0.828468
+  <td colspan="2"> - </td>
 
-#### seed: 1
-test-time-augment: yes
-dice score: 0.835425
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
 
-test-time-augment: no
-dice score: 0.831219
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
 
-#### seed: 2
-test-time-augment: yes
-dice score: 0.839881
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
 
-test-time-augment: no
-dice score: 0.827673
+  <td colspan="2"> - </td>
+</thead>
+<tr>
+  <td>Resnet34Unet</td>
+  <td>1</td>
+  <td>0.6555</td>
+  <td>0.6593</td>
 
-### SEResnext50UnetLocalization
-### seed: 0
+  <td>0.6675</td>
+  <td>0.6742</td>
 
-test_time_augment: yes 
-dice score: 0.843261
+  <td>0.6820</td>
+  <td>0.6837</td>
 
-test_time_augment: no
-dice score: 0.836489
+  <td colspan="2">0.6731</td>
 
-### seed: 1
+  <td>0.3608</td>
+  <td>0.3203</td>
 
-test_time_augment: yes 
-dice score: 0.849304
+  <td>0.4566</td>
+  <td>0.4603</td>
 
-test_time_augment: no
-dice score: 0.841374
+  <td>0.4284</td>
+  <td>0.4310</td>
 
-### seed: 2
-test_time_augment: yes
-dice score: 0.843076
+  <td colspan="2">0.4164</td>
+</tr>
+<tr>
+  <td>SeResnext50Unet</td>
+  <td>tuned</td>
+  <td>0.6943</td>
+  <td>0.6917</td>
 
-test_time_augment: no
-dice score: 0.837324
+  <td>0.6922</td>
+  <td>0.6952</td>
+
+  <td>0.7000</td>
+  <td>0.7030</td>
+
+  <td colspan="2">0.7017</td>
+
+  <td>0.6751</td>
+  <td>0.6712</td>
+
+  <td>0.6428</td>
+  <td>0.6419</td>
+
+  <td>0.6601</td>
+  <td>0.6703</td>
+
+  <td colspan="2">0.6687</td>
+</tr>
+<tr>
+  <td>Dpn92Unet</td>
+  <td>tuned</td>
+  <td>0.6774</td>
+  <td>0.6825</td>
+
+  <td>0.6338</td>
+  <td>0.6313</td>
+
+  <td>0.6654</td>
+  <td>0.6720</td>
+
+  <td colspan="2">0.6644</td>
+
+  <td>0.6747</td>
+  <td>0.6818</td>
+
+  <td>0.6292</td>
+  <td>0.6264</td>
+
+  <td>0.6397</td>
+  <td>0.6485</td>
+
+  <td colspan="2">0.6689</td>
+</tr>
+<tr>
+  <td>SeNet154Unet</td>
+  <td>1</td>
+
+  <td>0.7246</td>
+  <td>0.7289</td>
+
+  <td>0.7107</td>
+  <td>0.7168</td>
+
+  <td>0.7221</td>
+  <td>0.7244</td>
+
+  <td colspan="2">0.7282</td>
+
+  <td>0.6963</td>
+  <td>0.7012</td>
+
+  <td>0.6153</td>
+  <td>0.6418</td>
+
+  <td>0.6862</td>
+  <td>0.6838</td>
+
+  <td colspan="2">0.6982</td>
+</tr>
+<tr>
+  <td>EfficientUnetB0</td>
+  <td>00</td>
+  <td>0.75896</td>
+</tr>
+<tr>
+  <td>EfficientUnetWideSEB0</td>
+  <td>00</td>
+  <td>0.75884</td>
+</tr>
+<tr>
+  <td>EfficientUnetB0SCSE</td>
+  <td>00</td>
+  <td>0.75886</td>
+</tr>
+<tr>
+  <td>EfficientUnetB4</td>
+  <td>00</td>
+  <td>0.76844</td>
+</tr>
+<tr>
+  <td>EfficientUnetB4SCSE</td>
+  <td>00</td>
+  <td>0.76553</td>
+</tr>
+</table>
+
+on dataset `hold` (used for testing):
+<table>
+<thead>
+  <td colspan="1">model</td>
+  <td colspan="1">version</td>
+  <td colspan="8">Localization</td>
+  <td colspan="8">Classification</td>
+</thead>
+<thead>
+  <td colspan="2">seed</td>
+  <td colspan="2">0</td>
+  <td colspan="2">1</td>
+  <td colspan="2">2</td>
+  <td colspan="2">mean</td>
+  <td colspan="2">0</td>
+  <td colspan="2">1</td>
+  <td colspan="2">2</td>
+  <td colspan="2">mean</td>
+</thead>
+<thead>
+  <td colspan="2"> TTA </td>
+
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
+
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
+
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
+
+  <td colspan="2"> - </td>
+
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
+
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
+
+  <td colspan="1"> - </td>
+  <td colspan="1"> + </td>
+
+  <td colspan="2"> - </td>
+</thead>
+<tr>
+  <td>Resnet34Unet</td>
+  <td>1</td>
+
+  <td>0.6609</td>
+  <td>0.6667</td>
+
+  <td>0.6685</td>
+  <td>0.6779</td>
+
+  <td>0.6842</td>
+  <td>0.6882</td>
+
+  <td colspan="2">0.7085</td>
+</tr>
+<tr>
+  <td>SeResnext50Unet</td>
+  <td>tuned</td>
+
+  <td>0.6953</td>
+  <td>0.6964</td>
+
+  <td>0.7020</td>
+  <td>0.7115</td>
+
+  <td>0.7049</td>
+  <td>0.7095</td>
+
+  <td colspan="2">0.7093</td>
+</tr>
+<tr>
+  <td>Dpn92Unet</td>
+  <td>tuned</td>
+
+  <td>0.6812</td>
+  <td>0.6832</td>
+
+  <td>0.6294</td>
+  <td>0.6317</td>
+
+  <td>0.6688</td>
+  <td>0.6732</td>
+
+  <td colspan="2">0.6646</td>
+</tr>
+<tr>
+  <td>SeNet154Unet</td>
+  <td>1</td>
+
+  <td>0.7340</td>
+  <td>0.7394</td>
+
+  <td>0.7244</td>
+  <td>0.7306</td>
+
+  <td>0.7347</td>
+  <td>0.7392</td>
+
+  <td colspan="2">0.7402</td>
+</tr>
+</table>
+
+
+Unet Models:
+<table>
+  <tr>
+    <td rowspan="1" colspan="2">model</td>
+    <td rowspan="2" colspan="1">#params</td>
+    <td rowspan="2" colspan="1">Batch Normalization</td>
+    <td rowspan="2" colspan="1">DecoderType</td>
+  </tr>
+  <tr>
+    <td colspan="1">name</td>
+    <td colspan="1">backbone</td>
+  </tr>
+  <tr>
+    <td>Resnet34Unet</td>
+    <td>resnet_34</td>
+    <td>25,728,112</td>
+    <td> No </td>
+    <td>Normal</td>
+  </tr>
+  <tr>
+    <td>SeResnext50Unet</td>
+    <td>se_resnext50_32x4d</td>
+    <td>34,559,728</td>
+    <td>No</td>
+    <td>Normal</td>
+  </tr>
+  <tr>
+    <td>Dpn92Unet</td>
+    <td>dpn_92</td>
+    <td>47,408,735</td>
+    <td>No</td>
+    <td>SCSE - concat</td>
+  </tr>
+  <tr>
+    <td>SeNet154Unet</td>
+    <td>senet_154</td>
+    <td>124,874,656</td>
+    <td>No</td>
+    <td>Normal</td>
+  </tr>
+  <tr>
+    <td>EfficientUnetB0</td>
+    <td rowspan="2">efficientnet_b0</td>
+    <td>6,884,876</td>
+    <td>Yes</td>
+    <td>Normal</td>
+  </tr>
+  <tr>
+    <td>EfficientUnetB0SCSE</td>
+    <td>6,903,860</td>
+    <td>Yes</td>
+    <td>SCSE - no concat</td>
+  </tr>
+  <tr>
+    <td>EfficientUnetWideSEB0</td>
+    <td>efficientnet_widese_b0</td>
+    <td>10,020,176</td>
+    <td>Yes</td>
+    <td>Normal</td>
+  </tr>
+  <tr>
+    <td>EfficientUnetB4</td>
+    <td rowspan="2">efficientnet_b0</td>
+    <td>20,573,144</td>
+    <td>Yes</td>
+    <td>Normal</td>
+  </tr>
+  <tr>
+    <td>EfficientUnetB4SCSE</td>
+    <td>20,592,128</td>
+    <td>Yes</td>
+    <td>SCSE- no concat</td>
+  </tr>
+</table>
+
+## References
+- Competition and Dataset: [Xview2 org.](https://www.xview2.org)
+- [Xview2 First Place Solution](https://github.com/vdurnov/xview2_1st_place_solution)
+- [U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597)
+- [Cadene/Pretrained models for Pytorch](https://github.com/Cadene/pretrained-models.pytorch)

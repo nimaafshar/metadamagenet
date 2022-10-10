@@ -91,10 +91,10 @@ class Validator(Runner):
                     assert isinstance(self._model, ModelAggregator)
                     activated_outputs = self._model(inputs)
 
-                current_score: torch.Tensor = self._score(activated_outputs, targets)
+                self._score.update(activated_outputs, targets)
                 iterator.set_postfix({
                     "loss": loss.item() if self._loss is not None else "--",
-                    "score": current_score.item()
+                    "score": self._score.compute().item()
                 })
 
             log(f"Validation Results: loss:{loss_mean.compute().item() if self._loss is not None else '--'} "

@@ -87,75 +87,67 @@ models based on EfficientNetB0
 """
 
 
+def efficientnet_b0(self, pretrained: bool) -> nn.Module:
+    return torch.hub.load(repo_or_dir='NVIDIA/DeepLearningExamples:torchhub',
+                          model='nvidia_efficientnet_b0',
+                          pretrained=pretrained,
+                          trust_repo=True)
+
+
+def efficientnet_widese_b0(self, pretrained: bool) -> nn.Module:
+    return torch.hub.load(repo_or_dir='NVIDIA/DeepLearningExamples:torchhub',
+                          model='nvidia_efficientnet_widese_b0',
+                          pretrained=pretrained,
+                          trust_repo=True)
+
+
+def efficientnet_b4(self, pretrained: bool):
+    return torch.hub.load(repo_or_dir='NVIDIA/DeepLearningExamples:torchhub',
+                          model='nvidia_efficientnet_b4',
+                          pretrained=pretrained,
+                          trust_repo=True)
+
+
 class EfficientUnetB0(EfficientUnet):
+    get_backbone = efficientnet_b0
     encoder_filters = [16, 24, 40, 112, 320]
     decoder_filters = [48, 64, 96, 160, 320]  # same as Resnet34Unet
 
-    def get_backbone(self, pretrained: bool) -> nn.Module:
-        return torch.hub.load(repo_or_dir='NVIDIA/DeepLearningExamples:torchhub',
-                              model='nvidia_efficientnet_b0',
-                              pretrained=pretrained,
-                              trust_repo=True)
+
+class EfficientUnetB0Big(EfficientUnet):
+    get_backbone = efficientnet_b0
+    encoder_filters = [16, 24, 40, 112, 320]
+    decoder_filters = [64, 96, 128, 256, 512]
 
 
 class EfficientUnetB0SCSE(EfficientUnetSCSE):
+    get_backbone = efficientnet_b0
     encoder_filters = [16, 24, 40, 112, 320]
     decoder_filters = [48, 64, 96, 160, 320]  # same as Resnet34Unet
-
-    def get_backbone(self, pretrained: bool) -> nn.Module:
-        return torch.hub.load(repo_or_dir='NVIDIA/DeepLearningExamples:torchhub',
-                              model='nvidia_efficientnet_b0',
-                              pretrained=pretrained,
-                              trust_repo=True)
 
 
 class EfficientUnetWideSEB0(EfficientUnet):
     """
     EfficientUnet with Wide SE modules in encoder
     """
+    get_backbone = efficientnet_widese_b0
     encoder_filters = [16, 24, 40, 112, 320]
     decoder_filters = [48, 64, 96, 160, 320]  # same as Resnet34Unet
 
-    def get_backbone(self, pretrained: bool) -> nn.Module:
-        return torch.hub.load(repo_or_dir='NVIDIA/DeepLearningExamples:torchhub',
-                              model='nvidia_efficientnet_widese_b0',
-                              pretrained=pretrained,
-                              trust_repo=True)
-
-
-"""
-models based on EfficientUnetB4
-"""
-
 
 class EfficientUnetB4(EfficientUnet):
+    get_backbone = efficientnet_b4
     encoder_filters = [24, 32, 56, 160, 448]
     decoder_filters = [48, 64, 96, 160, 320]  # same as Resnet34Unet
 
-    def get_backbone(self, pretrained: bool):
-        return torch.hub.load(repo_or_dir='NVIDIA/DeepLearningExamples:torchhub',
-                              model='nvidia_efficientnet_b4',
-                              pretrained=pretrained,
-                              trust_repo=True)
+
+class EfficientUnetB4Big(EfficientUnet):
+    get_backbone = efficientnet_b4
+    encoder_filters = [24, 32, 56, 160, 448]
+    decoder_filters = [64, 96, 128, 256, 512]  # same as Resnet34Unet
 
 
 class EfficientUnetB4SCSE(EfficientUnetSCSE):
+    get_backbone = efficientnet_b4
     encoder_filters = [24, 32, 56, 160, 448]
     decoder_filters = [48, 64, 96, 160, 320]  # same as Resnet34Unet
-
-    def get_backbone(self, pretrained: bool):
-        return torch.hub.load(repo_or_dir='NVIDIA/DeepLearningExamples:torchhub',
-                              model='nvidia_efficientnet_b4',
-                              pretrained=pretrained,
-                              trust_repo=True)
-
-
-class EfficientUnetWideSEB4(EfficientUnet):
-    encoder_filters = [24, 32, 56, 160, 448]
-    decoder_filters = [48, 64, 96, 160, 320]  # same as Resnet34Unet
-
-    def get_backbone(self, pretrained: bool):
-        return torch.hub.load(repo_or_dir='NVIDIA/DeepLearningExamples:torchhub',
-                              model='nvidia_efficientnet_widese_b4',
-                              pretrained=pretrained,
-                              trust_repo=True)
