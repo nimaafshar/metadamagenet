@@ -49,4 +49,5 @@ class DamageClassificationMetric(Dice):
         super().update(preds_filtered - 1, targets_filtered - 1)
 
     def compute(self) -> torch.Tensor:
-        return ((1 / super().compute()).mean(dim=0)) ** (-1)
+        class_scores = super().compute()
+        return ((1 / class_scores[~class_scores.isnan()]).mean(dim=0)) ** (-1)
