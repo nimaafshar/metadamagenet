@@ -52,7 +52,7 @@ def dice_loss_with_logits(logits: torch.Tensor, true: torch.Tensor, class_weight
     """
     n, num_classes, h, w = logits.size()
     assert true.max() < num_classes and true.min() >= 0, "true values should be in 0,1,...,(num_classes-1)"
-    assert class_weights.ndim() == 1 and class_weights.size(0) == num_classes, \
+    assert class_weights.ndim == 1 and class_weights.size(0) == num_classes, \
         "class_weights should be of size (num_classes,)"
     true_1_hot = torch.eye(num_classes)[true.squeeze(1)]
     true_1_hot = true_1_hot.permute(0, 3, 1, 2).float()
