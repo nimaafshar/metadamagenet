@@ -38,5 +38,4 @@ class DamageClassificationMetric(Dice):
 
     def compute(self) -> torch.Tensor:
         class_scores = super().compute()
-        print(class_scores)
-        return ((1 / class_scores).mean(dim=0)) ** (-1)
+        return 1 / ((1 / class_scores[1:]).mean())
