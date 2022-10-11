@@ -33,7 +33,7 @@ class DamageClassificationMetric(Dice):
         super().__init__(multiclass=True,
                          num_classes=4,
                          threshold=.5,
-                         zero_division=0,
+                         zero_division=1,
                          average=None,
                          **kwargs)
 
