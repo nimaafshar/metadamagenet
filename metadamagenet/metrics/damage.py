@@ -30,24 +30,13 @@ class DamageLocalizationMetric(Dice):
 
 class DamageClassificationMetric(Dice):
     def __init__(self, **kwargs: Any):
-        super().__init__(multiclass=True,
-                         num_classes=4,
-                         threshold=.5,
-                         zero_division=1,
+        super().__init__(num_classes=5,
+                         ignore_index=0,
+                         zero_division=1.,
                          average=None,
                          **kwargs)
 
-    def update(self, preds: torch.Tensor, targets: torch.Tensor) -> None:
-        """
-        :param preds: torch.Tensor of shape (N,C,H,W)
-        :param targets: torch.Tensor of shape (N,H,W)
-        """
-        preds = preds.argmax(dim=1, keepdim=True)
-        assert preds.size() == targets.size()
-        preds_filtered = preds[(preds > 0) & (targets > 0)]
-        targets_filtered = targets[(preds > 0) & (targets > 0)]
-        super().update(preds_filtered - 1, targets_filtered - 1)
-
     def compute(self) -> torch.Tensor:
         class_scores = super().compute()
-        return ((1 / class_scores[~class_scores.isnan()]).mean(dim=0)) ** (-1)
+        print(class_scores)
+        return ((1 / class_scores).mean(dim=0)) ** (-1)
