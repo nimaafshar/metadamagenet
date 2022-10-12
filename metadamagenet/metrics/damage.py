@@ -7,23 +7,18 @@ from torchmetrics import Dice
 class DamageLocalizationMetric(Dice):
 
     def __init__(self, **kwargs: Any):
-        super().__init__(multiclass=True,
-                         num_classes=2,
-                         threshold=0.5,
-                         zero_division=0,
-                         ignore_index=0,
-                         average='macro',
-                         mdmc_average='global',
+        super().__init__(multiclass=False,
+                         average='micro',
+                         mdmc_reduce='global',
                          **kwargs)
 
     def update(self, preds: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         """
-        :param preds: torch.Tensor of shape (N,5,H,W)
+        :param preds: torch.Tensor of shape (N,C,H,W)
         :param targets: torch.Tensor of shape (N,H,W)
         """
-        logits_zero = preds[:, 0:1, ...]
-        logits_nonzero = 1 - logits_zero
-        logits = torch.cat((logits_zero, logits_nonzero), dim=1)
+        # convert to float so it can be detected as multi-label binary
+        logits = (torch.argmax(preds, dim=1) > 0).float()
         targets_binary = (targets > 0).long()
         super().update(logits, targets_binary)
 
@@ -36,6 +31,7 @@ class DamageClassificationMetric(Dice):
                          average=None,
                          **kwargs)
 
+    # eps for numerical stability
     def compute(self) -> torch.Tensor:
         class_scores = super().compute()
         return 1 / ((1 / class_scores[1:]).mean())
