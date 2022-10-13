@@ -15,4 +15,6 @@ class SegmentationCCE(nn.Module):
         :param targets: torch.Tensor of type int and shape (N,1,H,W) containing values [0,C)
         :return:
         """
+        print("outputs:", outputs.shape)
+        print("targets:", targets.shape)
         return self.ce(outputs, targets.squeeze(dim=1))
