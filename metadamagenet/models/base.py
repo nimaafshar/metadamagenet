@@ -107,9 +107,9 @@ class Localizer(BaseModel, Generic[UnetType]):
         """
         :param data: {'img': torch.Tensor of shape (N,3,H,H),
                       'msk': torch.Tensor of shape (N,1,H,H)}
-        :return: (torch.FloatTensor of shape (N,3,H,H), torch.LongTensor of shape (N,1,H,W)
+        :return: (torch.FloatTensor of shape (N,3,H,H), torch.LongTensor of shape (N,H,W)
         """
-        return (data['img'] * 2 - 1), data['msk'].long()
+        return (data['img'] * 2 - 1), data['msk'].long().squeeze(1)
 
 
 class Classifier(BaseModel, Generic[UnetType]):
@@ -158,7 +158,7 @@ class Classifier(BaseModel, Generic[UnetType]):
         :param data: {'img_pre': torch.Tensor of shape (N,3,H,H),
                       'img_post': torch.Tensor of shape (N,3,H,H),
                       'msk':torch.Tensor of shape (N,1,H,H)}
-        :return: (torch.FloatTensor of shape (N,6,H,H), torch.LongTensor of shape (N,1,H,W)
+        :return: (torch.FloatTensor of shape (N,6,H,H), torch.LongTensor of shape (N,H,W)
         """
         return (torch.cat((data['img_pre'] * 2 - 1, data['img_post'] * 2 - 1), dim=1),
-                (data['msk'] * 4).long())
+                (data['msk'] * 4).long().squeeze(1))
