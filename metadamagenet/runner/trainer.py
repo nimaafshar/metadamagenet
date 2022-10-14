@@ -127,7 +127,7 @@ class Trainer(Runner):
             data_batch = {k: v.to(device=self._device, non_blocking=True) for k, v in data_batch.items()}
 
             inputs: torch.Tensor  # (B,5,H,W) or (B,1,H,W) with float values
-            targets: torch.Tensor  # (B,H,W) with long values (0-4) or (0 -1)
+            targets: torch.Tensor  # (B,H,W) with long values (0-4) or (0-1)
             with torch.no_grad():
                 if self._transform is not None:
                     data_batch = self._transform(data_batch)
@@ -141,12 +141,6 @@ class Trainer(Runner):
                 activated_outputs: torch.Tensor = self._model.activate(outputs)
                 current_score: torch.Tensor = self._score(activated_outputs, targets)
                 loss_mean.update(loss)
-
-            print({"inputs": inputs.shape,
-                   "targets": targets.shape,
-                   "targets_unique": targets.unique(),
-                   "outputs": outputs.shape,
-                   "score": torchmetrics.Dice.compute(self._score)})
 
             iterator.set_postfix({
                 "loss": loss.item(),
