@@ -3,6 +3,7 @@ from typing import Optional, Dict
 from contextlib import nullcontext
 import gc
 
+import torchmetrics
 from tqdm.autonotebook import tqdm
 import torch
 from torch import nn
@@ -140,6 +141,12 @@ class Trainer(Runner):
                 activated_outputs: torch.Tensor = self._model.activate(outputs)
                 current_score: torch.Tensor = self._score(activated_outputs, targets)
                 loss_mean.update(loss)
+
+            print({"inputs": inputs.shape,
+                   "targets": targets.shape,
+                   "targets_unique": targets.unique(),
+                   "outputs": outputs.shape,
+                   "score": torchmetrics.Dice.compute(self._score)})
 
             iterator.set_postfix({
                 "loss": loss.item(),
