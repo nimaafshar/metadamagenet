@@ -1,84 +1,88 @@
-from typing import List, Optional
+from typing import Optional, List, Literal
 
 import torch
 from torch import nn
 from torch.nn import functional as tf
 
 
-def binary_dice_with_logits(logits: torch.Tensor, true: torch.Tensor, eps: float = 1e-8) -> torch.Tensor:
-    """
-    micro average soft dice score
-    sigmoid activation function is applied
-    loss is mean score for class 0 and 1
-
-    :param logits: (N,1,H,W) float tensor
-    :param true: (N,1,H,W) with values 0 and 1
-    :param eps: epsilon for numerical stability
-    :return: loss, torch.Tensor
-    """
-    assert logits.shape[1] == 1, "num_classes (logits.shape[1]) should be 1"
-    true_1_hot = torch.eye(2)[true.squeeze(1)]
-    true_1_hot = true_1_hot.permute(0, 3, 1, 2).float()
-    true_1_hot_f = true_1_hot[:, 0:1, :, :]
-    true_1_hot_s = true_1_hot[:, 1:2, :, :]
-    true_1_hot = torch.cat([true_1_hot_s, true_1_hot_f], dim=1)
-    pos_prob = torch.sigmoid(logits)
-    neg_prob = 1 - pos_prob
-    probas = torch.cat([pos_prob, neg_prob], dim=1)
-    true_1_hot = true_1_hot.type(logits.type())
-    dims = (0,) + tuple(range(2, true.ndimension()))
-    intersection = torch.sum(probas * true_1_hot, dims)
-    cardinality = torch.sum(probas + true_1_hot, dims)
-    dice_score = (2. * intersection / (cardinality + eps)).mean()
-    return 1 - dice_score
-
-
-class BinaryDiceLossWithLogits(nn.Module):
-    def __init__(self, eps: float = 1e-8):
+class BinaryDiceLoss(nn.Module):
+    def __init__(self, smooth: float = 1e-8, validate_inputs: bool = False):
         super().__init__()
-        self._eps: float = eps
+        self._smooth: float = smooth
+        self._validate_inputs: bool = validate_inputs
 
-    def forward(self, logits: torch.Tensor, outputs: torch.Tensor):
-        return binary_dice_with_logits(logits, outputs, self._eps)
+    def _validate(self, logits: torch.Tensor, targets: torch.Tensor):
+        n, c, h, w = logits.size()
+        assert c == 1, f"logits should have be of the shape (N,1,H,W). got {logits.shape}"
+        n2, h2, w2 = targets.size()
+        assert n == n2 and h == h2 and w == w2, \
+            f"logits.shape is {logits.shape}, expected targets to have the shape of ({n},{h},{w}). got {targets.shape}"
+        assert torch.all((targets == 1) | (targets == 0)), "targets is not binary"
 
-
-def dice_loss_with_logits(logits: torch.Tensor, true: torch.Tensor, class_weights: torch.Tensor, eps=1e-8):
-    """
-    :param logits: torch.Tensor of size (N,num_classes,H,W) with type float
-    :param true: torch.Tensor of size (N,1,H,W) with type long with values 0,...,C-1
-    :param class_weights: torch.Tensor of size(num_classes,)
-    :param eps: epsilon for numerical stability
-    :return: loss, torch.Tensor
-    """
-    n, num_classes, h, w = logits.size()
-    assert true.max() < num_classes and true.min() >= 0, "true values should be in 0,1,...,(num_classes-1)"
-    assert class_weights.ndim == 1 and class_weights.size(0) == num_classes, \
-        "class_weights should be of size (num_classes,)"
-    true_1_hot = torch.eye(num_classes)[true.squeeze(1)]
-    true_1_hot = true_1_hot.permute(0, 3, 1, 2).float()
-    probas = tf.softmax(logits, dim=1)
-    true_1_hot = true_1_hot.type(logits.type())
-    dims = (0,) + tuple(range(2, true.ndimension()))
-    intersection = torch.sum(probas * true_1_hot, dims)
-    cardinality = torch.sum(probas + true_1_hot, dims)
-    dice_score = (2. * intersection / (cardinality + eps))
-    loss = 1 - dice_score
-    return torch.dot(loss, class_weights)
+    def forward(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        """
+        logits: float, (N,1,H,W),
+        targets: binary, (N,H,W)
+        """
+        if self._validate_inputs:
+            self._validate(logits, targets)
+        logits_cont = torch.sigmoid(logits.to(memory_format=torch.contiguous_format))
+        targets_cont = targets.unsqueeze(1).to(memory_format=torch.contiguous_format).to(dtype=logits_cont.dtype)
+        intersection = torch.sum(logits_cont * targets_cont)
+        union = torch.sum(logits_cont) + torch.sum(targets_cont)
+        dice_coefficient = (2 * intersection + self._smooth) / (union + self._smooth)
+        return 1 - dice_coefficient
 
 
 class DiceLoss(nn.Module):
-    def __init__(self, num_classes: int, class_weights: Optional[List[float]], eps: float = 1e-8):
+    def __init__(self, num_classes: int,
+                 class_weights: Optional[List[float]] = None,
+                 activation: Literal['softmax', 'sigmoid'] = 'sigmoid',
+                 smooth: float = 1e-8,
+                 validate_inputs: bool = False):
         super().__init__()
         assert num_classes > 1, "Non Binary Dice Loss is used with num_classes>0"
         self._num_classes: int = num_classes
+
         if class_weights is None:
-            self._class_weights: torch.Tensor = torch.ones(num_classes)
+            self.register_buffer('class_weights', torch.ones(num_classes, dtype=torch.float))
         else:
             assert len(class_weights) == num_classes, "len(class_weights) should be equal to num_classes"
-            self._class_weights: torch.Tensor = torch.tensor(class_weights, dtype=torch.float)
-        self._eps: float = eps
+            self.register_buffer('class_weights', torch.tensor(class_weights, dtype=torch.float))
 
-    def forward(self, logits: torch.Tensor, outputs: torch.Tensor):
-        return dice_loss_with_logits(logits, outputs,
-                                     class_weights=self._class_weights.to(device=logits.device),
-                                     eps=self._eps)
+        self._smooth: float = smooth
+        self._validate_inputs: bool = validate_inputs
+        if activation not in ('softmax', 'sigmoid'):
+            raise ValueError(f"unsupported activation {activation}")
+        self._activation: Literal['softmax', 'sigmoid'] = activation
+
+    def _validate(self, logits: torch.Tensor, targets: torch.Tensor):
+        n, c, h, w = logits.size()
+        n2, h2, w2 = targets.size()
+        assert c == self._num_classes, "logits.size(1) should be equal to num_classes"
+        assert n == n2 and h == h2 and w == w2, \
+            f"logits.shape is {logits.shape}, expected targets to have the shape of ({n},{h},{w}). got {targets.shape}"
+        assert targets.dtype == torch.long \
+               and targets.min() >= 0 \
+               and targets.max() < c, "long is not long tensor with values (0 - C-1)"
+
+    def forward(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        """
+        logits: float, (N,C,H,W),
+        targets: long, (N,H,W) with values (0 - C-1)
+        """
+        if self._validate_inputs:
+            self._validate(logits, targets)
+        logits_cont = logits.to(memory_format=torch.contiguous_format)
+        if self._activation == 'sigmoid':
+            logits_cont = torch.sigmoid(logits_cont)
+        elif self._activation == 'softmax':
+            logits_cont = torch.softmax(logits_cont, dim=1)
+
+        targets_onehot = tf.one_hot(targets, num_classes=self._num_classes).permute(0, 3, 1, 2)
+        targets_cont = targets_onehot.to(memory_format=torch.contiguous_format).to(dtype=logits_cont.dtype)
+        dims = (0, 2, 3)
+        intersection = torch.sum(logits_cont * targets_cont, dim=dims)
+        union = torch.sum(logits_cont, dim=dims) + torch.sum(targets_cont, dim=dims)
+        dice_coefficients = (2 * intersection + self._smooth) / (union + self._smooth)
+        return torch.dot((1 - dice_coefficients), self.class_weights.to(device=dice_coefficients.device))
