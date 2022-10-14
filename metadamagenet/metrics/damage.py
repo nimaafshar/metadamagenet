@@ -15,11 +15,11 @@ class DamageLocalizationMetric(Dice):
     def update(self, preds: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         """
         :param preds: torch.Tensor of shape (N,C,H,W)
-        :param targets: torch.Tensor of shape (N,1,H,W)
+        :param targets: torch.Tensor of shape (N,H,W)
         """
         # convert to float, so it can be detected as multi-label binary
         logits = (torch.argmax(preds, dim=1) > 0).float()
-        targets_binary = (targets.squeeze(1) > 0).long()
+        targets_binary = (targets > 0).long()
         super().update(logits, targets_binary)
 
 
@@ -36,16 +36,16 @@ class DamageClassificationMetric(Dice):
     def update(self, preds: torch.Tensor, targets: torch.Tensor) -> None:
         """
         :param preds: torch.Tensor of shape (N,5,H,W)
-        :param targets: torch.Tensor of shape (N,1,H,W)
+        :param targets: torch.Tensor of shape (N,H,W)
         """
-        targets = targets.squeeze(1)
         preds = preds.argmax(dim=1)
         preds = torch.where(preds != 0, preds, 1)
         super().update(preds[targets > 0] - 1, targets[targets > 0] - 1)
 
     def _harmonic_mean(self, scores):
-        return 4 / torch.sum(1.0 / (scores + self._eps))
+        return scores.size(0) / torch.sum(1.0 / (scores + self._eps))
 
     def compute(self) -> torch.Tensor:
-        scores = torch.nan_to_num(super().compute(), 1.)
+        sup = self.tp + self.fn
+        scores = torch.nan_to_num(super().compute()[sup > 0], 1.)
         return self._harmonic_mean(scores)
