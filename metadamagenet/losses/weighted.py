@@ -28,8 +28,5 @@ class WeightedSum(nn.Module):
     def forward(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         weighted_loss: torch.Tensor = 0
         for i, loss in enumerate(self.losses):
-            value: torch.Tensor = loss(outputs, targets)
-            if value.isinf():
-                print(f"{loss} encountered inf")
-            weighted_loss += value * self.weights[i]
+            weighted_loss += loss(outputs, targets) * self.weights[i]
         return weighted_loss
