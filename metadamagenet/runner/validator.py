@@ -1,3 +1,4 @@
+import logging
 from typing import Optional, Union
 
 import emoji
@@ -10,8 +11,10 @@ from torchmetrics import MeanMetric
 from .base import Runner
 from ..augment import TestTimeAugmentor
 from torchmetrics import Metric
-from ..logging import log
+from ..logging import EmojiAdapter
 from ..models import BaseModel, ModelAggregator
+
+logger = EmojiAdapter(logging.getLogger())
 
 
 class Validator(Runner):
@@ -54,8 +57,8 @@ class Validator(Runner):
         validate model with given data
         :return: score
         """
-        log(f':arrow_forward: starting to validate model {self._model.name()} ...')
-        log(f'steps: {len(self._dataloader)}')
+        logger.info(f':arrow_forward: starting to validate model {self._model.name()} ...')
+        logger.info(f'steps: {len(self._dataloader)}')
         self._model.eval()
         loss_mean: MeanMetric = MeanMetric().to(self._device)
         self._score.reset()
@@ -98,6 +101,6 @@ class Validator(Runner):
                     "score": self._score.compute().item()
                 })
 
-            log(f"Validation Results: loss:{loss_mean.compute().item() if self._loss is not None else '--'} "
-                f"score:{self._score.compute().item()}")
+            logger.info(f"Validation Results: loss:{loss_mean.compute().item() if self._loss is not None else '--'} "
+                        f"score:{self._score.compute().item()}")
             return self._score.compute().item()

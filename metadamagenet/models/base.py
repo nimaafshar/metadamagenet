@@ -1,13 +1,16 @@
 import abc
+import logging
 from typing import Generic, TypeVar, Optional, Tuple, Dict, get_args, Type
 
 from typing_extensions import Self
 import torch
 from torch import Tensor, nn
 
-from ..logging import log
+from ..logging import EmojiAdapter
 from .manager import Checkpoint, Metadata, ModelManager
 from .unet import UnetBase
+
+logger = EmojiAdapter(logging.getLogger())
 
 
 class BaseModel(nn.Module, metaclass=abc.ABCMeta):
@@ -28,7 +31,7 @@ class BaseModel(nn.Module, metaclass=abc.ABCMeta):
             version=version,
             seed=seed
         )
-        log(f":eyes: loading from checkpoint {checkpoint}")
+        logger.info(f":eyes: loading from checkpoint {checkpoint}")
         manager = ModelManager.get_instance()
         state_dict: dict
         metadata: Metadata

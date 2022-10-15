@@ -1,9 +1,8 @@
 import abc
-from typing import Dict, Tuple, ClassVar
-from typing_extensions import Self
+from typing import Dict, Tuple
 
 import torch
-from torch import Tensor, nn
+from torch import nn
 
 from .base import BaseModel
 

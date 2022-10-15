@@ -2,9 +2,9 @@ from dataclasses import dataclass
 from typing import Optional, Dict
 from contextlib import nullcontext
 import gc
+import logging
 
 import emoji
-import torchmetrics
 from tqdm.autonotebook import tqdm
 import torch
 from torch import nn
@@ -19,8 +19,10 @@ from .base import Runner
 from ..models import Checkpoint, Metadata, ModelManager, BaseModel
 from ..augment import TestTimeAugmentor
 from torchmetrics import Metric
-from ..logging import log
+from ..logging import EmojiAdapter
 from .validator import Validator
+
+logger = EmojiAdapter(logging.getLogger())
 
 
 @dataclass
@@ -72,9 +74,9 @@ class Trainer(Runner):
 
     def run(self) -> None:
         cudnn.benchmark = True
-        log(f':arrow_forward: starting to train model {self._model.name()}'
-            f" version='{self._version}' seed='{self._seed}'")
-        log(f'steps_per_epoch: {len(self._dataloader)}')
+        logger.info(f':arrow_forward: starting to train model {self._model.name()}'
+                    f" version='{self._version}' seed='{self._seed}'")
+        logger.info(f'steps_per_epoch: {len(self._dataloader)}')
 
         best_score: float = self._model.metadata.best_score
         for epoch in range(1, self._epochs + 1):
@@ -94,13 +96,13 @@ class Trainer(Runner):
 
     def _score_improved(self, old_score: float, new_score: float) -> bool:
         if new_score > old_score:
-            log(f":confetti_ball: score {old_score:.5f} --> {new_score:.5f}")
+            logger.info(f":confetti_ball: score {old_score:.5f} --> {new_score:.5f}")
             return True
         elif new_score == old_score:
-            log(f":neutral_face: score {old_score:.5f} --> {new_score:.5f}")
+            logger.info(f":neutral_face: score {old_score:.5f} --> {new_score:.5f}")
             return False
         else:
-            log(f":disappointed: score {old_score:.5f} --> {new_score:.5f}")
+            logger.info(f":disappointed: score {old_score:.5f} --> {new_score:.5f}")
             return False
 
     def _make_validator(self) -> Validator:
@@ -149,7 +151,7 @@ class Trainer(Runner):
             })
             self._update_weights(loss)
 
-        log(f"Training Results: loss: {loss_mean.compute().item()} score:{self._score.compute().item()}")
+        logger.info(f"Training Results: loss: {loss_mean.compute().item()} score:{self._score.compute().item()}")
 
     def _update_weights(self, loss: torch.Tensor):
         self._optimizer.zero_grad()
@@ -176,4 +178,4 @@ class Trainer(Runner):
         )
         manager: ModelManager = ModelManager.get_instance()
         manager.save_checkpoint(checkpoint, self._model.state_dict(), self._model.metadata)
-        log(f"======> model saved at {checkpoint}")
+        logger.info(f"======> model saved at {checkpoint}")
