@@ -45,7 +45,7 @@ pip install -r requirements.txt
 
 ### Loss Functions
 
-example usage:
+Example Usage:
 
 ```python
 from metadamagenet.losses import WeightedSum, BinaryDiceLoss, BinaryFocalLoss
@@ -66,6 +66,7 @@ Focal, Dice, and Lovasz-sigmoid Loss are loss functions used in the training loc
 For Classification models, we tried Focal, Dice, Lovasz-Softmax Loss, Log-Cosh-Dice, and, Cross-entropy Loss.
 
 **Focal Loss**
+
 :page_facing_up: [Focal Loss for Dense Object Detection](https://arxiv.org/abs/1708.02002)
 
 $$
@@ -78,10 +79,13 @@ buildings was far less than the background pixels. In the damage classification 
 formed more than 80 percent of the total samples.
 
 **Dice Loss**
+
 $$
 Dice\space Loss(p,t) = 1 - dice(p,t)
 $$
+
 Where $dice$, $p$ and $t$ stand for *dice coefficient*, *predictions* and *target values* respectively.
+
 $$
 dice(A,B) = 2\frac{ A\cap B}{A + B}
 $$
@@ -94,6 +98,7 @@ constant and thus has less effect on the model's training though it makes better
 - [example argument about correct implementation of softmax-dice-loss](https://github.com/keras-team/keras/issues/9395#issuecomment-379276452)
 
 **Cross Entropy Loss**
+
 $$
 -\sum_{c=1}^My_{o,c}\log(p_{o,c})
 $$
