@@ -48,4 +48,7 @@ class DamageClassificationMetric(Dice):
     def compute(self) -> torch.Tensor:
         sup = self.tp + self.fn
         scores = torch.nan_to_num(super().compute()[sup > 0], 1.)
-        return self._harmonic_mean(scores)
+        final = self._harmonic_mean(scores)
+        if final.item() < 1e-4:
+            print({"scores": scores, "final": final})
+        return final
