@@ -5,10 +5,16 @@ from torch import nn
 import torch.nn.functional as tf
 
 
+class LossException(Exception):
+    def __init__(self, message: str, **kwargs):
+        super(LossException, self).__init__(message)
+        self.data = kwargs
+
+
 class BinaryFocalLoss(nn.Module):
-    def __init__(self, gamma: float = 2, eps: float = 1e-8, validate_inputs: bool = False):
+    def __init__(self, gamma: float = 2., eps: float = 1e-8, validate_inputs: bool = False):
         super().__init__()
-        self._gamma = gamma
+        self._gamma: float = gamma
         self._eps: float = eps
         self._validate_inputs: bool = validate_inputs
 
@@ -33,7 +39,13 @@ class BinaryFocalLoss(nn.Module):
         outputs = torch.clamp(outputs, self._eps, 1. - self._eps)
         targets = torch.clamp(targets, self._eps, 1. - self._eps)
         pt = (1 - targets) * (1 - outputs) + targets * outputs
-        return (-(1. - pt) ** self._gamma * torch.log(pt)).mean()
+        final_loss = (-(1. - pt) ** self._gamma * torch.log(pt)).mean()
+        if final_loss.isinf():
+            raise LossException("Focal Loss encountered inf",
+                                outputs=outputs,
+                                targets=targets,
+                                pt=pt)
+        return final_loss
 
 
 class FocalLoss(nn.Module):
@@ -93,22 +105,3 @@ class FocalLoss(nn.Module):
         pt = (1 - targets) * (1 - outputs) + targets * outputs
         losses = torch.mean(-(1. - pt) ** self._gamma * torch.log(pt), dim=dims)
         return torch.dot(losses, self.class_weights.to(device=losses.device))
-
-
-class FocalLoss2d(nn.Module):
-    def __init__(self, gamma=2, ignore_index=255):
-        super().__init__()
-        self.gamma = gamma
-        self.ignore_index = ignore_index
-
-    def forward(self, outputs, targets):
-        outputs = outputs.contiguous()
-        targets = targets.contiguous()
-        eps = 1e-8
-        non_ignored = targets.view(-1) != self.ignore_index
-        targets = targets.view(-1)[non_ignored].float()
-        outputs = outputs.contiguous().view(-1)[non_ignored]
-        outputs = torch.clamp(outputs, eps, 1. - eps)
-        targets = torch.clamp(targets, eps, 1. - eps)
-        pt = (1 - targets) * (1 - outputs) + targets * outputs
-        return (-(1. - pt) ** self.gamma * torch.log(pt)).mean()
