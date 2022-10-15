@@ -5,12 +5,6 @@ from torch import nn
 import torch.nn.functional as tf
 
 
-class LossException(Exception):
-    def __init__(self, message: str, **kwargs):
-        super(LossException, self).__init__(message)
-        self.data = kwargs
-
-
 class BinaryFocalLoss(nn.Module):
     def __init__(self, gamma: float = 2., eps: float = 1e-8, validate_inputs: bool = False):
         super().__init__()
@@ -39,13 +33,7 @@ class BinaryFocalLoss(nn.Module):
         outputs = torch.clamp(outputs, self._eps, 1. - self._eps)
         targets = torch.clamp(targets, self._eps, 1. - self._eps)
         pt = (1 - targets) * (1 - outputs) + targets * outputs
-        final_loss = (-(1. - pt) ** self._gamma * torch.log(pt)).mean()
-        if final_loss.isinf():
-            raise LossException("Focal Loss encountered inf",
-                                outputs=outputs,
-                                targets=targets,
-                                pt=pt)
-        return final_loss
+        return (-(1. - pt) ** self._gamma * torch.log(pt)).mean()
 
 
 class FocalLoss(nn.Module):
