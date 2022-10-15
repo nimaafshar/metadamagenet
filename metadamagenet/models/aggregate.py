@@ -45,11 +45,11 @@ class Mean(ModelAggregator):
         """
         outputs_sum: torch.Tensor = 0
         for i, model in enumerate(self.models):
-            outputs: torch.Tensor = model.activate(model(x))
+            outputs: torch.Tensor = model(x)
             if i == 0:
                 outputs_sum = torch.zeros_like(outputs, device=outputs.device)
             outputs_sum += outputs
-        return outputs_sum / len(self.models)
+        return self.models[0].activate(outputs_sum / len(self.models))
 
 
 class FourFlips(ModelAggregator):
@@ -69,8 +69,8 @@ class FourFlips(ModelAggregator):
         """
         forward + activate + mean
         """
-        outputs_sum: torch.Tensor = self.model.activate(self.model(x))  # original
-        outputs_sum += self.model.activate(self.model(torch.flip(x, dims=(2,))))  # top-down
-        outputs_sum += self.model.activate(self.model(torch.flip(x, dims=(3,))))  # left-right
-        outputs_sum += self.model.activate(self.model(torch.flip(x, dims=(2, 3))))  # top-down and left-right
-        return outputs_sum / 4
+        outputs_sum: torch.Tensor = self.model(x)  # original
+        outputs_sum += self.model(torch.flip(x, dims=(2,)))  # top-down
+        outputs_sum += self.model(torch.flip(x, dims=(3,)))  # left-right
+        outputs_sum += self.model(torch.flip(x, dims=(2, 3)))  # top-down and left-right
+        return self.model.activate(outputs_sum / 4)
