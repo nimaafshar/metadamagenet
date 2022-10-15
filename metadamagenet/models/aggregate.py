@@ -69,8 +69,12 @@ class FourFlips(ModelAggregator):
         """
         forward + activate + mean
         """
+
+        def forward_transform(model, inputs, dims):
+            return model.activate(torch.flip(model(torch.flip(inputs, dims=dims)), dims=dims))
+
         outputs_sum: torch.Tensor = self.model(x)  # original
-        outputs_sum += torch.flip(self.model(torch.flip(x, dims=(2,))), dims=(2,))  # top-down
-        outputs_sum += torch.flip(self.model(torch.flip(x, dims=(3,))), dims=(3,))  # left-right
-        outputs_sum += torch.flip(self.model(torch.flip(x, dims=(2, 3))), dims=(2, 3))  # top-down and left-right
-        return self.model.activate(outputs_sum / 4)
+        outputs_sum += forward_transform(self.model, x, (2,))  # top-down
+        outputs_sum += forward_transform(self.model, x, (3,))  # left-right
+        outputs_sum += forward_transform(self.model, x, (2, 3))  # top-down and left-right
+        return outputs_sum / 4
