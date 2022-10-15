@@ -5,73 +5,91 @@ from torch import nn
 import torch.nn.functional as tf
 
 
-class BinaryFocalLoss2d(nn.Module):
-    def __init__(self, gamma=2., eps=1e-8, reduction: Literal['sum', 'mean', None] = 'mean',
-                 class_weight: Optional[torch.Tensor] = None):
-        super(BinaryFocalLoss2d, self).__init__()
+class BinaryFocalLoss(nn.Module):
+    def __init__(self, gamma: float = 2, eps: float = 1e-8, validate_inputs: bool = False):
+        super().__init__()
+        self._gamma = gamma
+        self._eps: float = eps
+        self._validate_inputs: bool = validate_inputs
+
+    def _validate(self, outputs: torch.Tensor, targets: torch.Tensor):
+        n, c, h, w = outputs.size()
+        assert c == 1, f"outputs should have be of the shape (N,1,H,W). got {outputs.shape}"
+        n2, h2, w2 = targets.size()
+        assert n == n2 and h == h2 and w == w2, \
+            f"outputs.shape is {outputs.shape}, expected targets to have the shape of ({n},{h},{w})." \
+            f" got {targets.shape}"
+        assert torch.all((targets == 1) | (targets == 0)), "targets is not binary"
+
+    def forward(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        """
+        outputs: float, (N,1,H,W),
+        targets: binary, (N,H,W)
+        """
+        if self._validate_inputs:
+            self._validate(outputs, targets)
+        outputs = torch.sigmoid(outputs.to(memory_format=torch.contiguous_format))
+        targets = targets.unsqueeze(1).to(memory_format=torch.contiguous_format).to(dtype=outputs.dtype)
+        outputs = torch.clamp(outputs, self._eps, 1. - self._eps)
+        targets = torch.clamp(targets, self._eps, 1. - self._eps)
+        pt = (1 - targets) * (1 - outputs) + targets * outputs
+        return (-(1. - pt) ** self._gamma * torch.log(pt)).mean()
+
+
+class FocalLoss(nn.Module):
+    def __init__(self,
+                 num_classes: int,
+                 gamma: float = 2.,
+                 class_weights: Optional[List[float]] = None,
+                 activation: Literal['softmax', 'sigmoid'] = 'sigmoid',
+                 eps: float = 1e-8,
+                 validate_inputs: bool = False):
+        super().__init__()
+        assert num_classes > 1, "Non Binary Dice Loss is used with num_classes>0"
+        self._num_classes: int = num_classes
+
+        if class_weights is None:
+            self.register_buffer('class_weights', torch.ones(num_classes, dtype=torch.float))
+        else:
+            assert len(class_weights) == num_classes, "len(class_weights) should be equal to num_classes"
+            self.register_buffer('class_weights', torch.tensor(class_weights, dtype=torch.float))
         self._gamma: float = gamma
         self._eps: float = eps
-        self._reduction: Literal['sum', 'mean', None] = reduction
-        self._class_weight: Optional[torch.Tensor] = class_weight
+        self._validate_inputs: bool = validate_inputs
+        if activation not in ('softmax', 'sigmoid'):
+            raise ValueError(f"unsupported activation {activation}")
+        self._activation: Literal['softmax', 'sigmoid'] = activation
 
-    def forward(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
-        target = targets.view(-1, 1).long()
-        if self._class_weight is None:
-            class_weight = [1] * 2  # [1/C]*C
-        else:
-            class_weight = self._class_weight
-        prob = torch.sigmoid(logits)
-        prob = prob.view(-1, 1)
-        prob = torch.cat((1 - prob, prob), 1)
-        select = torch.FloatTensor(len(prob), 2).zero_().cuda()
-        select.scatter_(1, target, 1.)
+    def _validate(self, outputs: torch.Tensor, targets: torch.Tensor):
+        n, c, h, w = outputs.size()
+        n2, h2, w2 = targets.size()
+        assert c == self._num_classes, "outputs.size(1) should be equal to num_classes"
+        assert n == n2 and h == h2 and w == w2, \
+            f"outputs.shape is {outputs.shape}, expected targets to have the shape of ({n},{h},{w})." \
+            f" got {outputs.shape}"
+        assert targets.dtype == torch.long \
+               and targets.min() >= 0 \
+               and targets.max() < c, "long is not long tensor with values (0 - C-1)"
 
-        class_weight = torch.FloatTensor(class_weight).cuda().view(-1, 1)
-        class_weight = torch.gather(class_weight, 0, target)
-        prob = (prob * select).sum(1).view(-1, 1)
-        prob = torch.clamp(prob, self._eps, 1 - self._eps)
-        batch_loss = -class_weight * (torch.pow((1 - prob), self._gamma)) * prob.log()
-        if self._reduction is None:
-            return batch_loss
-        elif self._reduction == 'mean':
-            return batch_loss.mean()
-        elif self._reduction == 'sum':
-            return batch_loss.sum()
-        else:
-            raise NotImplementedError(f'invalid reduction {self._reduction}')
+    def forward(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        """
+        outputs: float, (N,C,H,W),
+        targets: long, (N,H,W) with values (0 - C-1)
+        """
+        if self._validate_inputs:
+            self._validate(outputs, targets)
 
+        outputs = outputs.to(memory_format=torch.contiguous_format)
+        if self._activation == 'sigmoid':
+            outputs = torch.sigmoid(outputs)
+        elif self._activation == 'softmax':
+            outputs = torch.softmax(outputs, dim=1)
 
-class FocalLoss2d(nn.Module):
-    def __init__(self, gamma=2., size_average=True, eps=1e-8, reduction: Literal['sum', 'mean', None] = 'mean',
-                 class_weight: Optional[List[float]] = None):
-        super(FocalLoss2d, self).__init__()
-        self._gamma: float = gamma
-        self._eps: float = eps
-        self._reduction: Literal['sum', 'mean', None] = reduction
-        self._class_weight: Optional[List[float]] = class_weight
-
-    def forward(self, logits: torch.Tensor, targets: torch.Tensor):
-        target = targets.view(-1, 1).long()
-        B, C, H, W = logits.size()
-        if self._class_weight is None:
-            class_weight = [1] * C  # [1/C]*C
-        else:
-            class_weight = self._class_weight
-        logit = logits.permute(0, 2, 3, 1).contiguous().view(-1, C)
-        prob = tf.softmax(logit, 1)
-        select = torch.FloatTensor(len(prob), C).zero_().cuda()
-        select.scatter_(1, target, 1.)
-
-        class_weight = torch.FloatTensor(class_weight).cuda().view(-1, 1)
-        class_weight = torch.gather(class_weight, 0, target)
-        prob = (prob * select).sum(1).view(-1, 1)
-        prob = torch.clamp(prob, self._eps, 1 - self._eps)
-        batch_loss = -class_weight * (torch.pow((1 - prob), self._gamma)) * prob.log()
-        if self._reduction is None:
-            return batch_loss
-        elif self._reduction == 'mean':
-            return batch_loss.mean()
-        elif self._reduction == 'sum':
-            return batch_loss.sum()
-        else:
-            raise NotImplementedError(f'invalid reduction {self._reduction}')
+        targets = tf.one_hot(targets, num_classes=self._num_classes).permute(0, 3, 1, 2)
+        targets = targets.to(memory_format=torch.contiguous_format).to(dtype=outputs.dtype)
+        dims = (0, 2, 3)
+        outputs = torch.clamp(outputs, self._eps, 1. - self._eps)
+        targets = torch.clamp(targets, self._eps, 1. - self._eps)
+        pt = (1 - targets) * (1 - outputs) + targets * outputs
+        losses = torch.mean(-(1. - pt) ** self._gamma * torch.log(pt), dim=dims)
+        return torch.dot(losses, self.class_weights.to(device=losses.device))
