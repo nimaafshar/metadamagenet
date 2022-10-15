@@ -73,11 +73,9 @@ class Validator(Runner):
                 activated_outputs: torch.Tensor
                 if isinstance(self._model, BaseModel):
                     outputs: torch.Tensor = self._model(inputs)
-
                     if self._loss is not None:
                         loss = self._loss(outputs, targets)
                         loss_mean.update(loss)
-
                     activated_outputs = self._model.activate(outputs)
                 else:
                     assert isinstance(self._model, ModelAggregator)
