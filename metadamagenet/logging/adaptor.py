@@ -3,7 +3,7 @@ from typing import Any, MutableMapping
 
 import emoji
 
-logging.basicConfig(format="%(message)s")
+logging.basicConfig(format="%(message)s", level=logging.INFO)
 
 
 class EmojiAdapter(logging.LoggerAdapter):
