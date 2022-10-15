@@ -1,5 +1,6 @@
 from typing import Optional, Union
 
+import emoji
 from tqdm.autonotebook import tqdm
 import torch
 from torch import nn
@@ -58,7 +59,7 @@ class Validator(Runner):
         self._model.eval()
         loss_mean: MeanMetric = MeanMetric().to(self._device)
         self._score.reset()
-        iterator = tqdm(self._dataloader, leave=False)
+        iterator = tqdm(self._dataloader, leave=False, desc=emoji.emojize(":fearful: Validation", use_aliases=True))
 
         with torch.no_grad():
             i: int

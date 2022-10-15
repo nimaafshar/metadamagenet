@@ -3,6 +3,7 @@ from typing import Optional, Dict
 from contextlib import nullcontext
 import gc
 
+import emoji
 import torchmetrics
 from tqdm.autonotebook import tqdm
 import torch
@@ -76,17 +77,15 @@ class Trainer(Runner):
         log(f'steps_per_epoch: {len(self._dataloader)}')
 
         best_score: float = self._model.metadata.best_score
-        for epoch in range(self._epochs):
-            log(f"===> :repeat_one: epoch {epoch}/{self._epochs}")
-            log(f"======>:relieved: training")
+        for epoch in range(1, self._epochs + 1):
             torch.cuda.empty_cache()
             gc.collect()
-            self._train_epoch()
+            self._train_epoch(epoch)
             self._lr_scheduler.step()
-            if self._validation_params is not None and epoch % self._validation_params.interval == 0:
+            if self._validation_params is not None and \
+                    (epoch % self._validation_params.interval == 0 or epoch == self._epochs):
                 torch.cuda.empty_cache()
                 gc.collect()
-                log(f"======>:fearful: validation")
                 validator: Validator = self._make_validator()
                 score: float = validator.run()
                 if self._score_improved(best_score, score):
@@ -115,12 +114,13 @@ class Trainer(Runner):
             test_time_augmentor=self._validation_params.test_time_augmentor
         )
 
-    def _train_epoch(self) -> None:
+    def _train_epoch(self, epoch: int) -> None:
         self._model.train()
         self._score.reset()
         loss_mean: MeanMetric = MeanMetric().to(self._device)
-        iterator = tqdm(self._dataloader, leave=False)
-
+        iterator = tqdm(self._dataloader,
+                        leave=False,
+                        desc=emoji.emojize(f":repeat_one: Training {epoch + 1}/{self._epochs}", use_aliases=True))
         i: int
         data_batch: Dict[str, torch.FloatTensor]
         for i, data_batch in enumerate(iterator):
