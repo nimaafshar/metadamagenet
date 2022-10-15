@@ -1,1 +1,1 @@
-from .logs import log
+from .adaptor import EmojiAdapter
