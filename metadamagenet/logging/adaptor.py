@@ -8,5 +8,5 @@ logging.basicConfig(format="%(message)s")
 
 class EmojiAdapter(logging.LoggerAdapter):
 
-    def process(self, msg: Any, kwargs: MutableMapping[str, Any]) -> tuple[Any, MutableMapping[str, Any]]:
+    def process(self, msg: Any, kwargs: MutableMapping[str, Any] = {}) -> tuple[Any, MutableMapping[str, Any]]:
         return emoji.emojize(msg, language='alias'), kwargs
