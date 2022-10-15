@@ -62,7 +62,7 @@ class Validator(Runner):
         self._model.eval()
         loss_mean: MeanMetric = MeanMetric().to(self._device)
         self._score.reset()
-        iterator = tqdm(self._dataloader, leave=False, desc=emoji.emojize(":fearful: Validation", use_aliases=True))
+        iterator = tqdm(self._dataloader, leave=False, desc=emoji.emojize(":fearful: Validation", language='alias'))
 
         with torch.no_grad():
             i: int
