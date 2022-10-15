@@ -151,7 +151,8 @@ class Trainer(Runner):
             })
             self._update_weights(loss)
 
-        logger.info(f"Training Results: loss: {loss_mean.compute().item()} score:{self._score.compute().item()}")
+        logger.info(f"Training Results(epoch {epoch}/{self._epochs}): "
+                    f"loss: {loss_mean.compute().item()} score:{self._score.compute().item()}")
 
     def _update_weights(self, loss: torch.Tensor):
         self._optimizer.zero_grad()
