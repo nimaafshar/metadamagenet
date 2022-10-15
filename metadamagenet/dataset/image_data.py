@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 import pathlib
 import json
@@ -8,7 +9,9 @@ from shapely import wkt
 
 from ..configs import DamageType, damage_to_damage_type, GeneralConfig
 from .data_time import DataTime
-from ..logging import log
+from ..logging import EmojiAdapter
+
+logger = EmojiAdapter(logging.getLogger())
 
 
 @dataclass
@@ -88,7 +91,7 @@ def discover_directory(base_directory: pathlib.Path, check: bool = True) -> List
     if not base_directory.is_dir():
         raise ValueError(f"{base_directory.absolute()} is not a directory")
 
-    log(f":mag: discovering {base_directory.absolute()}...")
+    logger.info(f":mag: discovering {base_directory.absolute()}...")
     for file_path in (base_directory / 'images').glob('*_pre_disaster.png'):
         disaster, identifier, time, _ = file_path.name.split('_')
         image_data: ImageData = ImageData(base_directory, identifier, disaster)
@@ -107,6 +110,6 @@ def discover_directory(base_directory: pathlib.Path, check: bool = True) -> List
         results.append(image_data)
 
     if len(results) == 0:
-        log(f"warning: directory {base_directory} is empty")
+        logger.info(f"warning: directory {base_directory} is empty")
 
     return results

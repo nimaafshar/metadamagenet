@@ -12,14 +12,14 @@ from .image_data import ImageData, discover_directories, discover_directory
 
 
 class Xview2Dataset(Dataset, ABC):
-    def __init__(self, source: Union[Sequence[ImageData], Iterable[Path], Path], check: bool = False):
+    def __init__(self, source: Union[Sequence[ImageData], Sequence[Path], Path], check: bool = False):
         super(Xview2Dataset, self).__init__()
         self._image_dataset: Sequence[ImageData]
         if isinstance(source, Sequence) and isinstance(source[0], ImageData):
             self._image_dataset = source
         elif isinstance(source, Path):
             self._image_dataset = discover_directory(source, check)
-        elif isinstance(source, Iterable) and isinstance(source[0], Path):
+        elif isinstance(source, Sequence) and isinstance(source[0], Path):
             self._image_dataset = discover_directories(source, check)
         else:
             raise TypeError(f"invalid type {type(source)} for source.")
