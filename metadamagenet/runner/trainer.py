@@ -17,7 +17,6 @@ from torchmetrics import MeanMetric
 
 from .base import Runner
 from ..models import Checkpoint, Metadata, ModelManager, BaseModel
-from ..augment import TestTimeAugmentor
 from torchmetrics import Metric
 from ..logging import EmojiAdapter
 from .validator import Validator
@@ -31,7 +30,6 @@ class ValidationInTrainingParams:
     interval: int = 1
     transform: Optional[nn.Module] = None
     score: Optional[Metric] = None
-    test_time_augmentor: Optional[TestTimeAugmentor] = None
 
 
 class Trainer(Runner):
@@ -112,8 +110,7 @@ class Trainer(Runner):
             transform=self._validation_params.transform,
             loss=self._loss,
             score=self._validation_params.score if self._validation_params.score is not None else self._score,
-            device=self._device,
-            test_time_augmentor=self._validation_params.test_time_augmentor
+            device=self._device
         )
 
     def _train_epoch(self, epoch: int) -> None:

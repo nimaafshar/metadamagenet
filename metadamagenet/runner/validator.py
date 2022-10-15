@@ -9,7 +9,6 @@ from torch.utils.data import DataLoader
 from torchmetrics import MeanMetric
 
 from .base import Runner
-from ..augment import TestTimeAugmentor
 from torchmetrics import Metric
 from ..logging import EmojiAdapter
 from ..models import BaseModel, ModelAggregator
@@ -24,8 +23,7 @@ class Validator(Runner):
                  score: Metric,
                  transform: Optional[nn.Module] = None,
                  loss: Optional[nn.Module] = None,
-                 device: Optional[torch.device] = None,
-                 test_time_augmentor: Optional[TestTimeAugmentor] = None
+                 device: Optional[torch.device] = None
                  ):
 
         self._device: torch.device
@@ -44,10 +42,6 @@ class Validator(Runner):
             self._loss = self._loss.to(self._device)
 
         self._score: Metric = score.to(self._device)
-
-        self._test_time_augmentor: Optional[TestTimeAugmentor] = test_time_augmentor
-        if self._test_time_augmentor is not None and isinstance(self._model, ModelAggregator):
-            raise ValueError("test time augment cannot be used with model aggregators")
 
         if self._loss is not None and isinstance(self._model, ModelAggregator):
             raise ValueError("loss calculation cannot be used with model aggregators")
@@ -78,13 +72,7 @@ class Validator(Runner):
                 inputs, targets = self._model.preprocess(data_batch)
                 activated_outputs: torch.Tensor
                 if isinstance(self._model, BaseModel):
-                    outputs: torch.Tensor
-                    if self._test_time_augmentor is not None:
-                        augmented_inputs: torch.Tensor = self._test_time_augmentor.augment(inputs)
-                        augmented_outputs: torch.Tensor = self._model(augmented_inputs)
-                        outputs: torch.Tensor = self._test_time_augmentor.aggregate(augmented_outputs)
-                    else:
-                        outputs: torch.Tensor = self._model(inputs)
+                    outputs: torch.Tensor = self._model(inputs)
 
                     if self._loss is not None:
                         loss = self._loss(outputs, targets)
