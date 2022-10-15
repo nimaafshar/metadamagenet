@@ -1,5 +1,5 @@
 import abc
-from typing import Sequence, Dict, TypeVar, Generic, Tuple, Union, Any
+from typing import Sequence, Dict, TypeVar, Generic, Tuple, Union
 
 import torch
 from torch import nn
