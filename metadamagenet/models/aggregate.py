@@ -50,3 +50,27 @@ class Mean(ModelAggregator):
                 outputs_sum = torch.zeros_like(outputs, device=outputs.device)
             outputs_sum += outputs
         return outputs_sum / len(self.models)
+
+
+class FourFlips(ModelAggregator):
+    @classmethod
+    def name(cls) -> str:
+        return "ModelsMean"
+
+    def __init__(self, model: BaseModel):
+        super().__init__()
+        assert isinstance(model, BaseModel), "model should be an instance of BaseModel"
+        self.model: BaseModel = model
+
+    def preprocess(self, data: Dict[str, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
+        return self.model.preprocess(data)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        forward + activate + mean
+        """
+        outputs_sum: torch.Tensor = self.model.activate(self.model(x))  # original
+        outputs_sum += self.model.activate(self.model(torch.flip(x, dims=(2,))))  # top-down
+        outputs_sum += self.model.activate(self.model(torch.flip(x, dims=(3,))))  # left-right
+        outputs_sum += self.model.activate(self.model(torch.flip(x, dims=(2, 3))))  # top-down and left-right
+        return outputs_sum / 4
