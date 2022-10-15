@@ -122,7 +122,7 @@ class Trainer(Runner):
         loss_mean: MeanMetric = MeanMetric().to(self._device)
         iterator = tqdm(self._dataloader,
                         leave=False,
-                        desc=emoji.emojize(f":repeat_one: Training {epoch + 1}/{self._epochs}", language='alias'))
+                        desc=emoji.emojize(f":repeat_one: Training {epoch}/{self._epochs}", language='alias'))
         i: int
         data_batch: Dict[str, torch.FloatTensor]
         for i, data_batch in enumerate(iterator):
