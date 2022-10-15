@@ -1,10 +1,13 @@
 # MetaDamageNet
+
 #### Using Deep Learning To Identify And Classify Damage In Aerial Imagery
 
-Some ideas from this project is borrowed from [xview2 first place solution](https://github.com/vdurnov/xview2_1st_place_solution) 
+This project is my bachelors thesis at AmirKabir University of Technology under supervision of Dr.Amin Gheibi.
+Some ideas from this project is borrowed from
+[xview2 first place solution](https://github.com/vdurnov/xview2_1st_place_solution)
 repository. I used that repository as a baseline.
-Thus, this code covers models and experiments of the mentioned repo and 
-contributes more research into the same problem of damage assessment in aerial imagery. 
+Thus, this code covers models and experiments of the mentioned repo and
+contributes more research into the same problem of damage assessment in aerial imagery.
 
 ## Usage
 
@@ -24,6 +27,110 @@ pip install -r requirements.txt
 - [`Dpn92Unet` training and tuning](./example_dpn92.py)
 - [`SeNet154Unet` training and tuning](./example_dpn92.py)
 
+## Data
+
+### Structure and
+
+### Data Loading and Datasets
+
+### Augmentations
+
+## Methodology
+
+### Unet
+
+### Vision Transformer
+
+### MetLearning
+
+### Loss Functions
+
+example usage:
+
+```python
+from metadamagenet.losses import WeightedSum, BinaryDiceLoss, BinaryFocalLoss
+
+WeightedSum(
+    (BinaryDiceLoss(), 1.0),
+    (BinaryFocalLoss(alpha=0.7, gamma=2., reduction='mean'), 6.0)
+)
+```
+
+Both Building Localization and Damage Classification are semantic segmentation tasks.
+Because, in both problems, the model's purpose is classification at the pixel level.
+We have used a combination of multiple segmentation losses for all models.
+[Here](https://github.com/shruti-jadon/Semantic-Segmentation-Loss-Functions),
+you can find a comprehensive comparison between popular loss functions for semantic segmentation.
+
+Focal, Dice, and Lovasz-sigmoid Loss are loss functions used in the training localization models.
+For Classification models, we tried Focal, Dice, Lovasz-Softmax Loss, Log-Cosh-Dice, and, Cross-entropy Loss.
+
+**Focal Loss**
+:page_facing_up: [Focal Loss for Dense Object Detection](https://arxiv.org/abs/1708.02002)
+
+$$
+FL(p_t) = -\alpha_t(1- p_t)\gamma log(p_t).
+$$
+
+Focal Loss's usage is to make the model focus on hard-to-classify examples by increasing their loss value. We used it
+because the target distribution was highly skewed. In the building localization task, the number of pixels containing
+buildings was far less than the background pixels. In the damage classification task, too, undamaged building samples
+formed more than 80 percent of the total samples.
+
+**Dice Loss**
+$$
+Dice\space Loss(p,t) = 1 - dice(p,t)
+$$
+Where $dice$, $p$ and $t$ stand for *dice coefficient*, *predictions* and *target values* respectively.
+$$
+dice(A,B) = 2\frac{ A\cap B}{A + B}
+$$
+
+Dice loss is calculated globally over each mini-batch. For multiclass cases, the loss value of each class (channel) is
+calculated individually, and their average is used as the final loss. Two activation functions can be applied to model
+outputs before calculating dice loss: sigmoid and softmax. Softmax makes the denominator of the final loss function
+constant and thus has less effect on the model's training though it makes better sense.
+
+- [example argument about correct implementation of softmax-dice-loss](https://github.com/keras-team/keras/issues/9395#issuecomment-379276452)
+
+**Cross Entropy Loss**
+$$
+-\sum_{c=1}^My_{o,c}\log(p_{o,c})
+$$
+
+Since we used sigmoid-dice-loss for multiclass damage classification, cross-entropy loss helped the model assign only
+one class to each pixel. It solely is a good loss function for semantic segmentation tasks.
+
+### Training Setup
+
+## Evaluation
+
+### Metrics
+
+## Results
+
+## Conclusion and Acknowledgments
+
+## References
+
+# Data
+
+# Data Cleaning Techniques
+
+Training masks generated using json files, "un-classified" type treated as "no-damage" (create_masks.py). "masks"
+folders will be created in "train" and "tier3" folders.
+
+The problem with different nadirs and small shifts between "pre" and "post" images solved on models level:
+
+- First, localization models trained using only "pre" images to ignore this additional noise from "post" images. Simple
+  UNet-like segmentation Encoder-Decoder Neural Network architectures used here.
+- Then, already pretrained localization models converted to classification Siamese Neural Network. So, "pre" and "post"
+  images shared common weights from localization model and the features from the last Decoder layer concatenated to
+  predict damage level for each pixel. This allowed Neural Network to look at "pre" and "post" separately in the same
+  way and helped to ignore these shifts and different nadirs as well.
+- Morphological dilation with 5*5 kernel applied to classification masks. Dilated masks made predictions more "bold" -
+  this improved accuracy on borders and also helped with shifts and nadirs.
+
 # Architecture
 
 ## Model
@@ -38,24 +145,80 @@ pip install -r requirements.txt
 
 ![Decoder Modules](./res/decoder.png)
 
-
-
-# Data Cleaning Techniques
-
-Dataset for this competition well prepared and I have not found any problems with it.
-Training masks generated using json files, "un-classified" type treated as "no-damage" (create_masks.py). "masks"
-folders will be created in "train" and "tier3" folders.
-
-The problem with different nadirs and small shifts between "pre" and "post" images solved on models level:
-
-- Frist, localization models trained using only "pre" images to ignore this additional noise from "post" images. Simple
-  UNet-like segmentation Encoder-Decoder Neural Network architectures used here.
-- Then, already pretrained localization models converted to classification Siamese Neural Network. So, "pre" and "post"
-  images shared common weights from localization model and the features from the last Decoder layer concatenated to
-  predict damage level for each pixel. This allowed Neural Network to look at "pre" and "post" separately in the same
-  way and helped to ignore these shifts and different nadirs as well.
-- Morphological dilation with 5*5 kernel applied to classification masks. Dilated masks made predictions more "bold" -
-  this improved accuracy on borders and also helped with shifts and nadirs.
+Unet Models:
+<table>
+  <tr>
+    <td rowspan="1" colspan="2">model</td>
+    <td rowspan="2" colspan="1">#params</td>
+    <td rowspan="2" colspan="1">Batch Normalization</td>
+    <td rowspan="2" colspan="1">DecoderType</td>
+  </tr>
+  <tr>
+    <td colspan="1">name</td>
+    <td colspan="1">backbone</td>
+  </tr>
+  <tr>
+    <td>Resnet34Unet</td>
+    <td>resnet_34</td>
+    <td>25,728,112</td>
+    <td> No </td>
+    <td>Normal</td>
+  </tr>
+  <tr>
+    <td>SeResnext50Unet</td>
+    <td>se_resnext50_32x4d</td>
+    <td>34,559,728</td>
+    <td>No</td>
+    <td>Normal</td>
+  </tr>
+  <tr>
+    <td>Dpn92Unet</td>
+    <td>dpn_92</td>
+    <td>47,408,735</td>
+    <td>No</td>
+    <td>SCSE - concat</td>
+  </tr>
+  <tr>
+    <td>SeNet154Unet</td>
+    <td>senet_154</td>
+    <td>124,874,656</td>
+    <td>No</td>
+    <td>Normal</td>
+  </tr>
+  <tr>
+    <td>EfficientUnetB0</td>
+    <td rowspan="2">efficientnet_b0</td>
+    <td>6,884,876</td>
+    <td>Yes</td>
+    <td>Normal</td>
+  </tr>
+  <tr>
+    <td>EfficientUnetB0SCSE</td>
+    <td>6,903,860</td>
+    <td>Yes</td>
+    <td>SCSE - no concat</td>
+  </tr>
+  <tr>
+    <td>EfficientUnetWideSEB0</td>
+    <td>efficientnet_widese_b0</td>
+    <td>10,020,176</td>
+    <td>Yes</td>
+    <td>Normal</td>
+  </tr>
+  <tr>
+    <td>EfficientUnetB4</td>
+    <td rowspan="2">efficientnet_b0</td>
+    <td>20,573,144</td>
+    <td>Yes</td>
+    <td>Normal</td>
+  </tr>
+  <tr>
+    <td>EfficientUnetB4SCSE</td>
+    <td>20,592,128</td>
+    <td>Yes</td>
+    <td>SCSE- no concat</td>
+  </tr>
+</table>
 
 # Data Processing Techniques
 
@@ -75,7 +238,7 @@ up-down, rotation to 180).
 
 # Details on Modeling Tools and Techniques
 
-All models trained with Train/Validation random split 90%/10% with fixed seeds (3 folds). Only checkpoints from epoches
+trained with Train/Validation random split 90%/10% with fixed seeds (3 folds). Only checkpoints from epochs
 with best validation score used.
 
 For localization models 4 different pretrained encoders used:
@@ -113,14 +276,6 @@ augmentations.
 Predictions averaged with equal coefficients for both localization and classification models separately.
 
 Different thresholds for localization used for damaged and undamaged classes (lower for damaged).
-
-## Augmentations
-
-## Test-Time Augment
-
-## Unet Models
-
-## MetaLearning
 
 # Conclusion and Acknowledgments
 
@@ -409,83 +564,8 @@ on dataset `hold` (used for testing):
 </tr>
 </table>
 
-
-Unet Models:
-<table>
-  <tr>
-    <td rowspan="1" colspan="2">model</td>
-    <td rowspan="2" colspan="1">#params</td>
-    <td rowspan="2" colspan="1">Batch Normalization</td>
-    <td rowspan="2" colspan="1">DecoderType</td>
-  </tr>
-  <tr>
-    <td colspan="1">name</td>
-    <td colspan="1">backbone</td>
-  </tr>
-  <tr>
-    <td>Resnet34Unet</td>
-    <td>resnet_34</td>
-    <td>25,728,112</td>
-    <td> No </td>
-    <td>Normal</td>
-  </tr>
-  <tr>
-    <td>SeResnext50Unet</td>
-    <td>se_resnext50_32x4d</td>
-    <td>34,559,728</td>
-    <td>No</td>
-    <td>Normal</td>
-  </tr>
-  <tr>
-    <td>Dpn92Unet</td>
-    <td>dpn_92</td>
-    <td>47,408,735</td>
-    <td>No</td>
-    <td>SCSE - concat</td>
-  </tr>
-  <tr>
-    <td>SeNet154Unet</td>
-    <td>senet_154</td>
-    <td>124,874,656</td>
-    <td>No</td>
-    <td>Normal</td>
-  </tr>
-  <tr>
-    <td>EfficientUnetB0</td>
-    <td rowspan="2">efficientnet_b0</td>
-    <td>6,884,876</td>
-    <td>Yes</td>
-    <td>Normal</td>
-  </tr>
-  <tr>
-    <td>EfficientUnetB0SCSE</td>
-    <td>6,903,860</td>
-    <td>Yes</td>
-    <td>SCSE - no concat</td>
-  </tr>
-  <tr>
-    <td>EfficientUnetWideSEB0</td>
-    <td>efficientnet_widese_b0</td>
-    <td>10,020,176</td>
-    <td>Yes</td>
-    <td>Normal</td>
-  </tr>
-  <tr>
-    <td>EfficientUnetB4</td>
-    <td rowspan="2">efficientnet_b0</td>
-    <td>20,573,144</td>
-    <td>Yes</td>
-    <td>Normal</td>
-  </tr>
-  <tr>
-    <td>EfficientUnetB4SCSE</td>
-    <td>20,592,128</td>
-    <td>Yes</td>
-    <td>SCSE- no concat</td>
-  </tr>
-</table>
-
 ## References
+
 - Competition and Dataset: [Xview2 org.](https://www.xview2.org)
 - [Xview2 First Place Solution](https://github.com/vdurnov/xview2_1st_place_solution)
 - [U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597)
