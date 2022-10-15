@@ -4,6 +4,12 @@ import torch
 from torchmetrics import Dice
 
 
+class ScoreException(Exception):
+    def __init__(self, message: str, **kwargs):
+        super(ScoreException, self).__init__(message)
+        self.data = kwargs
+
+
 class DamageLocalizationMetric(Dice):
 
     def __init__(self, **kwargs: Any):
@@ -48,4 +54,13 @@ class DamageClassificationMetric(Dice):
     def compute(self) -> torch.Tensor:
         sup = self.tp + self.fn
         scores = torch.nan_to_num(super().compute()[sup > 0], 1.)
-        return self._harmonic_mean(scores)
+        final_value = self._harmonic_mean(scores)
+        if final_value.isnan():
+            raise ScoreException("damage classification encountered nan",
+                                 tp=self.tp,
+                                 fn=self.fn,
+                                 fp=self.fp,
+                                 sup=sup,
+                                 dice=super().compute(),
+                                 scores=scores)
+        return final_value
