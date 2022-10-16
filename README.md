@@ -37,11 +37,145 @@ pip install -r requirements.txt
 
 ## Methodology
 
-### Unet
+### General Architecture
+
+As shown in the figure below, building-localization models consist of a feature extractor (a U-net or a SegFormer) and a classifier module. 
+The feature extractor extracts helpful features from the input image; 
+then, the classifier module predicts a value of 0 or 1 for each pixel, 
+indicating whether this pixel belongs to a building or not. 
+The feature extractor module extracts the same features from pre-disaster and post-disaster images in the classification models. 
+In these models, the classifier module predicts a class between 0 and 4 for each pixel. 
+The value 0 indicates that this pixel belongs to no building; 
+values 1-4 mean that this pixel belongs to a building and show the damage level in that pixel. 
+The classifier module learns a distance function between pre-disaster and post-disaster images 
+because the damage level of each facility can be determined by comparing it in the pre- and post-disaster images. 
+In many samples, the post-disaster image has a minor shift compared to the pre-disaster image; 
+the segmentation masks are created based on the location of buildings in the pre-disaster image. 
+This shift is an issue the model has to overcome. For models that share a joint feature extractor, 
+we can initialize the feature extractor module in the classification model with the localization model's feature extractor. 
+Since we do not use the localization model directly for damage assessment, training of the localization model can be seen as a pre-training stage for the classification model.
+
+![General Architecture](./res/model.png)
+
+### U-Models
+
+Some models in this project use a U-net module as the feature extractor and a superficial 2d Convolutional Layer as the classifier. 
+We call them u-models. Their feature extractor module is a u-net with five encoder and five decoder modules. 
+Encoder models are usually a part of a general feature extractor like Resnet-34. 
+in the forward pass of each image through an encoder module, the number of channels may or may not change. 
+Still, the height and width of the image are divided by two. 
+Usually, the five encoder modules combined include all layers of a general feature extractor model (like Resnet34) except the classification layer. 
+Each decoder module combines the output of the previous decoder module and the respective encoder module. 
+For example, encoder module 2 combines the output of decoder module 1 and encoder module 3. 
+They form a U-like structure, as shown in the figure below.
+
+![Unet](./res/unet-architecture.png)
+
+#### Decoder Modules
+
+There are two variants of decoder modules: 
+The standard decoder module and the SCSE decoder module. 
+The standard decoder module applies a 2d convolution and a Relu activation to the input from the previous decoder. 
+Then it concatenates the result with the input from the respective encoder module and applies another 2d convolution and ReLU activation. 
+SCSE decoder module works the same way but, in the end, 
+uses a "Concurrent Spatial and Channel Squeeze & Excitation" module on the result. 
+This SCSE module is supposed to help the model focus on the image's more critical regions and channels. 
+Decoder modules in the forked repository don't use batch normalization between the convolution and the activation. 
+We added this layer to the decoder modules to prevent gradient exploding and make them more stable.
+
+![Decoder Modules](./res/decoder.png)
+
+### Backbone
+We pick encoder modules of U-net models from a general feature extractor model called the backbone network. 
+The choice of the backbone network is the most crucial point in the performance of a U-net model. 
+Plus, most of the parameters of a U-net model are of its backbone network. 
+Thus, the choice of the backbone network significantly impacts its size and performance. 
+The forked repository used *Resnet34*, *Dual Path Network 92*, *SeResnext50 (32x4d)*, and *SeNet154* as the backbone network. 
+We used *EfficientNet B0* and *EfficientNet B4* (both standard and *Wide-SE* versions) as the backbone network, creating new U-models called EfficientUnets. 
+EfficientNets have shown excellent results on the ImageNet dataset, so they are good feature extractors. 
+They are also relatively small in size. These two features make them perfect choices for a backbone network.
+
+We listed all the used U-net models and their attributes in the table below.
+
+<table>
+  <tr>
+    <td rowspan="1" colspan="2">model</td>
+    <td rowspan="2" colspan="1">#params</td>
+    <td rowspan="2" colspan="1">Batch Normalization</td>
+    <td rowspan="2" colspan="1">DecoderType</td>
+  </tr>
+  <tr>
+    <td colspan="1">name</td>
+    <td colspan="1">backbone</td>
+  </tr>
+  <tr>
+    <td>Resnet34Unet</td>
+    <td>resnet_34</td>
+    <td>25,728,112</td>
+    <td> No </td>
+    <td>Standard</td>
+  </tr>
+  <tr>
+    <td>SeResnext50Unet</td>
+    <td>se_resnext50_32x4d</td>
+    <td>34,559,728</td>
+    <td>No</td>
+    <td>Standard</td>
+  </tr>
+  <tr>
+    <td>Dpn92Unet</td>
+    <td>dpn_92</td>
+    <td>47,408,735</td>
+    <td>No</td>
+    <td>SCSE - concat</td>
+  </tr>
+  <tr>
+    <td>SeNet154Unet</td>
+    <td>senet_154</td>
+    <td>124,874,656</td>
+    <td>No</td>
+    <td>Standard</td>
+  </tr>
+  <tr>
+    <td>EfficientUnetB0</td>
+    <td rowspan="2">efficientnet_b0</td>
+    <td>6,884,876</td>
+    <td>Yes</td>
+    <td>Standard</td>
+  </tr>
+  <tr>
+    <td>EfficientUnetB0SCSE</td>
+    <td>6,903,860</td>
+    <td>Yes</td>
+    <td>SCSE - no concat</td>
+  </tr>
+  <tr>
+    <td>EfficientUnetWideSEB0</td>
+    <td>efficientnet_widese_b0</td>
+    <td>10,020,176</td>
+    <td>Yes</td>
+    <td>Standard</td>
+  </tr>
+  <tr>
+    <td>EfficientUnetB4</td>
+    <td rowspan="2">efficientnet_b0</td>
+    <td>20,573,144</td>
+    <td>Yes</td>
+    <td>Standard</td>
+  </tr>
+  <tr>
+    <td>EfficientUnetB4SCSE</td>
+    <td>20,592,128</td>
+    <td>Yes</td>
+    <td>SCSE- no concat</td>
+  </tr>
+</table>
 
 ### Vision Transformer
 
-### MetLearning
+### Meta Learning
+
+### Training Setup
 
 ### Loss Functions
 
@@ -106,9 +240,9 @@ $$
 Since we used sigmoid-dice-loss for multiclass damage classification, cross-entropy loss helped the model assign only
 one class to each pixel. It solely is a good loss function for semantic segmentation tasks.
 
-### Training Setup
-
 ## Evaluation
+
+complete results are available at [results.md](./results.md)
 
 ### Metrics
 
@@ -136,94 +270,8 @@ The problem with different nadirs and small shifts between "pre" and "post" imag
 - Morphological dilation with 5*5 kernel applied to classification masks. Dilated masks made predictions more "bold" -
   this improved accuracy on borders and also helped with shifts and nadirs.
 
-# Architecture
 
-## Model
 
-![Model](./res/model.png)
-
-## Unet
-
-![Unet](./res/unet-architecture.png)
-
-### Module
-
-![Decoder Modules](./res/decoder.png)
-
-Unet Models:
-<table>
-  <tr>
-    <td rowspan="1" colspan="2">model</td>
-    <td rowspan="2" colspan="1">#params</td>
-    <td rowspan="2" colspan="1">Batch Normalization</td>
-    <td rowspan="2" colspan="1">DecoderType</td>
-  </tr>
-  <tr>
-    <td colspan="1">name</td>
-    <td colspan="1">backbone</td>
-  </tr>
-  <tr>
-    <td>Resnet34Unet</td>
-    <td>resnet_34</td>
-    <td>25,728,112</td>
-    <td> No </td>
-    <td>Normal</td>
-  </tr>
-  <tr>
-    <td>SeResnext50Unet</td>
-    <td>se_resnext50_32x4d</td>
-    <td>34,559,728</td>
-    <td>No</td>
-    <td>Normal</td>
-  </tr>
-  <tr>
-    <td>Dpn92Unet</td>
-    <td>dpn_92</td>
-    <td>47,408,735</td>
-    <td>No</td>
-    <td>SCSE - concat</td>
-  </tr>
-  <tr>
-    <td>SeNet154Unet</td>
-    <td>senet_154</td>
-    <td>124,874,656</td>
-    <td>No</td>
-    <td>Normal</td>
-  </tr>
-  <tr>
-    <td>EfficientUnetB0</td>
-    <td rowspan="2">efficientnet_b0</td>
-    <td>6,884,876</td>
-    <td>Yes</td>
-    <td>Normal</td>
-  </tr>
-  <tr>
-    <td>EfficientUnetB0SCSE</td>
-    <td>6,903,860</td>
-    <td>Yes</td>
-    <td>SCSE - no concat</td>
-  </tr>
-  <tr>
-    <td>EfficientUnetWideSEB0</td>
-    <td>efficientnet_widese_b0</td>
-    <td>10,020,176</td>
-    <td>Yes</td>
-    <td>Normal</td>
-  </tr>
-  <tr>
-    <td>EfficientUnetB4</td>
-    <td rowspan="2">efficientnet_b0</td>
-    <td>20,573,144</td>
-    <td>Yes</td>
-    <td>Normal</td>
-  </tr>
-  <tr>
-    <td>EfficientUnetB4SCSE</td>
-    <td>20,592,128</td>
-    <td>Yes</td>
-    <td>SCSE- no concat</td>
-  </tr>
-</table>
 
 # Data Processing Techniques
 
@@ -288,286 +336,6 @@ Thank you to xView2 team for creating and releasing this amazing dataset and opp
 help to response to the global natural disasters faster. I really hope it will be usefull and the idea will be improved
 further.
 
-# Evaluation Results
-
-on dataset `test` (used for validation):
-
-<table>
-<thead>
-  <td colspan="1">model</td>
-  <td colspan="1">version</td>
-  <td colspan="8">Localization</td>
-  <td colspan="8">Classification</td>
-</thead>
-<thead>
-  <td colspan="2">seed</td>
-  <td colspan="2">0</td>
-  <td colspan="2">1</td>
-  <td colspan="2">2</td>
-  <td colspan="2">mean</td>
-  <td colspan="2">0</td>
-  <td colspan="2">1</td>
-  <td colspan="2">2</td>
-  <td colspan="2">mean</td>
-</thead>
-<thead>
-  <td colspan="2"> TTA </td>
-
-  <td colspan="1"> - </td>
-  <td colspan="1"> + </td>
-
-  <td colspan="1"> - </td>
-  <td colspan="1"> + </td>
-
-  <td colspan="1"> - </td>
-  <td colspan="1"> + </td>
-
-  <td colspan="2"> - </td>
-
-  <td colspan="1"> - </td>
-  <td colspan="1"> + </td>
-
-  <td colspan="1"> - </td>
-  <td colspan="1"> + </td>
-
-  <td colspan="1"> - </td>
-  <td colspan="1"> + </td>
-
-  <td colspan="2"> - </td>
-</thead>
-<tr>
-  <td>Resnet34Unet</td>
-  <td>1</td>
-  <td>0.6555</td>
-  <td>0.6593</td>
-
-  <td>0.6675</td>
-  <td>0.6742</td>
-
-  <td>0.6820</td>
-  <td>0.6837</td>
-
-  <td colspan="2">0.6731</td>
-
-  <td>0.3608</td>
-  <td>0.3203</td>
-
-  <td>0.4566</td>
-  <td>0.4603</td>
-
-  <td>0.4284</td>
-  <td>0.4310</td>
-
-  <td colspan="2">0.4164</td>
-</tr>
-<tr>
-  <td>SeResnext50Unet</td>
-  <td>tuned</td>
-  <td>0.6943</td>
-  <td>0.6917</td>
-
-  <td>0.6922</td>
-  <td>0.6952</td>
-
-  <td>0.7000</td>
-  <td>0.7030</td>
-
-  <td colspan="2">0.7017</td>
-
-  <td>0.6751</td>
-  <td>0.6712</td>
-
-  <td>0.6428</td>
-  <td>0.6419</td>
-
-  <td>0.6601</td>
-  <td>0.6703</td>
-
-  <td colspan="2">0.6687</td>
-</tr>
-<tr>
-  <td>Dpn92Unet</td>
-  <td>tuned</td>
-  <td>0.6774</td>
-  <td>0.6825</td>
-
-  <td>0.6338</td>
-  <td>0.6313</td>
-
-  <td>0.6654</td>
-  <td>0.6720</td>
-
-  <td colspan="2">0.6644</td>
-
-  <td>0.6747</td>
-  <td>0.6818</td>
-
-  <td>0.6292</td>
-  <td>0.6264</td>
-
-  <td>0.6397</td>
-  <td>0.6485</td>
-
-  <td colspan="2">0.6689</td>
-</tr>
-<tr>
-  <td>SeNet154Unet</td>
-  <td>1</td>
-
-  <td>0.7246</td>
-  <td>0.7289</td>
-
-  <td>0.7107</td>
-  <td>0.7168</td>
-
-  <td>0.7221</td>
-  <td>0.7244</td>
-
-  <td colspan="2">0.7282</td>
-
-  <td>0.6963</td>
-  <td>0.7012</td>
-
-  <td>0.6153</td>
-  <td>0.6418</td>
-
-  <td>0.6862</td>
-  <td>0.6838</td>
-
-  <td colspan="2">0.6982</td>
-</tr>
-<tr>
-  <td>EfficientUnetB0</td>
-  <td>00</td>
-  <td>0.75896</td>
-</tr>
-<tr>
-  <td>EfficientUnetWideSEB0</td>
-  <td>00</td>
-  <td>0.75884</td>
-</tr>
-<tr>
-  <td>EfficientUnetB0SCSE</td>
-  <td>00</td>
-  <td>0.75886</td>
-</tr>
-<tr>
-  <td>EfficientUnetB4</td>
-  <td>00</td>
-  <td>0.76844</td>
-</tr>
-<tr>
-  <td>EfficientUnetB4SCSE</td>
-  <td>00</td>
-  <td>0.76553</td>
-</tr>
-</table>
-
-on dataset `hold` (used for testing):
-<table>
-<thead>
-  <td colspan="1">model</td>
-  <td colspan="1">version</td>
-  <td colspan="8">Localization</td>
-  <td colspan="8">Classification</td>
-</thead>
-<thead>
-  <td colspan="2">seed</td>
-  <td colspan="2">0</td>
-  <td colspan="2">1</td>
-  <td colspan="2">2</td>
-  <td colspan="2">mean</td>
-  <td colspan="2">0</td>
-  <td colspan="2">1</td>
-  <td colspan="2">2</td>
-  <td colspan="2">mean</td>
-</thead>
-<thead>
-  <td colspan="2"> TTA </td>
-
-  <td colspan="1"> - </td>
-  <td colspan="1"> + </td>
-
-  <td colspan="1"> - </td>
-  <td colspan="1"> + </td>
-
-  <td colspan="1"> - </td>
-  <td colspan="1"> + </td>
-
-  <td colspan="2"> - </td>
-
-  <td colspan="1"> - </td>
-  <td colspan="1"> + </td>
-
-  <td colspan="1"> - </td>
-  <td colspan="1"> + </td>
-
-  <td colspan="1"> - </td>
-  <td colspan="1"> + </td>
-
-  <td colspan="2"> - </td>
-</thead>
-<tr>
-  <td>Resnet34Unet</td>
-  <td>1</td>
-
-  <td>0.6609</td>
-  <td>0.6667</td>
-
-  <td>0.6685</td>
-  <td>0.6779</td>
-
-  <td>0.6842</td>
-  <td>0.6882</td>
-
-  <td colspan="2">0.7085</td>
-</tr>
-<tr>
-  <td>SeResnext50Unet</td>
-  <td>tuned</td>
-
-  <td>0.6953</td>
-  <td>0.6964</td>
-
-  <td>0.7020</td>
-  <td>0.7115</td>
-
-  <td>0.7049</td>
-  <td>0.7095</td>
-
-  <td colspan="2">0.7093</td>
-</tr>
-<tr>
-  <td>Dpn92Unet</td>
-  <td>tuned</td>
-
-  <td>0.6812</td>
-  <td>0.6832</td>
-
-  <td>0.6294</td>
-  <td>0.6317</td>
-
-  <td>0.6688</td>
-  <td>0.6732</td>
-
-  <td colspan="2">0.6646</td>
-</tr>
-<tr>
-  <td>SeNet154Unet</td>
-  <td>1</td>
-
-  <td>0.7340</td>
-  <td>0.7394</td>
-
-  <td>0.7244</td>
-  <td>0.7306</td>
-
-  <td>0.7347</td>
-  <td>0.7392</td>
-
-  <td colspan="2">0.7402</td>
-</tr>
-</table>
 
 ## References
 
