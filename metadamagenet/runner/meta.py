@@ -82,7 +82,7 @@ class MetaValidator(Runner):
 
             task: Task
             for task in task_set:
-                with higher.innerloop_ctx(self._model, self._inner_optim, track_higher_grads=False) \
+                with higher.innerloop_ctx(self._model, inner_optim, track_higher_grads=False) \
                         as (f_model, diff_optim):
                     # Optimize the likelihood of the support set by taking
                     # gradient steps w.r.t. the model's parameters.
@@ -287,7 +287,7 @@ class MetaTrainer(Runner):
                     # This unrolls through the gradient steps.
                     query_loss_value.backward()
 
-                    iterator.set_postfix({
+                    inner_iterator.set_postfix({
                         "support loss": support_loss_value.item(),
                         "query loss": query_loss_value.item(),
                         "query score": current_query_score.item(),
