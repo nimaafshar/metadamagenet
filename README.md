@@ -9,8 +9,6 @@ repository. I used that repository as a baseline and refactored its code.
 Thus, this code covers models and experiments of the mentioned repo and
 contributes more research into the same problem of damage assessment in aerial imagery.
 
-## Usage
-
 ### environment setup
 
 ```bash
@@ -27,9 +25,28 @@ pip install -r requirements.txt
 - [`Dpn92Unet` training and tuning](./example_dpn92.py)
 - [`SeNet154Unet` training and tuning](./example_dpn92.py)
 
+### table of contents
+
+1. [Data](#data)
+    1. [Structure](#structure)
+    2. [Data Loading and Datasets](#data-loading-and-datasets)
+    3. [Augmentations](#augmentations)
+2. [Methodology](#methodology)
+    1. [General Architecture](#general-architecture)
+    2. [U-Models](#u-models)
+        1. [Decoder Modules](#decoder-modules)
+        2. [Backbone](#backbone)
+    3. [Vision Transformer](#vision-transformer)
+    4. [Meta-Learning](#meta-learning)
+    5. [Training Setup](#training-setup)
+    6. [Loss Functions](#loss-functions)
+3. [Evaluation](#evaluation)
+4. [Conclusion and Acknowledgements](#conclusion-and-acknowledgments)
+5. [References](#references)
+
 ## Data
 
-### Structure and
+### Structure
 
 ### Data Loading and Datasets
 
@@ -120,7 +137,7 @@ We added this layer to the decoder modules to prevent gradient exploding and mak
 
 ![Decoder Modules](./res/decoder.png)
 
-### Backbone
+#### Backbone
 
 We pick encoder modules of U-net models from a general feature extractor model called the backbone network.
 The choice of the backbone network is the most crucial point in the performance of a U-net model.
@@ -211,20 +228,20 @@ We listed all the used U-net models and their attributes in the table below.
 
 ### Vision Transformer
 
-
 ### Meta-Learning
-In meta-learning, a general problem, such as classifying different images (in the *ImageNet* dataset) or classifying 
-different letters (in the *Omniglot* dataset), is seen as a distribution of tasks. In this approach, tasks are generally 
-the same problem (like classifying letters) but vary in some parameters (like the script letters belong to). 
-We can take a similar approach to our problem. We can view building detection and damage level classification as the 
-general problem and the disaster type (like a flood, hurricane, or wildfire) and the environment of the disaster 
-(like a desert, forest, or urban area) as the varying factor. In distance-learning methods, the distance function 
-returns a distance between the query sample and each class's sample. Then the query sample is classified into the 
-class with minimum distance. These methods are helpful when we have a high number of classes. However, in our case, 
-the number of classes is fixed. Thus, we used a model-agnostic approach. Model agnostic meta-learning algorithms find a 
-set of parameters for the model that can be adapted to a new task by training with very few samples. 
-We used the MAML algorithm and considered every different disaster a task. 
-Since the MAML algorithm consumes lots of memory, and the consumed memory is relative to the model size, 
+
+In meta-learning, a general problem, such as classifying different images (in the *ImageNet* dataset) or classifying
+different letters (in the *Omniglot* dataset), is seen as a distribution of tasks. In this approach, tasks are generally
+the same problem (like classifying letters) but vary in some parameters (like the script letters belong to).
+We can take a similar approach to our problem. We can view building detection and damage level classification as the
+general problem and the disaster type (like a flood, hurricane, or wildfire) and the environment of the disaster
+(like a desert, forest, or urban area) as the varying factor. In distance-learning methods, the distance function
+returns a distance between the query sample and each class's sample. Then the query sample is classified into the
+class with minimum distance. These methods are helpful when we have a high number of classes. However, in our case,
+the number of classes is fixed. Thus, we used a model-agnostic approach. Model agnostic meta-learning algorithms find a
+set of parameters for the model that can be adapted to a new task by training with very few samples.
+We used the MAML algorithm and considered every different disaster a task.
+Since the MAML algorithm consumes lots of memory, and the consumed memory is relative to the model size,
 we have used models based on *EfficientUnetB0* for this section.
 
 ### Training Setup
@@ -357,15 +374,26 @@ $$
 
 ### Training Results
 
+**Empirical Results:**
+
 - EfficientUnet Localization Models have shown that they train better without the usage of focal loss
 
 complete results are available at [results.md](./results.md)
 
 ## Conclusion and Acknowledgments
 
+Thank you to xView2 team for creating and releasing this amazing dataset and opportunity to invent a solution that can
+help to response to the global natural disasters faster. I really hope it will be usefull and the idea will be improved
+further.
+
 ## References
 
-# Data
+- Competition and Dataset: [Xview2 org.](https://www.xview2.org)
+- [Xview2 First Place Solution](https://github.com/vdurnov/xview2_1st_place_solution)
+- [U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597)
+- [Cadene/Pretrained models for Pytorch](https://github.com/Cadene/pretrained-models.pytorch)
+
+# Data2
 
 # Data Cleaning Techniques
 
@@ -431,15 +459,3 @@ Predictions averaged with equal coefficients for both localization and classific
 
 Different thresholds for localization used for damaged and undamaged classes (lower for damaged).
 
-# Conclusion and Acknowledgments
-
-Thank you to xView2 team for creating and releasing this amazing dataset and opportunity to invent a solution that can
-help to response to the global natural disasters faster. I really hope it will be usefull and the idea will be improved
-further.
-
-## References
-
-- Competition and Dataset: [Xview2 org.](https://www.xview2.org)
-- [Xview2 First Place Solution](https://github.com/vdurnov/xview2_1st_place_solution)
-- [U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597)
-- [Cadene/Pretrained models for Pytorch](https://github.com/Cadene/pretrained-models.pytorch)
