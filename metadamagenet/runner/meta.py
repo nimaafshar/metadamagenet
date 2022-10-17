@@ -53,7 +53,7 @@ class MetaValidator(Runner):
                           data_batch.items()}
         return data_batch
 
-    def _transform(self, data_batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def _transform_batch(self, data_batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         with torch.no_grad():
             if self._transform is not None:
                 data_batch = self._transform(data_batch)
@@ -89,7 +89,7 @@ class MetaValidator(Runner):
                     # This adapts the model's meta-parameters to the task.
                     support_batch: Dict[str, torch.Tensor] = next(iter(task.support))  # get one batch from dataloader
                     support_batch = self._move_batch_to_device(support_batch)
-                    support_batch = self._transform(support_batch)
+                    support_batch = self._transform_batch(support_batch)
                     inputs: torch.Tensor
                     targets: torch.Tensor
                     inputs, targets = self._model.preprocess(support_batch)
@@ -101,7 +101,7 @@ class MetaValidator(Runner):
                     # The query loss and score induced by these parameters.
                     query_batch: Dict[str, torch.Tensor] = next(iter(task.query))  # get one batch from dataloader
                     query_batch = self._move_batch_to_device(query_batch)
-                    query_batch = self._transform(query_batch)
+                    query_batch = self._transform_batch(query_batch)
                     query_inputs: torch.Tensor
                     query_targets: torch.Tensor
                     query_inputs, query_targets = self._model.preprocess(query_batch)
@@ -221,7 +221,7 @@ class MetaTrainer(Runner):
                           data_batch.items()}
         return data_batch
 
-    def _transform(self, data_batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def _transform_batch(self, data_batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         with torch.no_grad():
             if self._transform is not None:
                 data_batch = self._transform(data_batch)
@@ -255,7 +255,7 @@ class MetaTrainer(Runner):
                     # your network's parameters as they are being updated.
                     support_batch: Dict[str, torch.Tensor] = next(iter(task.support))  # get one batch from dataloader
                     support_batch = self._move_batch_to_device(support_batch)
-                    support_batch = self._transform(support_batch)
+                    support_batch = self._transform_batch(support_batch)
                     inputs: torch.Tensor  # (B,5,H,W) or (B,1,H,W) with float values
                     targets: torch.Tensor  # (B,H,W) with long values (0-4) or (0-1)
                     inputs, targets = self._model.preprocess(support_batch)
@@ -269,7 +269,7 @@ class MetaTrainer(Runner):
                     # These will be used to update the model's meta-parameters.
                     query_batch: Dict[str, torch.Tensor] = next(iter(task.query))  # get one batch from dataloader
                     query_batch = self._move_batch_to_device(query_batch)
-                    query_batch = self._transform(query_batch)
+                    query_batch = self._transform_batch(query_batch)
                     query_inputs: torch.Tensor
                     query_targets: torch.Tensor
                     query_inputs, query_targets = self._model.preprocess(query_batch)
