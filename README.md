@@ -37,62 +37,100 @@ pip install -r requirements.txt
 
 ## Methodology
 
+Example Usage:
+
+```python
+from metadamagenet.models import Localizer
+from metadamagenet.models.unet import EfficientUnetB0
+
+
+# define localizer of unet
+class EfficientUnetB0Localizer(Localizer[EfficientUnetB0]): pass
+
+
+# load pretrained model
+pretrained_model = EfficientUnetB0Localizer.from_pretrained(version='00', seed=0)
+
+# load an empty model
+empty_model = EfficientUnetB0Localizer()
+
+# load a model from pretrained unet
+unet: EfficientUnetB0  # some pretrained unet
+model_with_pretrained_unet = EfficientUnetB0Localizer(unet)
+
+# load an empty unet
+empty_unet = EfficientUnetB0()
+
+# load a unet with pretrained backbone
+unet_with_pretrained_backbone = EfficientUnetB0(pretrained_backbone=True)
+```
+
 ### General Architecture
 
-As shown in the figure below, building-localization models consist of a feature extractor (a U-net or a SegFormer) and a classifier module. 
-The feature extractor extracts helpful features from the input image; 
-then, the classifier module predicts a value of 0 or 1 for each pixel, 
-indicating whether this pixel belongs to a building or not. 
-The feature extractor module extracts the same features from pre-disaster and post-disaster images in the classification models. 
-In these models, the classifier module predicts a class between 0 and 4 for each pixel. 
-The value 0 indicates that this pixel belongs to no building; 
-values 1-4 mean that this pixel belongs to a building and show the damage level in that pixel. 
-The classifier module learns a distance function between pre-disaster and post-disaster images 
-because the damage level of each facility can be determined by comparing it in the pre- and post-disaster images. 
-In many samples, the post-disaster image has a minor shift compared to the pre-disaster image; 
-the segmentation masks are created based on the location of buildings in the pre-disaster image. 
-This shift is an issue the model has to overcome. For models that share a joint feature extractor, 
-we can initialize the feature extractor module in the classification model with the localization model's feature extractor. 
-Since we do not use the localization model directly for damage assessment, training of the localization model can be seen as a pre-training stage for the classification model.
+As shown in the figure below, building-localization models consist of a feature extractor (a U-net or a SegFormer) and a
+classifier module.
+The feature extractor extracts helpful features from the input image;
+then, the classifier module predicts a value of 0 or 1 for each pixel,
+indicating whether this pixel belongs to a building or not.
+The feature extractor module extracts the same features from pre-disaster and post-disaster images in the classification
+models.
+In these models, the classifier module predicts a class between 0 and 4 for each pixel.
+The value 0 indicates that this pixel belongs to no building;
+values 1-4 mean that this pixel belongs to a building and show the damage level in that pixel.
+The classifier module learns a distance function between pre-disaster and post-disaster images
+because the damage level of each facility can be determined by comparing it in the pre- and post-disaster images.
+In many samples, the post-disaster image has a minor shift compared to the pre-disaster image;
+the segmentation masks are created based on the location of buildings in the pre-disaster image.
+This shift is an issue the model has to overcome. For models that share a joint feature extractor,
+we can initialize the feature extractor module in the classification model with the localization model's feature
+extractor.
+Since we do not use the localization model directly for damage assessment, training of the localization model can be
+seen as a pre-training stage for the classification model.
 
 ![General Architecture](./res/model.png)
 
 ### U-Models
 
-Some models in this project use a U-net module as the feature extractor and a superficial 2d Convolutional Layer as the classifier. 
-We call them u-models. Their feature extractor module is a u-net with five encoder and five decoder modules. 
-Encoder models are usually a part of a general feature extractor like Resnet-34. 
-in the forward pass of each image through an encoder module, the number of channels may or may not change. 
-Still, the height and width of the image are divided by two. 
-Usually, the five encoder modules combined include all layers of a general feature extractor model (like Resnet34) except the classification layer. 
-Each decoder module combines the output of the previous decoder module and the respective encoder module. 
-For example, encoder module 2 combines the output of decoder module 1 and encoder module 3. 
+Some models in this project use a U-net module as the feature extractor and a superficial 2d Convolutional Layer as the
+classifier.
+We call them u-models. Their feature extractor module is a u-net with five encoder and five decoder modules.
+Encoder models are usually a part of a general feature extractor like Resnet-34.
+in the forward pass of each image through an encoder module, the number of channels may or may not change.
+Still, the height and width of the image are divided by two.
+Usually, the five encoder modules combined include all layers of a general feature extractor model (like Resnet34)
+except the classification layer.
+Each decoder module combines the output of the previous decoder module and the respective encoder module.
+For example, encoder module 2 combines the output of decoder module 1 and encoder module 3.
 They form a U-like structure, as shown in the figure below.
 
 ![Unet](./res/unet-architecture.png)
 
 #### Decoder Modules
 
-There are two variants of decoder modules: 
-The standard decoder module and the SCSE decoder module. 
-The standard decoder module applies a 2d convolution and a Relu activation to the input from the previous decoder. 
-Then it concatenates the result with the input from the respective encoder module and applies another 2d convolution and ReLU activation. 
-SCSE decoder module works the same way but, in the end, 
-uses a "Concurrent Spatial and Channel Squeeze & Excitation" module on the result. 
-This SCSE module is supposed to help the model focus on the image's more critical regions and channels. 
-Decoder modules in the forked repository don't use batch normalization between the convolution and the activation. 
+There are two variants of decoder modules:
+The standard decoder module and the SCSE decoder module.
+The standard decoder module applies a 2d convolution and a Relu activation to the input from the previous decoder.
+Then it concatenates the result with the input from the respective encoder module and applies another 2d convolution and
+ReLU activation.
+SCSE decoder module works the same way but, in the end,
+uses a "Concurrent Spatial and Channel Squeeze & Excitation" module on the result.
+This SCSE module is supposed to help the model focus on the image's more critical regions and channels.
+Decoder modules in the forked repository don't use batch normalization between the convolution and the activation.
 We added this layer to the decoder modules to prevent gradient exploding and make them more stable.
 
 ![Decoder Modules](./res/decoder.png)
 
 ### Backbone
-We pick encoder modules of U-net models from a general feature extractor model called the backbone network. 
-The choice of the backbone network is the most crucial point in the performance of a U-net model. 
-Plus, most of the parameters of a U-net model are of its backbone network. 
-Thus, the choice of the backbone network significantly impacts its size and performance. 
-The forked repository used *Resnet34*, *Dual Path Network 92*, *SeResnext50 (32x4d)*, and *SeNet154* as the backbone network. 
-We used *EfficientNet B0* and *EfficientNet B4* (both standard and *Wide-SE* versions) as the backbone network, creating new U-models called EfficientUnets. 
-EfficientNets have shown excellent results on the ImageNet dataset, so they are good feature extractors. 
+
+We pick encoder modules of U-net models from a general feature extractor model called the backbone network.
+The choice of the backbone network is the most crucial point in the performance of a U-net model.
+Plus, most of the parameters of a U-net model are of its backbone network.
+Thus, the choice of the backbone network significantly impacts its size and performance.
+The forked repository used *Resnet34*, *Dual Path Network 92*, *SeResnext50 (32x4d)*, and *SeNet154* as the backbone
+network.
+We used *EfficientNet B0* and *EfficientNet B4* (both standard and *Wide-SE* versions) as the backbone network, creating
+new U-models called EfficientUnets.
+EfficientNets have shown excellent results on the ImageNet dataset, so they are good feature extractors.
 They are also relatively small in size. These two features make them perfect choices for a backbone network.
 
 We listed all the used U-net models and their attributes in the table below.
@@ -242,9 +280,26 @@ one class to each pixel. It solely is a good loss function for semantic segmenta
 
 ## Evaluation
 
-One of the most popular evaluation metrics for classifiers is the f1-score; because it accounts for precision and recall simultaneously. The macro version of the f1-score is a good evaluation measure for imbalanced datasets. The xview2-scoring repository describes what variation of f1-score to use for this problem's scoring. We adapted their evaluation metrics. However, we implemented these metrics as a metric for the torchmetrics repository. It performs better than computing metrics in NumPy and provides an easy-to-use API.
+Example Usage:
 
--   The dice score is a set similarity measure that equals the f1-score.
+```python
+from torch import Tensor
+from metadamagenet.metrics import DamageLocalizationMetric, DamageClassificationMetric
+
+evaluator = 0.2 * DamageLocalizationMetric() + 0.8 * DamageClassificationMetric()
+
+preds: Tensor
+targets: Tensor
+score = evaluator(preds, targets)
+```
+
+One of the most popular evaluation metrics for classifiers is the f1-score; because it accounts for precision and recall
+simultaneously. The macro version of the f1-score is a good evaluation measure for imbalanced datasets. The
+xview2-scoring repository describes what variation of f1-score to use for this problem's scoring. We adapted their
+evaluation metrics. However, we implemented these metrics as a metric for the torchmetrics repository. It performs
+better than computing metrics in NumPy and provides an easy-to-use API.
+
+- The dice score is a set similarity measure that equals the f1-score.
 
 $$
 Dice(P,Q) = 2. \frac{P \cap Q}{P+Q}
@@ -256,25 +311,39 @@ $$
 
 ### Localization Models Scoring
 
-The localization score defines as a globally calculated binary f1-score. Sample-wise calculation means calculating the score on each sample (image); then averaging sample scores to get the final score. In global calculation, we use the sum of true positives, true negatives, false positives, and false negatives across all samples to calculate the metric.
+The localization score defines as a globally calculated binary f1-score. Sample-wise calculation means calculating the
+score on each sample (image); then averaging sample scores to get the final score. In global calculation, we use the sum
+of true positives, true negatives, false positives, and false negatives across all samples to calculate the metric.
 
-The localization score is a binary f1-score, which means class zero (no-building/background) is considered negative, and class one (building) is considered positive. Since we only care about detecting buildings from the background, micro-average is applied too.
-
-  
+The localization score is a binary f1-score, which means class zero (no-building/background) is considered negative, and
+class one (building) is considered positive. Since we only care about detecting buildings from the background,
+micro-average is applied too.
 
 ### Classification Models Scoring
 
-The classification score consists of a weighted sum of 2 scores: the localization score and the damage classification score. Classification models a label of zero to four for each pixel, indicating no-building, no damage, minor damage, major damage, and destroyed, respectively. Since one to four label values show that this pixel belongs to a building, we calculate the localization score after converting all values above zero to one. This score determines how good the model is at segmenting buildings. We defined the damage classification score as the harmonic mean of the globally computed f1-score for each class from one to four. We calculate the f1-score of each class separately, then use their harmonic mean to give each damage level equal importance. Here we prefer the harmonic mean to the arithmetic mean because different classes do not have equal support. We compute the damage classification score only on the pixels that have one to four label values in reality. This way, we remove the effect of the models' localization performance from the damage classification score. Hence, these two metrics represent the models' performance in two disparate aspects.
+The classification score consists of a weighted sum of 2 scores: the localization score and the damage classification
+score. Classification models a label of zero to four for each pixel, indicating no-building, no damage, minor damage,
+major damage, and destroyed, respectively. Since one to four label values show that this pixel belongs to a building, we
+calculate the localization score after converting all values above zero to one. This score determines how good the model
+is at segmenting buildings. We defined the damage classification score as the harmonic mean of the globally computed
+f1-score for each class from one to four. We calculate the f1-score of each class separately, then use their harmonic
+mean to give each damage level equal importance. Here we prefer the harmonic mean to the arithmetic mean because
+different classes do not have equal support. We compute the damage classification score only on the pixels that have one
+to four label values in reality. This way, we remove the effect of the models' localization performance from the damage
+classification score. Hence, these two metrics represent the models' performance in two disparate aspects.
 
 $$
- score = 0.3 \times F1_{LOC} + 0.7 \times F1_{DC}
+score = 0.3 \times F1_{LOC} + 0.7 \times F1_{DC}
 $$
 
 $$
-F1_{DC} = 4/(\frac{1}{F1_1 + \epsilon} + \frac{1}{F1_2 + \epsilon} + \frac{1}{F1_3 + \epsilon} + \frac{1}{F1_4 + \epsilon})
+F1_{DC} = 4/(\frac{1}{F1_1 + \epsilon} + \frac{1}{F1_2 + \epsilon} + \frac{1}{F1_3 + \epsilon} + \frac{1}{F1_4 +
+\epsilon})
 $$
 
 ### Training Results
+
+- EfficientUnet Localization Models have shown that they train better without the usage of focal loss
 
 complete results are available at [results.md](./results.md)
 
@@ -299,9 +368,6 @@ The problem with different nadirs and small shifts between "pre" and "post" imag
   way and helped to ignore these shifts and different nadirs as well.
 - Morphological dilation with 5*5 kernel applied to classification masks. Dilated masks made predictions more "bold" -
   this improved accuracy on borders and also helped with shifts and nadirs.
-
-
-
 
 # Data Processing Techniques
 
@@ -365,7 +431,6 @@ Different thresholds for localization used for damaged and undamaged classes (lo
 Thank you to xView2 team for creating and releasing this amazing dataset and opportunity to invent a solution that can
 help to response to the global natural disasters faster. I really hope it will be usefull and the idea will be improved
 further.
-
 
 ## References
 
