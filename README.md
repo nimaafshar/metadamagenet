@@ -3,9 +3,9 @@
 #### Using Deep Learning To Identify And Classify Damage In Aerial Imagery
 
 This project is my bachelors thesis at AmirKabir University of Technology under supervision of Dr.Amin Gheibi.
-Some ideas from this project is borrowed from
+Some ideas of this project is borrowed from
 [xview2 first place solution](https://github.com/vdurnov/xview2_1st_place_solution)
-repository. I used that repository as a baseline.
+repository. I used that repository as a baseline and refactored its code.
 Thus, this code covers models and experiments of the mentioned repo and
 contributes more research into the same problem of damage assessment in aerial imagery.
 
@@ -87,7 +87,7 @@ extractor.
 Since we do not use the localization model directly for damage assessment, training of the localization model can be
 seen as a pre-training stage for the classification model.
 
-![General Architecture](./res/model.png)
+![General Architecture](./res/arch.png)
 
 ### U-Models
 
@@ -211,7 +211,21 @@ We listed all the used U-net models and their attributes in the table below.
 
 ### Vision Transformer
 
-### Meta Learning
+
+### Meta-Learning
+In meta-learning, a general problem, such as classifying different images (in the *ImageNet* dataset) or classifying 
+different letters (in the *Omniglot* dataset), is seen as a distribution of tasks. In this approach, tasks are generally 
+the same problem (like classifying letters) but vary in some parameters (like the script letters belong to). 
+We can take a similar approach to our problem. We can view building detection and damage level classification as the 
+general problem and the disaster type (like a flood, hurricane, or wildfire) and the environment of the disaster 
+(like a desert, forest, or urban area) as the varying factor. In distance-learning methods, the distance function 
+returns a distance between the query sample and each class's sample. Then the query sample is classified into the 
+class with minimum distance. These methods are helpful when we have a high number of classes. However, in our case, 
+the number of classes is fixed. Thus, we used a model-agnostic approach. Model agnostic meta-learning algorithms find a 
+set of parameters for the model that can be adapted to a new task by training with very few samples. 
+We used the MAML algorithm and considered every different disaster a task. 
+Since the MAML algorithm consumes lots of memory, and the consumed memory is relative to the model size, 
+we have used models based on *EfficientUnetB0* for this section.
 
 ### Training Setup
 
@@ -389,15 +403,6 @@ up-down, rotation to 180).
 
 trained with Train/Validation random split 90%/10% with fixed seeds (3 folds). Only checkpoints from epochs
 with best validation score used.
-
-For localization models 4 different pretrained encoders used:
-from torchvision.models:
-
-- ResNet34
-  from https://github.com/Cadene/pretrained-models.pytorch:
-- se_resnext50_32x4d
-- SeNet154
-- Dpn92
 
 Localization models trained on "pre" images, "post" images used in very rare cases as additional augmentation.
 
