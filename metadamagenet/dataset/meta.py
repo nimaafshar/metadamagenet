@@ -50,7 +50,7 @@ class MetaDataLoader(Iterable):
         return self
 
     def __len__(self):
-        return len(self._dataset_class) // self._task_set_size
+        return len(self._tasks_datasets) // self._task_set_size
 
     def __next__(self) -> TaskSet:
         if self._i >= len(self):
