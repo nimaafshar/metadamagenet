@@ -242,11 +242,41 @@ one class to each pixel. It solely is a good loss function for semantic segmenta
 
 ## Evaluation
 
+One of the most popular evaluation metrics for classifiers is the f1-score; because it accounts for precision and recall simultaneously. The macro version of the f1-score is a good evaluation measure for imbalanced datasets. The xview2-scoring repository describes what variation of f1-score to use for this problem's scoring. We adapted their evaluation metrics. However, we implemented these metrics as a metric for the torchmetrics repository. It performs better than computing metrics in NumPy and provides an easy-to-use API.
+
+-   The dice score is a set similarity measure that equals the f1-score.
+
+$$
+Dice(P,Q) = 2. \frac{P \cap Q}{P+Q}
+$$
+
+$$
+F1(P,Q) = \frac{2TP}{2TP + FP + FN}
+$$
+
+### Localization Models Scoring
+
+The localization score defines as a globally calculated binary f1-score. Sample-wise calculation means calculating the score on each sample (image); then averaging sample scores to get the final score. In global calculation, we use the sum of true positives, true negatives, false positives, and false negatives across all samples to calculate the metric.
+
+The localization score is a binary f1-score, which means class zero (no-building/background) is considered negative, and class one (building) is considered positive. Since we only care about detecting buildings from the background, micro-average is applied too.
+
+  
+
+### Classification Models Scoring
+
+The classification score consists of a weighted sum of 2 scores: the localization score and the damage classification score. Classification models a label of zero to four for each pixel, indicating no-building, no damage, minor damage, major damage, and destroyed, respectively. Since one to four label values show that this pixel belongs to a building, we calculate the localization score after converting all values above zero to one. This score determines how good the model is at segmenting buildings. We defined the damage classification score as the harmonic mean of the globally computed f1-score for each class from one to four. We calculate the f1-score of each class separately, then use their harmonic mean to give each damage level equal importance. Here we prefer the harmonic mean to the arithmetic mean because different classes do not have equal support. We compute the damage classification score only on the pixels that have one to four label values in reality. This way, we remove the effect of the models' localization performance from the damage classification score. Hence, these two metrics represent the models' performance in two disparate aspects.
+
+$$
+ score = 0.3 \times F1_{LOC} + 0.7 \times F1_{DC}
+$$
+
+$$
+F1_{DC} = 4/(\frac{1}{F1_1 + \epsilon} + \frac{1}{F1_2 + \epsilon} + \frac{1}{F1_3 + \epsilon} + \frac{1}{F1_4 + \epsilon})
+$$
+
+### Training Results
+
 complete results are available at [results.md](./results.md)
-
-### Metrics
-
-## Results
 
 ## Conclusion and Acknowledgments
 
@@ -310,12 +340,12 @@ Loss: Dice + Focal
 Validation metric: Dice
 Optimizer: AdamW
 
-Classification models initilized using weights from corresponding localization model and fold number. They are Siamese
+Classification models initialized using weights from corresponding localization model and fold number. They are Siamese
 Neural Networks with whole localization model shared between "pre" and "post" input images. Features from last Decoder
-layer combined together for classification. Pretrained weights are not frozen.
+layer combined for classification. Pretrained weights are not frozen.
 Using pretrained weights from localization models allowed to train classification models much faster and to have better
 accuracy. Features from "pre" and "post" images connected at the very end of the Decoder in bottleneck part, this
-helping not to overfit and get better generalizing model.
+helping not to over-fit and get better generalizing model.
 
 Classification training parameters:
 Loss: Dice + Focal + CrossEntropyLoss. Larger coefficient for CrossEntropyLoss and 2-4 damage classes.
