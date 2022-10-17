@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass
 import pathlib
 import json
-from typing import List, Tuple, Iterable, Union
+from typing import List, Tuple, Iterable, Union, Dict
 
 from shapely.geometry import Polygon
 from shapely import wkt
@@ -113,3 +113,16 @@ def discover_directory(base_directory: pathlib.Path, check: bool = True) -> List
         logger.info(f"warning: directory {base_directory} is empty")
 
     return results
+
+
+def group_by_disasters(dataset: List[ImageData]) -> Dict[str, List[ImageData]]:
+    result: Dict[str, List[ImageData]] = {}
+
+    image_data: ImageData
+    for image_data in dataset:
+        if image_data.disaster in result:
+            result[image_data.disaster].append(image_data)
+        else:
+            result[image_data.disaster] = [image_data]
+
+    return result
