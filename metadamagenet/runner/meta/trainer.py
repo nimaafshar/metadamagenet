@@ -150,11 +150,10 @@ class MetaTrainer(Runner):
                         # This adapts the model's meta-parameters to the task.
                         # higher is able to automatically keep copies of
                         # your network's parameters as they are being updated.
-                        self._score.reset()
                         for k in range(1, self._n_inner_iter + 1):
                             gc.collect()
                             torch.cuda.empty_cache()
-
+                            self._score.reset()
                             support_loss_sum: torch.Tensor = 0
                             data_batch: Dict[str, torch.Tensor]
                             inputs: torch.Tensor  # (B,5,H,W) or (B,1,H,W) with float values

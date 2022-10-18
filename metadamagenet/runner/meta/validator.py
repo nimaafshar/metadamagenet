@@ -86,9 +86,9 @@ class MetaValidator(Runner):
                         targets: torch.Tensor
                         data_batch: Dict[str, torch.Tensor]
 
-                        self._score.reset()
                         for k in range(1, self._n_inner_iter + 1):
                             support_loss_sum: torch.Tensor = 0
+                            self._score.reset()
                             for data_batch in task.support:
                                 inputs, targets = self._prepare_batch(data_batch)
                                 outputs: torch.Tensor = f_model(inputs)
