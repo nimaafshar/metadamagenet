@@ -123,7 +123,7 @@ class MetaValidator(Runner):
                             query_loss_sum += self._loss(outputs, targets).detach()
                             with torch.no_grad():
                                 activated_outputs: torch.Tensor = self._model.activate(outputs)
-                                self._score.update(activated_outputs, targets).detach()
+                                self._score.update(activated_outputs, targets)
                             del inputs, targets, outputs, activated_outputs
                         query_loss: torch.Tensor = (query_loss_sum / len(task.query))
                         logger.info("%s", {
