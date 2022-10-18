@@ -115,7 +115,7 @@ def discover_directory(base_directory: pathlib.Path, check: bool = True) -> List
     return results
 
 
-def group_by_disasters(dataset: List[ImageData]) -> Dict[str, List[ImageData]]:
+def group_by_disasters(dataset: List[ImageData]) -> List[Tuple[str, List[ImageData]]]:
     result: Dict[str, List[ImageData]] = {}
 
     image_data: ImageData
@@ -125,4 +125,4 @@ def group_by_disasters(dataset: List[ImageData]) -> Dict[str, List[ImageData]]:
         else:
             result[image_data.disaster] = [image_data]
 
-    return result
+    return [(k, v) for k, v in result.items()]
