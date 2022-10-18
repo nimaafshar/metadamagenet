@@ -190,8 +190,8 @@ class MetaTrainer(Runner):
                         query_loss_sum: torch.Tensor = 0
                         for data_batch in task.query:
                             inputs, targets = self._prepare_batch(data_batch)
-                            outputs = f_model(inputs).detach()
-                            query_loss_sum += self._loss(outputs, targets).detach()
+                            outputs = f_model(inputs)
+                            query_loss_sum += self._loss(outputs, targets)
                             with torch.no_grad():
                                 activated_outputs: torch.Tensor = self._model.activate(outputs)
                                 self._score.update(activated_outputs, targets)
