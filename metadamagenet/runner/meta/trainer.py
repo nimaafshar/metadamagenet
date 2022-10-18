@@ -150,12 +150,15 @@ class MetaTrainer(Runner):
                         # This adapts the model's meta-parameters to the task.
                         # higher is able to automatically keep copies of
                         # your network's parameters as they are being updated.
-                        data_batch: Dict[str, torch.Tensor]
-                        inputs: torch.Tensor  # (B,5,H,W) or (B,1,H,W) with float values
-                        targets: torch.Tensor  # (B,H,W) with long values (0-4) or (0-1)
                         self._score.reset()
                         for k in range(1, self._n_inner_iter + 1):
+                            gc.collect()
+                            torch.cuda.empty_cache()
+
                             support_loss_sum: torch.Tensor = 0
+                            data_batch: Dict[str, torch.Tensor]
+                            inputs: torch.Tensor  # (B,5,H,W) or (B,1,H,W) with float values
+                            targets: torch.Tensor  # (B,H,W) with long values (0-4) or (0-1)
                             for data_batch in task.support:
                                 inputs, targets = self._prepare_batch(data_batch)
                                 outputs: torch.Tensor = f_model(inputs)
@@ -164,11 +167,8 @@ class MetaTrainer(Runner):
                                     activated_outputs: torch.Tensor = self._model.activate(outputs)
                                     self._score.update(activated_outputs, targets)
                                 del inputs, targets, outputs
-                                gc.collect()
-                                torch.cuda.empty_cache()
                             support_loss = support_loss_sum / len(task.support)
                             diff_optim.step(support_loss)
-
                             logger.info("%s", {
                                 "task": task.name,
                                 "mode": "adapt",
