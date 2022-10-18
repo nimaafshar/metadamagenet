@@ -7,7 +7,7 @@ import kornia.geometry as kg
 
 class Resize(CollectionTransform):
     def forward(self, img_group: ImageCollection) -> ImageCollection:
-        return {k: kg.resize(v, size=(self._height, self._width)) for k, v in img_group}
+        return {k: kg.resize(v, size=(self._height, self._width)) for k, v in img_group.items()}
 
     def __init__(self, height: int, width: int):
         """
