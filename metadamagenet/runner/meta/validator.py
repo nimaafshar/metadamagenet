@@ -105,7 +105,7 @@ class MetaValidator(Runner):
                             support_loss = support_loss_sum / len(task.support)
                             diff_optim.step(support_loss)
 
-                            logger.info({
+                            logger.info("%s", {
                                 "task": task.name,
                                 "mode": "adapt",
                                 "k": f"{k}/{self._n_inner_iter}",
@@ -130,7 +130,7 @@ class MetaValidator(Runner):
                                 activated_outputs: torch.Tensor = self._model.activate(outputs)
                                 self._score.update(activated_outputs, targets).detach()
                         query_loss: torch.Tensor = (query_loss_sum / len(task.query))
-                        logger.info({
+                        logger.info("%s", {
                             "task": task.name,
                             "mode": "check",
                             "loss": query_loss.item(),
@@ -143,7 +143,7 @@ class MetaValidator(Runner):
                             "que_sc": total_query_score.compute().item()
                         })
                     progress_bar.update(1)
-        logger.info({
+        logger.info("%s", {
             "support_loss": total_support_loss.compute().item(),
             "support_score": total_support_score.compute().item(),
             "query_loss": total_query_loss.compute().item(),

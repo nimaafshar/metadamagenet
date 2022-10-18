@@ -172,7 +172,7 @@ class MetaTrainer(Runner):
                             support_loss = support_loss_sum / len(task.support)
                             diff_optim.step(support_loss)
 
-                            logger.info({
+                            logger.info("%s", {
                                 "task": task.name,
                                 "mode": "adapt",
                                 "k": f"{k}/{self._n_inner_iter}",
@@ -205,7 +205,7 @@ class MetaTrainer(Runner):
                         # This unrolls through the gradient steps.
                         query_loss.backward()
 
-                        logger.info({
+                        logger.info("%s", {
                             "task": task.name,
                             "mode": "check",
                             "loss": query_loss.item(),
@@ -223,7 +223,7 @@ class MetaTrainer(Runner):
 
                 self._meta_opt.zero_grad()
                 self._meta_opt.step()
-                logger.info({
+                logger.info("%s", {
                     "support_loss": total_support_loss.compute().item(),
                     "support_score": total_support_score.compute().item(),
                     "query_loss": total_query_loss.compute().item(),
