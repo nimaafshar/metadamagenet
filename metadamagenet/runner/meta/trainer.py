@@ -159,10 +159,11 @@ class MetaTrainer(Runner):
                             torch.cuda.empty_cache()
                             support_loss_sum: torch.Tensor = 0
                             for data_batch in task.support:
-                                print(inputs.shape)
-                                print(targets.shape)
                                 inputs, targets = self._prepare_batch(data_batch)
                                 outputs: torch.Tensor = f_model(inputs)
+                                print(inputs.shape)
+                                print(outputs.shape)
+                                print(targets.shape)
                                 support_loss_sum += self._loss(outputs, targets)
                                 with torch.no_grad():
                                     activated_outputs: torch.Tensor = self._model.activate(outputs)
