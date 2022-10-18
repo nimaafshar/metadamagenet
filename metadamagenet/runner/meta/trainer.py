@@ -168,7 +168,7 @@ class MetaTrainer(Runner):
                                 del inputs, targets, outputs, activated_outputs
                             support_loss = support_loss_sum / len(task.support)
                             diff_optim.step(support_loss)
-                            logger.info("%s", {
+                            logger.debug("%s", {
                                 "task": task.name,
                                 "mode": "adapt",
                                 "k": f"{k}/{self._n_inner_iter}",
