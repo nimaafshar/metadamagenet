@@ -11,8 +11,7 @@ from .base import BaseModel
 class SegFormerLocalizer(BaseModel):
     def __init__(self):
         super().__init__()
-        self.config: SegformerConfig = SegformerForSemanticSegmentation. \
-            from_pretrained("nvidia/segformer-b0-finetuned-ade-512-512")
+        self.config: SegformerConfig = SegformerConfig.from_pretrained("nvidia/segformer-b0-finetuned-ade-512-512")
         self.config.num_labels = 1
         self.segformer: SegformerModel = SegformerModel.from_pretrained("nvidia/segformer-b0-finetuned-ade-512-512")
         self.decode_head: SegformerDecodeHead = SegformerDecodeHead(self.config)
