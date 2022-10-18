@@ -80,7 +80,7 @@ class MetaDataLoader(Iterable):
                 support=DataLoader(
                     dataset=self._dataset_class(support_set),
                     batch_size=self._batch_size,
-                    num_workers=2,
+                    num_workers=1,
                     pin_memory=True,
                     shuffle=True,
                     drop_last=False
@@ -88,7 +88,7 @@ class MetaDataLoader(Iterable):
                 query=DataLoader(
                     dataset=self._dataset_class(query_set),
                     batch_size=self._batch_size,
-                    num_workers=2,
+                    num_workers=1,
                     pin_memory=True,
                     shuffle=True,
                     drop_last=False

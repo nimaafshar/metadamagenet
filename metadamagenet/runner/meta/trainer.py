@@ -112,20 +112,14 @@ class MetaTrainer(Runner):
             device=self._device
         )
 
-    def _move_batch_to_device(self, data_batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def _prepare_batch(self, data_batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         if self._device is not None:
             data_batch = {k: v.to(device=self._device, non_blocking=True) for k, v in
                           data_batch.items()}
-        return data_batch
-
-    def _transform_batch(self, data_batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         with torch.no_grad():
             if self._transform is not None:
                 data_batch = self._transform(data_batch)
-        return data_batch
-
-    def _prepare_batch(self, data_batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
-        return self._model.preprocess(self._transform_batch(self._move_batch_to_device(data_batch)))
+            return self._model.preprocess(data_batch)
 
     def _train_epoch(self, epoch: int) -> None:
         self._model.train()
@@ -165,6 +159,8 @@ class MetaTrainer(Runner):
                             torch.cuda.empty_cache()
                             support_loss_sum: torch.Tensor = 0
                             for data_batch in task.support:
+                                print(inputs.shape)
+                                print(targets.shape)
                                 inputs, targets = self._prepare_batch(data_batch)
                                 outputs: torch.Tensor = f_model(inputs)
                                 support_loss_sum += self._loss(outputs, targets)

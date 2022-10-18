@@ -43,20 +43,14 @@ class MetaValidator(Runner):
         self._n_inner_iter: int = n_inner_iter
         self._inner_optim: Callable[[nn.Module, ], torch.optim.Optimizer] = inner_opt
 
-    def _move_batch_to_device(self, data_batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def _prepare_batch(self, data_batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         if self._device is not None:
             data_batch = {k: v.to(device=self._device, non_blocking=True) for k, v in
                           data_batch.items()}
-        return data_batch
-
-    def _transform_batch(self, data_batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         with torch.no_grad():
             if self._transform is not None:
                 data_batch = self._transform(data_batch)
-        return data_batch
-
-    def _prepare_batch(self, data_batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
-        return self._model.preprocess(self._transform_batch(self._move_batch_to_device(data_batch)))
+            return self._model.preprocess(data_batch)
 
     def run(self) -> float:
         # Crucially in our testing procedure here, we do *not* fine-tune
