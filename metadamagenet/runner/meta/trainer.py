@@ -148,10 +148,7 @@ class MetaTrainer(Runner):
                 query_loss_mean: MeanMetric = MeanMetric().to(self._device)
 
                 task: Task
-                inner_iterator = tqdm(task_set,
-                                      leave=False,
-                                      desc=emoji.emojize(f":repeat_one: Task set Training", language='alias'))
-                for task in inner_iterator:
+                for task in task_set:
                     with higher.innerloop_ctx(self._model, inner_optim, copy_initial_weights=False) as \
                             (f_model, diff_optim):
                         # Optimize the likelihood of the support set by taking
