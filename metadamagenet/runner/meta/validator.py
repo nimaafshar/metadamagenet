@@ -102,6 +102,7 @@ class MetaValidator(Runner):
                                 with torch.no_grad():
                                     activated_outputs: torch.Tensor = self._model.activate(outputs)
                                     self._score.update(activated_outputs, targets)
+                                del inputs, targets, outputs, activated_outputs
                             support_loss = support_loss_sum / len(task.support)
                             diff_optim.step(support_loss)
 
@@ -129,6 +130,7 @@ class MetaValidator(Runner):
                             with torch.no_grad():
                                 activated_outputs: torch.Tensor = self._model.activate(outputs)
                                 self._score.update(activated_outputs, targets).detach()
+                            del inputs, targets, outputs, activated_outputs
                         query_loss: torch.Tensor = (query_loss_sum / len(task.query))
                         logger.info("%s", {
                             "task": task.name,

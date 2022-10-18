@@ -161,6 +161,8 @@ class MetaTrainer(Runner):
                         targets: torch.Tensor  # (B,H,W) with long values (0-4) or (0-1)
                         self._score.reset()
                         for k in range(1, self._n_inner_iter + 1):
+                            gc.collect()
+                            torch.cuda.empty_cache()
                             support_loss_sum: torch.Tensor = 0
                             for data_batch in task.support:
                                 inputs, targets = self._prepare_batch(data_batch)
@@ -169,6 +171,7 @@ class MetaTrainer(Runner):
                                 with torch.no_grad():
                                     activated_outputs: torch.Tensor = self._model.activate(outputs)
                                     self._score.update(activated_outputs, targets)
+                                del inputs, targets, outputs
                             support_loss = support_loss_sum / len(task.support)
                             diff_optim.step(support_loss)
 
@@ -185,7 +188,8 @@ class MetaTrainer(Runner):
                                 "sup_loss": total_support_loss.compute().item(),
                                 "sup_sc": total_support_score.compute().item()
                             })
-
+                        gc.collect()
+                        torch.cuda.empty_cache()
                         # The final set of adapted parameters will induce some
                         # final loss and accuracy on the query dataset.
                         # These will be used to update the model's meta-parameters.
