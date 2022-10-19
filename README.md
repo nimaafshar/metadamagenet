@@ -9,7 +9,7 @@ repository. I used that repository as a baseline and refactored its code.
 Thus, this code covers models and experiments of the mentioned repo and
 contributes more research into the same problem of damage assessment in aerial imagery.
 
-### environment setup
+**Environment Setup**
 
 ```bash
 git clone https://github.com/nimaafshar/metadamagenet.git
@@ -17,7 +17,7 @@ cd metadamagenet/
 pip install -r requirements.txt
 ```
 
-### examples
+**Examples**
 
 - [create segmentation masks from json labels](./create_masks.py)
 - [`Resnet34Unet` training and tuning](./example_resnet34.py)
@@ -25,39 +25,38 @@ pip install -r requirements.txt
 - [`Dpn92Unet` training and tuning](./example_dpn92.py)
 - [`SeNet154Unet` training and tuning](./example_dpn92.py)
 
-### table of contents
-
-- [MetaDamageNet](#metadamagenet)
-      - [Using Deep Learning To Identify And Classify Damage In Aerial Imagery](#using-deep-learning-to-identify-and-classify-damage-in-aerial-imagery)
-    - [environment setup](#environment-setup)
-    - [examples](#examples)
-    - [table of contents](#table-of-contents)
-  - [Data](#data)
-    - [Augmentations](#augmentations)
-  - [Methodology](#methodology)
-    - [General Architecture](#general-architecture)
-    - [U-Models](#u-models)
-      - [Decoder Modules](#decoder-modules)
-      - [Backbone](#backbone)
-    - [Meta-Learning](#meta-learning)
-    - [Vision Transformer](#vision-transformer)
-    - [Training Setup](#training-setup)
-    - [Training Results](#training-results)
-    - [Loss Functions](#loss-functions)
-  - [Evaluation](#evaluation)
-    - [Localization Models Scoring](#localization-models-scoring)
-    - [Classification Models Scoring](#classification-models-scoring)
-    - [Test-Time Augment](#test-time-augment)
-    - [Training Results](#training-results-1)
-  - [Conclusion and Acknowledgments](#conclusion-and-acknowledgments)
-  - [Further Reading](#further-reading)
-  - [References](#references)
+### Table Of Contents
+- [Data](#data)
+  - [Augmentations](#augmentations)
+- [Methodology](#methodology)
+  - [General Architecture](#general-architecture)
+  - [U-Models](#u-models)
+    - [Decoder Modules](#decoder-modules)
+    - [Backbone](#backbone)
+  - [Meta-Learning](#meta-learning)
+  - [Vision Transformer](#vision-transformer)
+  - [Training Setup](#training-setup)
+  - [Training Results](#training-results)
+  - [Loss Functions](#loss-functions)
+- [Evaluation](#evaluation)
+  - [Localization Models Scoring](#localization-models-scoring)
+  - [Classification Models Scoring](#classification-models-scoring)
+  - [Test-Time Augment](#test-time-augment)
+  - [Training Results](#training-results-1)
+- [Conclusion and Acknowledgments](#conclusion-and-acknowledgments)
+- [Further Reading](#further-reading)
+- [References](#references)
 
 ## Data
 
+### Dataset
+
+We are using the xview2 challenge dataset, namely Xbd, as the dataset for our project. This dataset contains pairs of pre and post-disaster satellite images from 19 natural disasters worldwide, including fires, hurricanes, floods, and earthquakes. Each sample in the dataset consists of a pre-disaster image with its building annotations and a post-disaster image with the same building annotations. However, in the post-disaster building annotations, each building is a damage level of the following: *undamaged*, *minor-damage*, *major damage*, *destroyed*, and *unclassified*. The dataset consists of *train*, *tier3*, *test*, and *hold* subsets. Each subset has an images folder containing pre and post-disaster images stored as 1024\*1024 PNG and a folder named labels containing building annotations and damage labels in JSON format. Some of the post-imagery is slightly shifted from their corresponding pre-image. Also, the dataset has different ground sample distances. We used the *train* and *tier3* subsets for training, the *test* subset for validation, and the *hold* subset for testing. The dataset is highly unbalanced in multiple aspects. The buildings with the *undamaged* label are far more than buildings with other damage types. The number of images varies a lot between different disasters; the same is true for the number of building annotations in each disaster.
+
 ![an example of data](./res/data.png)
 
-We are using the xview2 challenge dataset, namely Xbd, as the dataset for our project. This dataset contains pairs of pre and post-disaster satellite images from 19 natural disasters worldwide, including fires, hurricanes, floods, and earthquakes. Each sample in the dataset consists of a pre-disaster image with its building annotations and a post-disaster image with the same building annotations. However, in the post-disaster building annotations, each building is a damage level of the following: undamaged, minor-damage, major damage, destroyed, and unclassified. The dataset consists of train, tier3, test, and hold subsets. Each subset has an images folder containing pre and post-disaster images stored as 1024*1024 PNG and a folder named labels containing building annotations and damage labels in JSON format. We can convert this building (annotated as polygons) to a binary mask. We can also convert the damage levels to values 1-4 and use them as the value for all the pixels in their corresponding building, forming a semantic segmentation mask. Thus, we define the building localization task as predicting each pixel's value being zero or non-zero. We also define the damage classification task as predicting the exact value of pixels within each building. We consider the label of an unclassified building as undamaged, as it is the most common label by far. Some of the post-imagery is slightly shifted from their corresponding pre-image. Also, the dataset has different ground sample distances. We used the train and tier3 subsets for training, the test subset for validation, and the hold subset for testing. The dataset is highly unbalanced in multiple aspects. The buildings with the undamaged label are far more than buildings with other damage types. The number of images varies a lot between different disasters; the same is true for the number of building annotations in each disaster.
+### Problem Defenition
+We can convert this building annotations (polygons) to a binary mask. We can also convert the damage levels to values 1-4 and use them as the value for all the pixels in their corresponding building, forming a semantic segmentation mask. Thus, we define the building localization task as predicting each pixel's value being zero or non-zero. We also define the damage classification task as predicting the exact value of pixels within each building. We consider the label of an unclassified building as undamaged, as it is the most common label by far.
 
 <details>
 <summary>
@@ -102,7 +101,7 @@ dataset = ClassificationDataset([Path('/path/to/dataset/train'),Path('/path/to/d
 
 </details>
 
-### Augmentations
+### Data Augmentations
 
 <details>
 <summary>
