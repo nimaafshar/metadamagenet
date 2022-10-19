@@ -145,13 +145,104 @@
         <td>--</td>
     </tr>
     <tr>
-        <td rowspan="1">EfficientUnetB0</td>
-        <td rowspan="1">Regular</td>
+        <td rowspan="8">EfficientUnetB0</td>
+        <td rowspan="3">Regular</td>
         <td>0</td>
         <td>0.7692</td>
         <td>0.7739</td>
         <td>0.7634</td>
+        <td>0.7666</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>0.7685</td>
+        <td>0.7723</td>
+        <td>0.7638</td>
+        <td>0.7662</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>0.7704</td>
+        <td>0.7740</td>
+        <td>0.7625</td>
+        <td>0.7666</td>
+    </tr>
+    <tr>
+        <td rowspan="3">SCSE</td>
+        <td>0</td>
+        <td>0.7723</td>
+        <td>0.7749</td>
+        <td>0.7644</td>
+        <td>0.7674</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>0.7707</td>
+        <td>0.7737</td>
+        <td>0.7628</td>
+        <td>0.7682</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>0.7721</td>
+        <td>0.7765</td>
+        <td>0.7647</td>
+        <td>0.7711</td>
+    </tr>
+    <tr>
+        <td rowspan="2">Wide-SE</td>
+        <td>0</td>
+        <td>0.7719</td>
+        <td>0.7758</td>
+        <td>0.7662</td>
+        <td>0.7700</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>0.7754</td>
+        <td>0.7754</td>
+        <td>0.7664</td>
+        <td>0.7682</td>
+    </tr>
+    <tr>
+        <td rowspan="2">EfficientUnetB4</td>
+        <td>Regular</td>
         <td>--</td>
+        <td>0.7755</td>
+        <td>0.7797</td>
+        <td>0.7702</td>
+        <td>0.7724</td>
+    </tr>
+    <tr>
+        <td>SCSE</td>
+        <td>--</td>
+        <td>0.7811</td>
+        <td>0.7826</td>
+        <td>0.7718</td>
+        <td>0.7743</td>
+    </tr>
+    <tr>
+        <td rowspan="3">SegFormerB0</td>
+        <td rowspan="3">512*512_ade</td>
+        <td>0</td>
+        <td>0.7602</td>
+        <td>0.7281</td>
+        <td>0.7543</td>
+        <td>0.7214</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>0.7569</td>
+        <td>0.7223</td>
+        <td>0.7533</td>
+        <td>0.7189</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>0.7605</td>
+        <td>0.7301</td>
+        <td>0.7545</td>
+        <td>0.7250</td>
     </tr>
 </tbody>
 </table>
