@@ -298,6 +298,39 @@ and query shots equal to two or ten, respectively. Other training hyperparameter
 and evaluation results are available in the results section. 
 We utilized the higher library to implement the MAML algorithm.
 
+```python
+from metadamagenet.dataset import discover_directory, group_by_disasters, MetaDataLoader,LocalizationDataset
+from metadamagenet.metrics import xview2
+from metadamagenet.losses import BinaryDiceLoss
+from metadamagenet.runner import MetaTrainer,MetaValidationInTrainingParams
+
+dataset: list[ImageData] = discover_directory
+tasks: List[Tuple[str,List[ImageData]]] = group_by_disasters(dataset)
+
+train = MetaDataLoader(LocalizationDataset,tasks[:-2],task_set_size=17,support_shots=4,query_shots=8,batch_size=1)
+test = MetaDataLoader(LocalizationDataset,tasks[-2:],task_set_size=2,support_shots=4,query_shots=8,batch_size=1)
+
+MetaTrainer(
+        model,
+        version,
+        seed,
+        train,
+        nn.Identity(),
+        meta_optimizer,
+        inner_optimizer,
+        lr_scheduler,
+        BinaryDiceLoss(),
+        epochs=50,
+        n_inner_iter=5,
+        score=xview2.localization_score,
+        validation_params=MetaValidationInTrainingParams(
+            meta_dataloader=test,
+            interval=1,
+            transform=None,
+        )
+    ).run()
+```
+
 ### Vision Transformer
 
 ### Training Setup
