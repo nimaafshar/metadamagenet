@@ -62,6 +62,7 @@ pip install -r requirements.txt
 Example Usage: 
 
 ```python
+import torch
 from metadamagenet.augment import Random, VFlip, Rotate90, Shift, RotateAndScale, BestCrop, OneOf, RGBShift, HSVShift, Clahe, GaussianNoise, Blur, Saturation, Brightness, Contrast, ElasticTransform
 
 transform = nn.Sequential(
@@ -84,6 +85,12 @@ transform = nn.Sequential(
         ),
         Random(ElasticTransform(), p=0.001)
     )
+
+inputs = {
+  'img':torch.rand(3,3,100,100),
+  'msk':torch.randint(low=0,high=2,size(3,100,100))
+  }
+outputs = transform(inputs)
 ```
 
 Data Augmentation techniques help generate new valid samples from the dataset. Hence, they provide us with more data, help the model train faster, and prevent overfitting. Data Augmentation is vastly used in training computer vision tasks, from image classification to instance segmentation. in most cases, data augmentation is done randomly. This randomness means it is not done on some of the original samples, and the augmentation has some random parameters. Most libraries used for augmentation, like open-cv (cite), do not support image-batch transforms and only perform transforms on the CPU. Kornia (cite) is an open-source differentiable computer vision library for PyTorch; it does support image-batch transforms, and it does support performing these transforms on GPU. We used Kornia and added some parts to it to suit our project requirements.
