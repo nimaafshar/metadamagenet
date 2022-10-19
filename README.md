@@ -397,10 +397,10 @@ In contrast to U-nets, SegFormer models have constant input and output sizes. So
 However, for the classification task, pre and post-disaster go through the same Segformer model, and their outputs are concatenated channel-wise and then go through a modified SegfFormer decode head. The modification is to double the number of channels for the MLP modules. Of course, both outputs can be merged in successive layers, which decreases the distance function complexity. These other versions of the modified decode head can be created and tested in the future. Moreover, one can experiment with changing the size of the SegFormer input and SegFormer model size.
 
 ### Training Setup
-We trained some models with multiple random seeds (multiple folds) to ensure they have low variance and consistent scores. We trained Localization models only on pre-disaster images; we used post-disaster images in sporadic cases as additional augmentation. We initialized each classification model's feature extractor using weights from the corresponding localization model and fold number. While training both classification and localization models, no weights were frozen. 
+We trained some models with multiple random seeds (multiple folds) to ensure they have low variance and consistent scores. We trained Localization models only on pre-disaster images; we used post-disaster images in sporadic cases as additional augmentation. We initialized each classification model's feature extractor using weights from the corresponding localization model and fold number. While training both classification and localization models, no weights were frozen.Since the dataset is unbalanced, we use weighted losses with weights relative to the inverse of each class's sample count. We applied morphological dilation with a 5*5 kernel to classification masks as an augmentation. Dilated masks made predictions more "bold";
 
 ### Training Results
-Using pre-trained feature extractors from localization models allowed classification models to train much faster and have higher scores. Since the dataset is unbalanced, we use weighted losses with weights relative to the inverse of each class's sample count. We applied morphological dilation with a 5*5 kernel to classification masks as an augmentation. Dilated masks made predictions more "bold"; this improved borders accuracy and helped with shifts and different nadirs. The model classifier module determines each pixel's value based on a distance function between the extracted features from the pre and post-disaster image. In U-models, the classifier module is a 2d convolution, but in SegFormer models, it is a SegFormer decoder head. Hence, U-models learn a much simpler distance function than SegFormer models; the simplicity of the distance function helps them not to overfit but also prevents them from learning some sophisticated patterns. In the end, SegFormer models train much faster than overfit on the training data, but U-models slowly reach almost the same score. Comparing the scores of different models show us some facts. (complete)
+Using pre-trained feature extractors from localization models allowed classification models to train much faster and have higher scores. Using dialated masks improved borders accuracy and helped with shifts and different nadirs. The model's classifier module determines each pixel's value based on a distance function between the extracted features from the pre and post-disaster image. In U-models, the classifier module is a 2d convolution, but in SegFormer models, it is a SegFormer decoder head. Hence, U-models learn a much simpler distance function than SegFormer models; the simplicity of the distance function helps them not to overfit but also prevents them from learning some sophisticated patterns. In the end, SegFormer models train much faster before overfitting on the training data, but U-models slowly reach almost the same score. EfficientUnet localization models have shown that they train better without the usage of focal loss. 
 
 
 ### Loss Functions
@@ -559,10 +559,6 @@ model_using_test_time_augment = FourRotations(model)
 
 ### Training Results
 
-**Empirical Results:**
-
-- EfficientUnet Localization Models have shown that they train better without the usage of focal loss
-
 complete results are available at [results.md](./results.md)
 
 - [ ] dice vs iou
@@ -591,6 +587,7 @@ further.
 - :link: [Review: ResNeXt — 1st Runner Up in ILSVRC 2016 (Image Classification)](https://towardsdatascience.com/review-resnext-1st-runner-up-of-ilsvrc-2016-image-classification-15d7f17b42ac)
 - :link: [A Review of Popular Deep Learning Architectures: DenseNet, ResNeXt, MnasNet, and ShuffleNet v2](https://blog.paperspace.com/popular-deep-learning-architectures-densenet-mnasnet-shufflenet/)
 
+
 [^xview2]
 [^first_place_solution]
 [^unet]
@@ -616,6 +613,7 @@ further.
 [^open-cv]
 [^dice-loss]
 [^segmentation-losses]
+[^cross-entropy]
 
 ## References
 [^xbd]: :page_facing_up: [xBD: A Dataset for Assessing Building Damage from Satellite Imagery](https://arxiv.org/abs/1911.09296)
@@ -686,4 +684,5 @@ further.
 
 [^segmentation-losses]: :page_facing_up: [A survey of loss functions for semantic segmentation](https://arxiv.org/abs/2006.14822)
 
+[^cross-entropy]: :page_facing_up: [Generalized Cross Entropy Loss for Training Deep Neural Networks with Noisy Labels](https://arxiv.org/abs/1805.07836)
 
