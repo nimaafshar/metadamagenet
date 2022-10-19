@@ -456,6 +456,7 @@ test tasks: `mexico-earthquake`,`joplin-tornado`
     </tr>
     <tr>
         <td>Wide-SE</td>
+        <td>0</td>
         <td>0.7726</td>
         <td>0.7667</td>
         <td>0.7769</td>
@@ -464,6 +465,7 @@ test tasks: `mexico-earthquake`,`joplin-tornado`
     <tr>
         <td rowspan="2">EfficientUnetB4</td>
         <td>Regular</td>
+        <td>0</td>
         <td>0.7732</td>
         <td>0.7679</td>
         <td>0.7684</td>
@@ -471,6 +473,7 @@ test tasks: `mexico-earthquake`,`joplin-tornado`
     </tr>
     <tr>
         <td>SCSE</td>
+        <td>0</td>
         <td>0.7746</td>
         <td>0.7650</td>
         <td>0.7740</td>
