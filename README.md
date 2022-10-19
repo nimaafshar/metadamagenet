@@ -27,22 +27,29 @@ pip install -r requirements.txt
 
 ### table of contents
 
-1. [Data](#data)
-    1. [Structure](#structure)
-    2. [Data Loading and Datasets](#data-loading-and-datasets)
-    3. [Augmentations](#augmentations)
-2. [Methodology](#methodology)
-    1. [General Architecture](#general-architecture)
-    2. [U-Models](#u-models)
-        1. [Decoder Modules](#decoder-modules)
-        2. [Backbone](#backbone)
-    3. [Vision Transformer](#vision-transformer)
-    4. [Meta-Learning](#meta-learning)
-    5. [Training Setup](#training-setup)
-    6. [Loss Functions](#loss-functions)
-3. [Evaluation](#evaluation)
-4. [Conclusion and Acknowledgements](#conclusion-and-acknowledgments)
-5. [References](#references)
+- [MetaDamageNet](#metadamagenet)
+      - [Using Deep Learning To Identify And Classify Damage In Aerial Imagery](#using-deep-learning-to-identify-and-classify-damage-in-aerial-imagery)
+    - [environment setup](#environment-setup)
+    - [examples](#examples)
+    - [table of contents](#table-of-contents)
+  - [Data](#data)
+    - [Structure](#structure)
+    - [Data Loading and Datasets](#data-loading-and-datasets)
+    - [Augmentations](#augmentations)
+  - [Methodology](#methodology)
+    - [General Architecture](#general-architecture)
+    - [U-Models](#u-models)
+      - [Decoder Modules](#decoder-modules)
+      - [Backbone](#backbone)
+    - [Meta-Learning](#meta-learning)
+    - [Vision Transformer](#vision-transformer)
+    - [Training Setup](#training-setup)
+    - [Loss Functions](#loss-functions)
+  - [Evaluation](#evaluation)
+    - [Localization Models Scoring](#localization-models-scoring)
+    - [Classification Models Scoring](#classification-models-scoring)
+    - [Training Results](#training-results)
+  - [Conclusion and Acknowledgments](#conclusion-and-acknowledgments)
 
 ## Data
 
@@ -51,6 +58,39 @@ pip install -r requirements.txt
 ### Data Loading and Datasets
 
 ### Augmentations
+
+Example Usage: 
+
+```python
+from metadamagenet.augment import Random, VFlip, Rotate90, Shift, RotateAndScale, BestCrop, OneOf, RGBShift, HSVShift, Clahe, GaussianNoise, Blur, Saturation, Brightness, Contrast, ElasticTransform
+
+transform = nn.Sequential(
+        Random(VFlip(), p=0.5),
+        Random(Rotate90(), p=0.95),
+        Random(Shift(y=(.2, .8), x=(.2, .8)), p=.1),
+        Random(RotateAndScale(center_y=(0.3, 0.7), center_x=(0.3, 0.7), angle=(-10., 10.), scale=(.9, 1.1)), p=0.1),
+        BestCrop(samples=5, dsize=(512, 512), size_range=(0.45, 0.55)),
+        Random(RGBShift().only_on('img'), p=0.01),
+        Random(HSVShift().only_on('img'), p=0.01),
+        OneOf(
+            (OneOf(
+                (Clahe().only_on('img'), 0.01),
+                (GaussianNoise().only_on('img'), 0.01),
+                (Blur().only_on('img'), 0.01)), 0.01),
+            (OneOf(
+                (Saturation().only_on('img'), 0.01),
+                (Brightness().only_on('img'), 0.01),
+                (Contrast().only_on('img'), 0.01)), 0.01)
+        ),
+        Random(ElasticTransform(), p=0.001)
+    )
+```
+
+Data Augmentation techniques help generate new valid samples from the dataset. Hence, they provide us with more data, help the model train faster, and prevent overfitting. Data Augmentation is vastly used in training computer vision tasks, from image classification to instance segmentation. in most cases, data augmentation is done randomly. This randomness means it is not done on some of the original samples, and the augmentation has some random parameters. Most libraries used for augmentation, like open-cv (cite), do not support image-batch transforms and only perform transforms on the CPU. Kornia (cite) is an open-source differentiable computer vision library for PyTorch; it does support image-batch transforms, and it does support performing these transforms on GPU. We used Kornia and added some parts to it to suit our project requirements.
+
+We created a version of each image transformation that supports our needs. Its input is multiple batches of images, and each batch has a name. for example, an input contains a batch of images and a batch of corresponding segmentation masks. In some transformations like resize, the same parameters (in this case, scale) should be used for transforming both images and segmentation masks. In some transformations, like channel shift, the transformation should not be done on the segmentation masks. Another requirement is that the transformation parameters can differ for each image and its corresponding mask in the batch.
+Furthermore, a random augmentation should generate different transformation parameters for each image in the batch. Moreover, it should consider that the transformation does not apply to some images in the batch. Our version of each transformation meets these requirements.
+
 
 ## Methodology
 
@@ -226,8 +266,6 @@ We listed all the used U-net models and their attributes in the table below.
   </tr>
 </table>
 
-### Vision Transformer
-
 ### Meta-Learning
 
 In meta-learning, a general problem, such as classifying different images (in the *ImageNet* dataset) or classifying
@@ -241,8 +279,18 @@ class with minimum distance. These methods are helpful when we have a high numbe
 the number of classes is fixed. Thus, we used a model-agnostic approach. Model agnostic meta-learning algorithms find a
 set of parameters for the model that can be adapted to a new task by training with very few samples.
 We used the MAML algorithm and considered every different disaster a task.
-Since the MAML algorithm consumes lots of memory, and the consumed memory is relative to the model size,
-we have used models based on *EfficientUnetB0* for this section.
+Since the MAML algorithm consumes lots of memory, and the consumed memory is 
+relative to the model size, we have used models based on EfficientUnetB0 and 
+only trained it for building localization task.
+
+Since the MAML algorithm trains the model much slower than regular training, 
+and we did not have many hours to train our models, the results were disappointing. 
+We trained EfficientUnetB0-Localizer with MAML with support shots equal to one or five 
+and query shots equal to two or ten, respectively. Other training hyperparameters 
+and evaluation results are available in the results section. 
+We utilized the higher library to implement the MAML algorithm.
+
+### Vision Transformer
 
 ### Training Setup
 
@@ -269,8 +317,6 @@ Focal, Dice, and Lovasz-sigmoid Loss are loss functions used in the training loc
 For Classification models, we tried Focal, Dice, Lovasz-Softmax Loss, Log-Cosh-Dice, and, Cross-entropy Loss.
 
 **Focal Loss**
-
-:page_facing_up: [Focal Loss for Dense Object Detection](https://arxiv.org/abs/1708.02002)
 
 $$
 FL(p_t) = -\alpha_t(1- p_t)\gamma log(p_t).
@@ -380,82 +426,13 @@ $$
 
 complete results are available at [results.md](./results.md)
 
+- [ ] dice vs iou
 ## Conclusion and Acknowledgments
 
 Thank you to xView2 team for creating and releasing this amazing dataset and opportunity to invent a solution that can
 help to response to the global natural disasters faster. I really hope it will be usefull and the idea will be improved
 further.
 
-## References
 
-- Competition and Dataset: [Xview2 org.](https://www.xview2.org)
-- [Xview2 First Place Solution](https://github.com/vdurnov/xview2_1st_place_solution)
-- [U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597)
-- [Cadene/Pretrained models for Pytorch](https://github.com/Cadene/pretrained-models.pytorch)
 
-# Data2
-
-# Data Cleaning Techniques
-
-Training masks generated using json files, "un-classified" type treated as "no-damage" (create_masks.py). "masks"
-folders will be created in "train" and "tier3" folders.
-
-The problem with different nadirs and small shifts between "pre" and "post" images solved on models level:
-
-- First, localization models trained using only "pre" images to ignore this additional noise from "post" images. Simple
-  UNet-like segmentation Encoder-Decoder Neural Network architectures used here.
-- Then, already pretrained localization models converted to classification Siamese Neural Network. So, "pre" and "post"
-  images shared common weights from localization model and the features from the last Decoder layer concatenated to
-  predict damage level for each pixel. This allowed Neural Network to look at "pre" and "post" separately in the same
-  way and helped to ignore these shifts and different nadirs as well.
-- Morphological dilation with 5*5 kernel applied to classification masks. Dilated masks made predictions more "bold" -
-  this improved accuracy on borders and also helped with shifts and nadirs.
-
-# Data Processing Techniques
-
-Models trained on different crops sizes from (448, 448) for heavy encoder to (736, 736) for light encoder.
-Augmentations used for training:
-
-- Flip (often)
-- Rotation (often)
-- Scale (often)
-- Color shifts (rare)
-- Clahe / Blur / Noise (rare)
-- Saturation / Brightness / Contrast (rare)
-- ElasticTransformation (rare)
-
-Inference goes on full image size (1024, 1024) with 4 simple test-time augmentations (original, filp left-right, flip
-up-down, rotation to 180).
-
-# Details on Modeling Tools and Techniques
-
-trained with Train/Validation random split 90%/10% with fixed seeds (3 folds). Only checkpoints from epochs
-with best validation score used.
-
-Localization models trained on "pre" images, "post" images used in very rare cases as additional augmentation.
-
-Localization training parameters:
-Loss: Dice + Focal
-Validation metric: Dice
-Optimizer: AdamW
-
-Classification models initialized using weights from corresponding localization model and fold number. They are Siamese
-Neural Networks with whole localization model shared between "pre" and "post" input images. Features from last Decoder
-layer combined for classification. Pretrained weights are not frozen.
-Using pretrained weights from localization models allowed to train classification models much faster and to have better
-accuracy. Features from "pre" and "post" images connected at the very end of the Decoder in bottleneck part, this
-helping not to over-fit and get better generalizing model.
-
-Classification training parameters:
-Loss: Dice + Focal + CrossEntropyLoss. Larger coefficient for CrossEntropyLoss and 2-4 damage classes.
-Validation metric: competition metric
-Optimizer: AdamW
-Sampling: classes 2-4 sampled 2 times to give them more attention.
-
-Almost all checkpoints finally finetuned on full train data for few epoches using low learning rate and less
-augmentations.
-
-Predictions averaged with equal coefficients for both localization and classification models separately.
-
-Different thresholds for localization used for damaged and undamaged classes (lower for damaged).
 
