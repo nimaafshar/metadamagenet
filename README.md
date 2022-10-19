@@ -42,13 +42,16 @@ pip install -r requirements.txt
     - [Meta-Learning](#meta-learning)
     - [Vision Transformer](#vision-transformer)
     - [Training Setup](#training-setup)
+    - [Training Results](#training-results)
     - [Loss Functions](#loss-functions)
   - [Evaluation](#evaluation)
     - [Localization Models Scoring](#localization-models-scoring)
     - [Classification Models Scoring](#classification-models-scoring)
     - [Test-Time Augment](#test-time-augment)
-    - [Training Results](#training-results)
+    - [Training Results](#training-results-1)
   - [Conclusion and Acknowledgments](#conclusion-and-acknowledgments)
+  - [Further Reading](#further-reading)
+  - [References](#references)
 
 ## Data
 
@@ -389,8 +392,16 @@ MetaTrainer(
 </details>
 
 ### Vision Transformer
+In recent years, vision transformers have achieved state-of-the-art results in many computer vision tasks, including semantic segmentation. SegFormer is a model designed for efficient semantic segmentation, and it is based on vision transformers. SegFormer is available in different sizes. We only used the smallest size, named SegFormerB0. The SegFormer model consists of a hierarchical Transformer encoder and a lightweight all-MLP decode head.
+In contrast to U-nets, SegFormer models have constant input and output sizes. So inputs and outputs should be interpolated to the correct size. For the localization task, the input image goes through SegFormer, and its outputs go through a SegfFormer decode head.
+However, for the classification task, pre and post-disaster go through the same Segformer model, and their outputs are concatenated channel-wise and then go through a modified SegfFormer decode head. The modification is to double the number of channels for the MLP modules. Of course, both outputs can be merged in successive layers, which decreases the distance function complexity. These other versions of the modified decode head can be created and tested in the future. Moreover, one can experiment with changing the size of the SegFormer input and SegFormer model size.
 
 ### Training Setup
+We trained some models with multiple random seeds (multiple folds) to ensure they have low variance and consistent scores. We trained Localization models only on pre-disaster images; we used post-disaster images in sporadic cases as additional augmentation. We initialized each classification model's feature extractor using weights from the corresponding localization model and fold number. While training both classification and localization models, no weights were frozen. 
+
+### Training Results
+Using pre-trained feature extractors from localization models allowed classification models to train much faster and have higher scores. Since the dataset is unbalanced, we use weighted losses with weights relative to the inverse of each class's sample count. We applied morphological dilation with a 5*5 kernel to classification masks as an augmentation. Dilated masks made predictions more "bold"; this improved borders accuracy and helped with shifts and different nadirs. The model classifier module determines each pixel's value based on a distance function between the extracted features from the pre and post-disaster image. In U-models, the classifier module is a 2d convolution, but in SegFormer models, it is a SegFormer decoder head. Hence, U-models learn a much simpler distance function than SegFormer models; the simplicity of the distance function helps them not to overfit but also prevents them from learning some sophisticated patterns. In the end, SegFormer models train much faster than overfit on the training data, but U-models slowly reach almost the same score. Comparing the scores of different models show us some facts. (complete)
+
 
 ### Loss Functions
 
@@ -562,5 +573,117 @@ help to response to the global natural disasters faster. I really hope it will b
 further.
 
 
+## Further Reading
+- :book: [Higher Repository](https://github.com/facebookresearch/higher)
+- :link: [Squeeze and Excitation Networks Explained with PyTorch Implementation](https://amaarora.github.io/2020/07/24/SeNet.html)
+- :link: [Building Disaster Damage Assessment in Satellite Imagery with Multi-Temporal Fusion](https://github.com/ethanweber/xview2)
+- :link: [Workshop on Meta-Learning (MetaLearn 2022)](https://meta-learn.github.io/2022/)
+- :link: [Meta-Learning with Implicit Gradients](https://sites.google.com/view/imaml)
+- :link: [Learning About Algorithms That Learn to Learn](https://towardsdatascience.com/learning-about-algorithms-that-learn-to-learn-9022f2fa3dd5)
+- :link: [A Search for Efficient Meta-Learning: MAMLs, Reptiles, and Related Species](https://towardsdatascience.com/a-search-for-efficient-meta-learning-mamls-reptiles-and-related-species-e47b8fc454f2)
+- :link: [Learn To Learn: A blog post from an author of MAML](https://bair.berkeley.edu/blog/2017/07/18/learning-to-learn/)
+- :link: [Comparing F1/Dice score and IoU](https://stats.stackexchange.com/questions/273537/f1-dice-score-vs-iou)
+- :link: [Xview2 Baseline Repository](https://github.com/DIUx-xView/xView2_baseline)
+- :link: [Concurrent Spatial and Channel Squeeze & Excitation (scSE) Nets](https://blog.paperspace.com/scse-nets/)
+- :link: [Channel Attention and Squeeze-and-Excitation Networks (SENet)](https://blog.paperspace.com/channel-attention-squeeze-and-excitation-networks/)
+- :link: [Introduction to ResNets](https://towardsdatascience.com/introduction-to-resnets-c0a830a288a4)
+- :link: [Understand Deep Residual Networks — a simple, modular learning framework that has redefined state-of-the-art](https://medium.com/@waya.ai/deep-residual-learning-9610bb62c355)
+- :link: [Review: ResNeXt — 1st Runner Up in ILSVRC 2016 (Image Classification)](https://towardsdatascience.com/review-resnext-1st-runner-up-of-ilsvrc-2016-image-classification-15d7f17b42ac)
+- :link: [A Review of Popular Deep Learning Architectures: DenseNet, ResNeXt, MnasNet, and ShuffleNet v2](https://blog.paperspace.com/popular-deep-learning-architectures-densenet-mnasnet-shufflenet/)
+
+[^xview2]
+[^first_place_solution]
+[^unet]
+[^cadene]
+[^segformer]
+[^xbd]
+[^higher]
+[^maml]
+[^multi-temporal-fusion]
+[^SCSE]
+[^SeNet]
+[^fp16]
+[^dpn]
+[^meta-seg]
+[^meta-seg-init]
+[^focal-loss]
+[^first-order-meta-learing-algorithms]
+[^resnet]
+[^resnext]
+[^efficientnet]
+[^kornia]
+[^kornia-survey]
+[^open-cv]
+[^dice-loss]
+[^segmentation-losses]
+
+## References
+[^xbd]: :page_facing_up: [xBD: A Dataset for Assessing Building Damage from Satellite Imagery](https://arxiv.org/abs/1911.09296)
+
+[^xview2]: :link: Competition and Dataset: [Xview2 org.](https://www.xview2.org)
+
+[^first_place_solution]:[Xview2 First Place Solution](https://github.com/vdurnov/xview2_1st_place_solution)
+
+[^unet]: :page_facing_up: [U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597)
+
+[^cadene]: [Cadene/Pretrained models for Pytorch](https://github.com/Cadene/pretrained-models.pytorch)
+
+[^segformer]: :page_facing_up: [SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers](https://arxiv.org/abs/2105.15203)
+
+[^higher]: :page_facing_up: [Generalized Inner Loop Meta-Learning](https://arxiv.org/abs/1910.01727) 
+
+[^maml]: :page_facing_up: [Model-Agnostic Meta-Learning for Fast Adaptation of Deep Networks](https://arxiv.org/abs/1703.03400)
+
+[^multi-temporal-fusion]: :page_facing_up: [Building Disaster Damage Assessment in Satellite Imagery with Multi-Temporal Fusion](https://arxiv.org/abs/2004.05525)
+
+[^SCSE]: :page_facing_up: [Concurrent Spatial and Channel Squeeze & Excitation in Fully Convolutional Networks](https://arxiv.org/abs/1803.02579)
+
+[^SeNet]: :page_facing_up: [Recalibrating Fully Convolutional Networks with Spatial and Channel 'Squeeze & Excitation' Blocks](https://arxiv.org/abs/1808.08127)
+
+[^fp16]: :page_facing_up: [AMPT-GA: Automatic Mixed Precision Floating Point Tuning for GPU Applications](https://engineering.purdue.edu/dcsl/publications/papers/2019/gpu-fp-tuning_ics19_submitted.pdf)
+
+[^dpn]: :page_facing_up: [Dual Path Networks](https://arxiv.org/abs/1707.01629)
+
+[^meta-seg]: :page_facing_up: [Meta-seg: A survey of meta-learning for image segmentation](https://www.sciencedirect.com/science/article/abs/pii/S003132032200067X)
+
+[^meta-seg-init]: :page_facing_up: [Meta-Learning Initializations for Image Segmentation](https://meta-learn.github.io/2020/papers/44_paper.pdf)
+
+[^focal-loss]: :page_facing_up: [Focal Loss for Dense Object Detection](https://arxiv.org/abs/1708.02002)
+
+[^first-order-meta-learing-algorithms]: :page_facing_up: [On First-Order Meta-Learning Algorithms](https://arxiv.org/abs/1803.02999)
+
+[^imaml]: :page_facing_up: [Meta-Learning with Implicit Gradients](https://arxiv.org/abs/1909.04630)
+
+[^resnet]: :page_facing_up: [Deep Residual Learning for Image Recognition](https://arxiv.org/abs/1512.03385)
+
+[^resnext]: :page_facing_up: [Aggregated Residual Transformations for Deep Neural Networks](https://arxiv.org/abs/1611.05431)
+
+[^efficientnet]: :page_facing_up: [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks](https://arxiv.org/abs/1905.11946)
+
+[^kornia]: :page_facing_up: [Kornia: an Open Source Differentiable Computer Vision Library for PyTorch](https://arxiv.org/abs/1910.02190)
+
+[^kornia-survey]: :page_facing_up: [A survey on Kornia: an Open Source Differentiable Computer Vision Library for PyTorch](https://arxiv.org/abs/2009.10521)
+
+
+<!--https://github.com/kornia/kornia/blob/master/CITATION.md -->
+
+[^open-cv]: :page_facing_up: [open cv](https://github.com/opencv/opencv)
+
+<!-- 
+@article{opencv_library,
+    author = {Bradski, G.},
+    citeulike-article-id = {2236121},
+    journal = {Dr. Dobb's Journal of Software Tools},
+    keywords = {bibtex-import},
+    posted-at = {2008-01-15 19:21:54},
+    priority = {4},
+    title = {{The OpenCV Library}},
+    year = {2000}
+}
+-->
+
+[^dice-loss]: :page_facing_up: [Generalised Dice overlap as a deep learning loss function for highly unbalanced segmentations](https://arxiv.org/abs/1707.03237)
+
+[^segmentation-losses]: :page_facing_up: [A survey of loss functions for semantic segmentation](https://arxiv.org/abs/2006.14822)
 
 
