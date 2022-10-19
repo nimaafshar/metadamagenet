@@ -1,10 +1,10 @@
 # Evaluation Results
 
-## Localization Results
-
 **validation set path in dataset**: `/test/`
 
 **test set path in dataset** : `/hold/`
+
+## Localization Results
 
 <table>
 <thead>
@@ -123,7 +123,7 @@
         <td>0.7261</td>
         <td>0.7302</td>
     </tr>
-     <tr>
+    <tr>
         <td>1</td>
         <td>0.7253</td>
         <td>0.7319</td>
@@ -144,9 +144,17 @@
         <td>0.7264</td>
         <td>--</td>
     </tr>
+    <tr>
+        <td rowspan="1">EfficientUnetB0</td>
+        <td rowspan="1">Regular</td>
+        <td>0</td>
+        <td>0.7692</td>
+        <td>0.7739</td>
+        <td>0.7634</td>
+        <td>--</td>
+    </tr>
 </tbody>
 </table>
-  
 
 ### Meta-Learning
 
@@ -200,191 +208,145 @@ test tasks: `mexico-earthquake`,`joplin-tornado`
 
 ## Classification Results
 
-**validation set**
-
-path in dataset : `/test/`
-
 <table>
 <thead>
     <tr>
-        <td colspan="1">model</td>
-        <td colspan="1">version</td>
-        <td colspan="8">Classification Score</td>
+        <td>model</td>
+        <td>version</td>
+        <td>seed</td>
+        <td colspan="2">Test Score</td>
+        <td colspan="2">Validation Score</td>
     </tr>
     <tr>
-        <td colspan="2">seed</td>
-        <td colspan="2">0</td>
-        <td colspan="2">1</td>
-        <td colspan="2">2</td>
-        <td colspan="2">mean agg.</td>
-    </tr>
-    <tr>
-        <td colspan="2"> TTA </td>
+        <td colspan="3"> TTA </td>
         <td> - </td>
         <td> + </td>
         <td> - </td>
         <td> + </td>
-        <td> - </td>
-        <td> + </td>
-        <td colspan="2"> - </td>
     </tr>
 </thead>
 <tbody>
-<tr>
-  <td>Resnet34Unet</td>
-  <td>tuned</td>
-
-  <td>0.1119</td>
-  <td>0.0831</td>
-
-  <td>0.1264</td>
-  <td>0.0997</td>
-
-  <td>0.1324</td>
-  <td>0.1082</td>
-
-  <td colspan="2">0.0832</td>
-</tr>
-<tr>
-<td>SeResnext50Unet</td>
-<td>tuned</td>
-
-<td>0.6397</td>
-<td>0.6347</td>
-
-<td>0.6012</td>
-<td>0.5991</td>
-
-<td>0.6271</td>
-<td>0.6361</td>
-
-<td>0.6301</td>
-</tr>
-<tr>
-<td>Dpn92Unet</td>
-<td>tuned</td>
-
-<td>0.6387</td>
-<td>0.6441</td>
-
-<td>0.5869</td>
-<td>0.5813</td>
-
-<td>0.6075</td>
-<td>0.6138</td>
-
-<td colspan="2">0.6258</td>
-</tr>
-<tr>
-  <td>SeNet154Unet</td>
-  <td>tuned</td>
-
-  <td>0.6684</td>
-  <td>0.6722</td>
-
-  <td>0.5889</td>
-  <td>0.6123</td>
-
-  <td>0.6520</td>
-  <td>0.6479</td>
-
-  <td colspan="2">0.6596</td>
-</tr>
+    <tr>
+        <td rowspan="4">Resnet34Unet</td>
+        <td rowspan="4">tuned</td>
+        <td>0</td>
+        <td>0.1090</td>
+        <td>0.0806</td>
+        <td>0.1119</td>
+        <td>0.0831</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>0.1466</td>
+        <td>0.1174</td>
+        <td>0.1264</td>
+        <td>0.0997</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>0.1314</td>
+        <td>0.1101</td>
+        <td>0.1324</td>
+        <td>0.1082</td>
+    </tr>
+    <tr>
+        <td> mean agg.</td>
+        <td>0.0860</td>
+        <td>--</td>
+        <td>0.0832</td>
+        <td>--</td>
+    </tr>
+    <tr>
+        <td rowspan="4">SeResnext50Unet</td>
+        <td rowspan="4">tuned</td>
+        <td>0</td>
+        <td>0.6164</td>
+        <td>0.6152</td>
+        <td>0.6397</td>
+        <td>0.6347</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>0.6135</td>
+        <td>0.6069</td>
+        <td>0.6012</td>
+        <td>0.5991</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>0.6319</td>
+        <td>0.6422</td>
+        <td>0.6271</td>
+        <td>0.6361</td>
+    </tr>
+    <tr>
+        <td>mean agg.</td>
+        <td>0.6360</td>
+        <td>--</td>
+        <td>0.6301</td>
+        <td>--</td>
+    </tr>
+    <tr>
+        <td rowspan="4">Dpn92Unet</td>
+        <td rowspan="4">tuned</td>
+        <td>0</td>
+        <td>0.6564</td>
+        <td>0.6657</td>
+        <td>0.6387</td>
+        <td>0.6441</td>
+    </tr>
+     <tr>
+        <td>1</td>
+        <td>0.6233</td>
+        <td>0.6343</td>
+        <td>0.5869</td>
+        <td>0.5813</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>0.6246</td>
+        <td>0.6252</td>
+        <td>0.6075</td>
+        <td>0.6138</td>
+    </tr>
+    <tr>
+        <td>mean agg.</td>
+        <td>0.6460</td>
+        <td>--</td>
+        <td>0.6258</td>
+        <td>--</td>
+    </tr>
+    <tr>
+        <td rowspan="4">SeNet154Unet</td>
+        <td rowspan="4">tuned</td>
+        <td>0</td>
+        <td>0.6916</td>
+        <td>0.7034</td>
+        <td>0.6684</td>
+        <td>0.6722</td>
+    </tr>
+     <tr>
+        <td>1</td>
+        <td>0.6216</td>
+        <td>0.6342</td>
+        <td>0.5889</td>
+        <td>0.6123</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>0.6868</td>
+        <td>0.6949</td>
+        <td>0.6520</td>
+        <td>0.6479</td>
+    </tr>
+    <tr>
+        <td>mean agg.</td>
+        <td>0.6954</td>
+        <td>--</td>
+        <td>0.6596</td>
+        <td>--</td>
+    </tr>
 </tbody>
 </table>
-
-**test set**
-
-path in dataset : `/hold/`
-
-<table>
-<thead>
-    <tr>
-        <td colspan="1">model</td>
-        <td colspan="1">version</td>
-        <td colspan="8">Classification Score</td>
-    </tr>
-    <tr>
-        <td colspan="2">seed</td>
-        <td colspan="2">0</td>
-        <td colspan="2">1</td>
-        <td colspan="2">2</td>
-        <td colspan="2">mean agg.</td>
-    </tr>
-    <tr>
-        <td colspan="2"> TTA </td>
-        <td> - </td>
-        <td> + </td>
-        <td> - </td>
-        <td> + </td>
-        <td> - </td>
-        <td> + </td>
-        <td colspan="2"> - </td>
-    </tr>
-</thead>
-<tbody>
-<tr>
-  <td>Resnet34Unet</td>
-  <td>tuned</td>
-
-  <td>0.1090</td>
-  <td>0.0806</td>
-
-  <td>0.1466</td>
-  <td>0.1174</td>
-
-  <td>0.1314</td>
-  <td>0.1101</td>
-
-  <td colspan="2">0.0860</td>
-</tr>
-<tr>
-<td>SeResnext50Unet</td>
-<td>tuned</td>
-
-<td>0.6164</td>
-<td>0.6152</td>
-
-<td>0.6135</td>
-<td>0.6069</td>
-
-<td>0.6319</td>
-<td>0.6422</td>
-
-<td colspan="2">0.6360</td>
-</tr>
-<tr>
-<td>Dpn92Unet</td>
-<td>tuned</td>
-
-<td>0.6564</td>
-<td>0.6657</td>
-
-<td>0.6233</td>
-<td>0.6343</td>
-
-<td>0.6246</td>
-<td>0.6252</td>
-
-<td colspan="2">0.6460</td>
-</tr>
-<tr>
-  <td>SeNet154Unet</td>
-  <td>tuned</td>
-
-  <td>0.6916</td>
-  <td>0.7034</td>
-
-  <td>0.6216</td>
-  <td>0.6342</td>
-
-  <td>0.6868</td>
-  <td>0.6949</td>
-
-  <td colspan="2">0.6954</td>
-</tr>
-</tbody>
-</table>
-
 
 
