@@ -146,7 +146,7 @@
     </tr>
     <tr>
         <td rowspan="8">EfficientUnetB0</td>
-        <td rowspan="3">Regular</td>
+        <td rowspan="3">Standard</td>
         <td>0</td>
         <td>0.7692</td>
         <td>0.7739</td>
@@ -206,7 +206,7 @@
     </tr>
     <tr>
         <td rowspan="2">EfficientUnetB4</td>
-        <td>Regular</td>
+        <td>Standard</td>
         <td>0</td>
         <td>0.7755</td>
         <td>0.7797</td>
@@ -439,7 +439,7 @@ test tasks: `mexico-earthquake`,`joplin-tornado`
     </tr>
     <tr>
         <td rowspan="3">EfficientNetB0</td>
-        <td>Regular</td>
+        <td>Standard</td>
         <td>0</td>
         <td>0.7576</td>
         <td>0.7571</td>
@@ -464,7 +464,7 @@ test tasks: `mexico-earthquake`,`joplin-tornado`
     </tr>
     <tr>
         <td rowspan="2">EfficientUnetB4</td>
-        <td>Regular</td>
+        <td>Standard</td>
         <td>0</td>
         <td>0.7732</td>
         <td>0.7679</td>
@@ -481,7 +481,7 @@ test tasks: `mexico-earthquake`,`joplin-tornado`
     </tr>
     <tr>
         <td>SegFormer</td>
-        <td>Regular</td>
+        <td>Standard</td>
         <td>0</td>
         <td>0.7574</td>
         <td>0.7380</td>

@@ -4,8 +4,7 @@
 
 This project is my bachelors thesis at AmirKabir University of Technology under supervision of Dr.Amin Gheibi.
 Some ideas of this project is borrowed from
-[xview2 first place solution](https://github.com/vdurnov/xview2_1st_place_solution)
-repository. I used that repository as a baseline and refactored its code.
+[xview2 first place solution](https://github.com/vdurnov/xview2_1st_place_solution) [^first_place_solution] repository. I used that repository as a baseline and refactored its code.
 Thus, this code covers models and experiments of the mentioned repo and
 contributes more research into the same problem of damage assessment in aerial imagery.
 
@@ -27,10 +26,9 @@ pip install -r requirements.txt
 
 ### Table Of Contents
 
-- [Data](#data)
-    - [Dataset](#dataset)
-    - [Problem Definition](#problem-defenition)
-    - [Data Augmentations](#data-augmentations)
+- [Dataset](#dataset)
+- [Problem Definition](#problem-defenition)
+- [Data Augmentations](#data-augmentations)
 - [Methodology](#methodology)
     - [General Architecture](#general-architecture)
     - [U-Models](#u-models)
@@ -52,19 +50,17 @@ pip install -r requirements.txt
 - [Further Reading](#further-reading)
 - [References](#references)
 
-## Data
+## Dataset
 
-### Dataset
-
-We are using the xview2 challenge dataset, namely Xbd, as the dataset for our project. This dataset contains pairs of
+We are using the xview2 [^xview2] challenge dataset, namely Xbd[^xbd], as the dataset for our project. This dataset contains pairs of
 pre and post-disaster satellite images from 19 natural disasters worldwide, including fires, hurricanes, floods, and
 earthquakes. Each sample in the dataset consists of a pre-disaster image with its building annotations and a
 post-disaster image with the same building annotations. However, in the post-disaster building annotations, each
-building is a damage level of the following: *undamaged*, *minor-damage*, *major damage*, *destroyed*, and *
-unclassified*. The dataset consists of *train*, *tier3*, *test*, and *hold* subsets. Each subset has an images folder
-containing pre and post-disaster images stored as 1024\*1024 PNG and a folder named labels containing building
+building has a damage level of the following: *undamaged*, *minor-damage*, *major damage*, *destroyed*, and *
+unclassified*. The dataset consists of *train*, *tier3*, *test*, and *hold* subsets. Each subset has an *images* folder
+containing pre and post-disaster images stored as 1024\*1024 PNGs and a folder named labels containing building
 annotations and damage labels in JSON format. Some of the post-imagery is slightly shifted from their corresponding
-pre-image. Also, the dataset has different ground sample distances. We used the *train* and *tier3* subsets for
+pre-disaster image. Also, the dataset has different ground sample distances. We used the *train* and *tier3* subsets for
 training, the *test* subset for validation, and the *hold* subset for testing. The dataset is highly unbalanced in
 multiple aspects. The buildings with the *undamaged* label are far more than buildings with other damage types. The
 number of images varies a lot between different disasters; the same is true for the number of building annotations in
@@ -117,15 +113,15 @@ dataset = ClassificationDataset([Path('/path/to/dataset/train'), Path('/path/to/
 
 ![an example of data](./res/data.png)
 
-### Problem Defenition
+## Problem Defenition
 
 We can convert this building annotations (polygons) to a binary mask. We can also convert the damage levels to values
 1-4 and use them as the value for all the pixels in their corresponding building, forming a semantic segmentation mask.
 Thus, we define the building localization task as predicting each pixel's value being zero or non-zero. We also define
 the damage classification task as predicting the exact value of pixels within each building. We consider the label of an
-unclassified building as undamaged, as it is the most common label by far.
+unclassified building as undamaged, as it is the most common label by far in the dataset.
 
-### Data Augmentations
+## Data Augmentations
 
 <details>
 <summary>
@@ -171,8 +167,8 @@ Data Augmentation techniques help generate new valid samples from the dataset. H
 help the model train faster, and prevent overfitting. Data Augmentation is vastly used in training computer vision
 tasks, from image classification to instance segmentation. in most cases, data augmentation is done randomly. This
 randomness means it is not done on some of the original samples, and the augmentation has some random parameters. Most
-libraries used for augmentation, like open-cv (cite), do not support image-batch transforms and only perform transforms
-on the CPU. Kornia (cite) is an open-source differentiable computer vision library for PyTorch; it does support
+libraries used for augmentation, like open-cv [^open-cv], do not support image-batch transforms and only perform transforms
+on the CPU. Kornia [^kornia] [^kornia-survey] is an open-source differentiable computer vision library for PyTorch[^pytorch]; it does support
 image-batch transforms, and it does support performing these transforms on GPU. We used Kornia and added some parts to
 it to suit our project requirements.
 
@@ -221,8 +217,8 @@ unet_with_pretrained_backbone = EfficientUnetB0(pretrained_backbone=True)
 
 ### General Architecture
 
-As shown in the figure below, building-localization models consist of a feature extractor (a U-net or a SegFormer) and a
-classifier module.
+As shown in the figure below, building-localization models consist of a feature extractor (a U-net [^unet] or a SegFormer [^segformer]) and a
+classifier module [^first_place_solution].
 The feature extractor extracts helpful features from the input image;
 then, the classifier module predicts a value of 0 or 1 for each pixel,
 indicating whether this pixel belongs to a building or not.
@@ -235,7 +231,7 @@ The classifier module learns a distance function between pre-disaster and post-d
 because the damage level of each facility can be determined by comparing it in the pre- and post-disaster images.
 In many samples, the post-disaster image has a minor shift compared to the pre-disaster image;
 the segmentation masks are created based on the location of buildings in the pre-disaster image.
-This shift is an issue the model has to overcome. For models that share a joint feature extractor,
+This shift is an issue the model has to overcome. In our models, feature extracting weights are shared between the two images. this helps the model to detect the shift or nadir difference. For models that share a joint feature extractor (like SegFormerB0 Classifier and SegFormerB0 Localizer),
 we can initialize the feature extractor module in the classification model with the localization model's feature
 extractor.
 Since we do not use the localization model directly for damage assessment, training of the localization model can be
@@ -245,13 +241,13 @@ seen as a pre-training stage for the classification model.
 
 ### U-Models
 
-Some models in this project use a U-net module as the feature extractor and a superficial 2d Convolutional Layer as the
+Some of our models use a U-net [^unet] module as the feature extractor and a superficial 2d Convolutional Layer as the
 classifier.
-We call them u-models. Their feature extractor module is a u-net with five encoder and five decoder modules.
-Encoder models are usually a part of a general feature extractor like Resnet-34.
-in the forward pass of each image through an encoder module, the number of channels may or may not change.
+We call them U-models. Their feature extractor module is a U-net [^unet] with five encoder and five decoder modules.
+Encoder modules are usually a part of a general feature extractor like *Resnet-34* [^resnet].
+in the forward pass of each image through each encoder module, the number of channels may or may not change.
 Still, the height and width of the image are divided by two.
-Usually, the five encoder modules combined include all layers of a general feature extractor model (like Resnet34)
+Usually, the five encoder modules combined include all layers of a general feature extractor model (like Resnet34 [^resnet])
 except the classification layer.
 Each decoder module combines the output of the previous decoder module and the respective encoder module.
 For example, encoder module 2 combines the output of decoder module 1 and encoder module 3.
@@ -262,29 +258,29 @@ They form a U-like structure, as shown in the figure below.
 #### Decoder Modules
 
 There are two variants of decoder modules:
-The standard decoder module and the SCSE decoder module.
-The standard decoder module applies a 2d convolution and a Relu activation to the input from the previous decoder.
+The *Standard* decoder module and the *SCSE* [^SCSE] decoder module.
+The *Standard* decoder module applies a 2d convolution and a *Relu* activation to the input from the previous decoder.
 Then it concatenates the result with the input from the respective encoder module and applies another 2d convolution and
-ReLU activation.
-SCSE decoder module works the same way but, in the end,
-uses a "Concurrent Spatial and Channel Squeeze & Excitation" module on the result.
+*ReLU* activation.
+*SCSE* decoder module works the same way but, in the end,
+uses a "Concurrent Spatial and Channel Squeeze & Excitation" [^SCSE] module on the result.
 This SCSE module is supposed to help the model focus on the image's more critical regions and channels.
-Decoder modules in the forked repository don't use batch normalization between the convolution and the activation.
-We added this layer to the decoder modules to prevent gradient exploding and make them more stable.
+Decoder modules in *xview2 first place solution* [^first_place_solution] don't use batch normalization between the convolution and the activation.
+We added this layer to the decoder modules to prevent gradient exploding and to make them more stable.
 
 ![Decoder Modules](./res/decoder.png)
 
 #### Backbone
 
-We pick encoder modules of U-net models from a general feature extractor model called the backbone network.
+We pick encoder modules of U-net modules from a general feature extractor model called *the backbone network*.
 The choice of the backbone network is the most crucial point in the performance of a U-net model.
 Plus, most of the parameters of a U-net model are of its backbone network.
 Thus, the choice of the backbone network significantly impacts its size and performance.
-The forked repository used *Resnet34*, *Dual Path Network 92*, *SeResnext50 (32x4d)*, and *SeNet154* as the backbone
+*xview2 first place solution* [^first_place_solution] used *Resnet34* [^resnet], *Dual Path Network 92* [^dpn], *SeResnext50 (32x4d)* [^resnext], and *SeNet154* [^SeNet] as the backbone
 network.
-We used *EfficientNet B0* and *EfficientNet B4* (both standard and *Wide-SE* versions) as the backbone network, creating
-new U-models called EfficientUnets.
-EfficientNets have shown excellent results on the ImageNet dataset, so they are good feature extractors.
+We used *EfficientNet B0* and *EfficientNet B4* [^efficientnet] (both standard and *Wide-SE* versions) as the backbone network, creating
+new U-models called *Efficient-Unets*.
+*EfficientNets* [^efficientnet] have shown excellent results on the ImageNet [^imagenet] dataset, so they are good feature extractors.
 They are also relatively small in size. These two features make them perfect choices for a backbone network.
 
 We listed all the used models and their attributes in the table below.
@@ -372,16 +368,16 @@ We listed all the used models and their attributes in the table below.
 ### Meta-Learning
 
 In meta-learning, a general problem, such as classifying different images (in the *ImageNet* dataset) or classifying
-different letters (in the *Omniglot* dataset), is seen as a distribution of tasks. In this approach, tasks are generally
+different letters (in the *Omniglot* [^omniglot] dataset), is seen as a distribution of tasks. In this approach, tasks are generally
 the same problem (like classifying letters) but vary in some parameters (like the script letters belong to).
 We can take a similar approach to our problem. We can view building detection and damage level classification as the
 general problem and the disaster type (like a flood, hurricane, or wildfire) and the environment of the disaster
 (like a desert, forest, or urban area) as the varying factor. In distance-learning methods, the distance function
 returns a distance between the query sample and each class's sample. Then the query sample is classified into the
 class with minimum distance. These methods are helpful when we have a high number of classes. However, in our case,
-the number of classes is fixed. Thus, we used a model-agnostic approach. Model agnostic meta-learning algorithms find a
+the number of classes is fixed. Thus, we used a model-agnostic approach. Model agnostic meta-learning [^maml] algorithms find a
 set of parameters for the model that can be adapted to a new task by training with very few samples.
-We used the MAML algorithm and considered every different disaster a task.
+We used the MAML [^maml] algorithm and considered every different disaster a task.
 Since the MAML algorithm consumes lots of memory, and the consumed memory is
 relative to the model size, we have used models based on EfficientUnetB0 and
 only trained it for building localization task.
@@ -391,7 +387,7 @@ and we did not have many hours to train our models, the results were disappointi
 We trained EfficientUnetB0-Localizer with MAML with support shots equal to one or five
 and query shots equal to two or ten, respectively. Other training hyperparameters
 and evaluation results are available in the results section.
-We utilized the higher library to implement the MAML algorithm.
+We utilized the *Higher* [^higher] library to implement the MAML algorithm.
 
 
 <details>
@@ -446,11 +442,11 @@ MetaTrainer(
 
 ### Vision Transformer
 
-In recent years, vision transformers have achieved state-of-the-art results in many computer vision tasks, including
-semantic segmentation. SegFormer is a model designed for efficient semantic segmentation, and it is based on vision
+In recent years, vision transformers [^vit] have achieved state-of-the-art results in many computer vision tasks, including
+semantic segmentation. SegFormer [^segformer] is a model designed for efficient semantic segmentation, and it is based on vision
 transformers. SegFormer is available in different sizes. We only used the smallest size, named SegFormerB0. The
 SegFormer model consists of a hierarchical Transformer encoder and a lightweight all-MLP decode head.
-In contrast to U-nets, SegFormer models have constant input and output sizes. So inputs and outputs should be
+In contrast to U-nets, SegFormer models have constant input and output sizes. So model inputs and outputs should be
 interpolated to the correct size. For the localization task, the input image goes through SegFormer, and its outputs go
 through a SegfFormer decode head.
 However, for the classification task, pre and post-disaster go through the same Segformer model, and their outputs are
@@ -462,12 +458,12 @@ Moreover, one can experiment with changing the size of the SegFormer input and S
 ### Training Setup
 
 We trained some models with multiple random seeds (multiple folds) to ensure they have low variance and consistent
-scores. We trained Localization models only on pre-disaster images; we used post-disaster images in sporadic cases as
+scores. We trained Localization models only on pre-disaster images, because post-disaster images added noise to the data; we used post-disaster images in sporadic cases as
 additional augmentation. We initialized each classification model's feature extractor using weights from the
 corresponding localization model and fold number. While training both classification and localization models, no weights
-were frozen.Since the dataset is unbalanced, we use weighted losses with weights relative to the inverse of each class's
+were frozen. Since the dataset is unbalanced, we use weighted losses with weights relative to the inverse of each class's
 sample count. We applied morphological dilation with a 5*5 kernel to classification masks as an augmentation. Dilated
-masks made predictions more "bold";
+masks made predictions more bold. We also used pytorch [^pytorch] amp for FP-16 [^fp16] training.
 
 ### Loss Functions
 
@@ -490,13 +486,13 @@ WeightedSum(
 Both Building Localization and Damage Classification are semantic segmentation tasks.
 Because, in both problems, the model's purpose is classification at the pixel level.
 We have used a combination of multiple segmentation losses for all models.
-[Here](https://github.com/shruti-jadon/Semantic-Segmentation-Loss-Functions),
+In [^segmentation-losses],
 you can find a comprehensive comparison between popular loss functions for semantic segmentation.
 
-Focal, Dice, and Lovasz-sigmoid Loss are loss functions used in the training localization models.
-For Classification models, we tried Focal, Dice, Lovasz-Softmax Loss, Log-Cosh-Dice, and, Cross-entropy Loss.
+Focal and Dice Loss are loss functions used in the training localization models.
+For Classification models, we tried channelwise-weighted versions of Focal, Dice and Cross-entropy Loss.
 
-**Focal Loss**
+**Focal Loss**[^focal-loss]
 
 $$
 FL(p_t) = -\alpha_t(1- p_t)\gamma log(p_t).
@@ -505,9 +501,9 @@ $$
 Focal Loss's usage is to make the model focus on hard-to-classify examples by increasing their loss value. We used it
 because the target distribution was highly skewed. In the building localization task, the number of pixels containing
 buildings was far less than the background pixels. In the damage classification task, too, undamaged building samples
-formed more than 80 percent of the total samples.
+formed most of the total samples.
 
-**Dice Loss**
+**Dice Loss**[^dice-loss]
 
 $$
 Dice\space Loss(p,t) = 1 - dice(p,t)
@@ -521,12 +517,11 @@ $$
 
 Dice loss is calculated globally over each mini-batch. For multiclass cases, the loss value of each class (channel) is
 calculated individually, and their average is used as the final loss. Two activation functions can be applied to model
-outputs before calculating dice loss: sigmoid and softmax. Softmax makes the denominator of the final loss function
+outputs before calculating dice loss: *sigmoid* and *softmax*. Softmax makes the denominator of the final loss function
 constant and thus has less effect on the model's training though it makes better sense.
 
-- [example argument about correct implementation of softmax-dice-loss](https://github.com/keras-team/keras/issues/9395#issuecomment-379276452)
 
-**Cross Entropy Loss**
+**Cross Entropy Loss**[^cross-entropy]
 
 $$
 -\sum_{c=1}^My_{o,c}\log(p_{o,c})
@@ -555,13 +550,11 @@ score = evaluator(preds, targets)
 
 </details>
 
-One of the most popular evaluation metrics for classifiers is the f1-score; because it accounts for precision and recall
+One of the best and most popular evaluation metrics for classifiers is the f1-score; because it accounts for precision and recall
 simultaneously. The macro version of the f1-score is a good evaluation measure for imbalanced datasets. The
-xview2-scoring repository describes what variation of f1-score to use for this problem's scoring. We adapted their
-evaluation metrics. However, we implemented these metrics as a metric for the torchmetrics repository. It performs
-better than computing metrics in NumPy and provides an easy-to-use API.
-
-- The dice score is a set similarity measure that equals the f1-score.
+[xview2-scoring](https://github.com/DIUx-xView/xView2_scoring) repository describes what variation of f1-score to use for this problem's scoring. We adapted their
+evaluation metrics. However, we implemented these metrics as a metric for the torchmetrics [^torchmetrics] library. It performs
+better than computing metrics in NumPy [^numpy] and provides an easy-to-use API. The dice score is a set similarity measure that equals the f1-score.
 
 $$
 Dice(P,Q) = 2. \frac{P \cap Q}{P+Q}
@@ -635,7 +628,7 @@ model_using_test_time_augment = FourRotations(model)
 
 </details>
 
-### Results & Discussion
+### Results
 
 Using pre-trained feature extractors from localization models allowed
 classification models to train much faster and have higher scores.
@@ -645,12 +638,7 @@ based on a distance function between the extracted features from the
 pre- and post-disaster image.
 In U-models, the classifier module is a 2d convolution, but in SegFormer models,
 it is a SegFormer decoder head. Hence, U-models learn a much simpler distance
-function than SegFormer models; the simplicity of the distance function helps
-them not to overfit but also prevents them from learning some sophisticated
-patterns. In the end, SegFormer models train much faster before overfitting o
-n the training data, but U-models slowly reach almost the same score.
-EfficientUnet localization models have shown that they train better without
-the usage of focal loss.
+function than SegFormer models; the simplicity of the distance function helps them not to overfit but also prevents them from learning some sophisticated patterns. In the end, SegFormer models train much faster before overfitting on the training data, but U-models slowly reach almost the same score. EfficientUnet localization models have shown that they train better without the usage of focal loss. Softmax dice loss does not perform well in damage classification models training. A combination of sigmoid dice loss for each class (channel), and cross entropy loss gives the best results in training of a classification model. The effect of SCSE in decoder modules and Wide-SE in Encoder Modules of a U-net is very limited; these variations of EfficientUnets performed almost the same as the standard version.
 
 complete results are available at [results.md](./results.md)
 
@@ -663,25 +651,19 @@ the efficient unet by trying efficientnet b5 or b7 as the backbone.
 The layer in which the embedding of the pre- and post-disaster images
 get concatenated dictates the complexity of the distance function in the classifier.
 This effect can also be tested and analyzed.
-Log-cosh-dice and focal-travesky are two loss functions which
+*Log-cosh-dice* and *Focal-travesky* are two loss functions which
 have the best performance in the training of segmentation models [^segmentation-losses].
 We can also try training our models with these two loss functions.
 But in this case, we have to make sure to modify them, so we can assign weights to classes.
 The low performance of the meta learning model may
 not be only due to the small number of training epochs or the small number of shots.
-We can try using first-order MAML like reptile instead of the original MAML algorithm in the model.
-These algorithms use less memory, thus, we can test the effects of other factors and hyper parameters faster. [][].
-Previous research in the realm of meta learning may also help us train a better model for our specific problem. [][]
+We can try using first-order MAML like reptile [^reptile] instead of the original MAML algorithm in the model.
+These algorithms use less memory, thus, we can test the effects of other factors and hyper parameters faster.
+Previous research in the realm of meta learning for semantic segmentation may also help us train a better model for our specific problem. [^meta-seg] [^meta-seg-init].
 
 ## Discussion and Conclusion
 Detecting buildings and their damage level by artificial intelligence can import rescue operations' speed and efficiency after natural disasters. Solving this problem can identify the area of damage on a large scale and prioritize the areas that have been the most affected and damaged by a disaster in rescue operations. We tested different decoders in the U-net modules and utilized different variations of efficient-net as our backbone in our model. Additionally, we fine-tuned SegFormer for our specific task. The result was models with fewer parameters (approximately three million) that performed much better than the previous models. (Damage classification score=0.77). Due to the fewer parameters, these models have a shorter training and inference time. Therefore, they can be trained and used faster and can be easily fine-tuned for new and different natural disasters. Considering damage classification and building localization in each natural disaster as a separate task, we utilized MAML and trained models that can be adapted to a new natural disaster only using a few brand-new samples. These models do not have satisfactory performance, but we hope to build better models of this type in the future.
 
-
-## Conclusion and Acknowledgments
-
-Thank you to xView2 team for creating and releasing this amazing dataset and opportunity to invent a solution that can
-help to response to the global natural disasters faster. I really hope it will be usefull and the idea will be improved
-further.
 
 ## Further Reading
 
@@ -702,32 +684,7 @@ further.
 - :link: [Review: ResNeXt — 1st Runner Up in ILSVRC 2016 (Image Classification)](https://towardsdatascience.com/review-resnext-1st-runner-up-of-ilsvrc-2016-image-classification-15d7f17b42ac)
 - :link: [A Review of Popular Deep Learning Architectures: DenseNet, ResNeXt, MnasNet, and ShuffleNet v2](https://blog.paperspace.com/popular-deep-learning-architectures-densenet-mnasnet-shufflenet/)
 
-[^xview2]
-[^first_place_solution]
-[^unet]
-[^cadene]
-[^segformer]
-[^xbd]
-[^higher]
-[^maml]
-[^multi-temporal-fusion]
-[^SCSE]
-[^SeNet]
-[^fp16]
-[^dpn]
-[^meta-seg]
-[^meta-seg-init]
-[^focal-loss]
-[^first-order-meta-learing-algorithms]
-[^resnet]
-[^resnext]
-[^efficientnet]
-[^kornia]
-[^kornia-survey]
-[^open-cv]
-[^dice-loss]
-[^segmentation-losses]
-[^cross-entropy]
+- :link: [Cadene/Pretrained models for Pytorch](https://github.com/Cadene/pretrained-models.pytorch)
 
 ## References
 
@@ -735,11 +692,9 @@ further.
 
 [^xview2]: :link: Competition and Dataset: [Xview2 org.](https://www.xview2.org)
 
-[^first_place_solution]:[Xview2 First Place Solution](https://github.com/vdurnov/xview2_1st_place_solution)
+[^first_place_solution]: :link: [Xview2 First Place Solution](https://github.com/vdurnov/xview2_1st_place_solution)
 
 [^unet]: :page_facing_up: [U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597)
-
-[^cadene]: [Cadene/Pretrained models for Pytorch](https://github.com/Cadene/pretrained-models.pytorch)
 
 [^segformer]: :page_facing_up: [SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers](https://arxiv.org/abs/2105.15203)
 
@@ -763,7 +718,7 @@ further.
 
 [^focal-loss]: :page_facing_up: [Focal Loss for Dense Object Detection](https://arxiv.org/abs/1708.02002)
 
-[^first-order-meta-learing-algorithms]: :page_facing_up: [On First-Order Meta-Learning Algorithms](https://arxiv.org/abs/1803.02999)
+[^reptile]: :page_facing_up: [On First-Order Meta-Learning Algorithms](https://arxiv.org/abs/1803.02999)
 
 [^imaml]: :page_facing_up: [Meta-Learning with Implicit Gradients](https://arxiv.org/abs/1909.04630)
 
@@ -801,3 +756,14 @@ further.
 
 [^cross-entropy]: :page_facing_up: [Generalized Cross Entropy Loss for Training Deep Neural Networks with Noisy Labels](https://arxiv.org/abs/1805.07836)
 
+[^pytorch]: :page_facing_up: [Automatic differentiation in PyTorch](https://openreview.net/pdf?id=BJJsrmfCZ)
+
+[^imagenet]: :page_facing_up: [ImageNet: A large-scale hierarchical image database](https://ieeexplore.ieee.org/document/5206848)
+
+[^omniglot]: :page_facing_up: [The Omniglot challenge: a 3-year progress report](https://arxiv.org/abs/1902.03477v2)
+
+[^vit]: :page_facing_up: [An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale](https://arxiv.org/abs/2010.11929v2)
+
+[^torchmetrics]: :link: [Machine learning metrics for distributed, scalable PyTorch applications.](https://github.com/Lightning-AI/metrics)
+
+[^numpy]: :page_facing_up: [Array programming with NumPy](https://numpy.org/citing-numpy/)
