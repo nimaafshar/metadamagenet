@@ -287,7 +287,7 @@ new U-models called EfficientUnets.
 EfficientNets have shown excellent results on the ImageNet dataset, so they are good feature extractors.
 They are also relatively small in size. These two features make them perfect choices for a backbone network.
 
-We listed all the used U-net models and their attributes in the table below.
+We listed all the used models and their attributes in the table below.
 
 <table>
   <tr>
@@ -360,6 +360,12 @@ We listed all the used U-net models and their attributes in the table below.
     <td>20,592,128</td>
     <td>Yes</td>
     <td>SCSE- no concat</td>
+  </tr>
+  <tr>
+    <td>SegFormer</td>
+    <td>segformer_512*512_ade</td>
+    <td>3,714,401</td>
+    <td colspan="2"></td>
   </tr>
 </table>
 
