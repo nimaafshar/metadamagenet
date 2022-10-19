@@ -26,25 +26,26 @@ pip install -r requirements.txt
 - [`SeNet154Unet` training and tuning](./example_dpn92.py)
 
 ### Table Of Contents
+
 - [Data](#data)
-  - [Dataset](#dataset)
-  - [Problem Definition](#problem-defenition)
-  - [Data Augmentations](#data-augmentations)
+    - [Dataset](#dataset)
+    - [Problem Definition](#problem-defenition)
+    - [Data Augmentations](#data-augmentations)
 - [Methodology](#methodology)
-  - [General Architecture](#general-architecture)
-  - [U-Models](#u-models)
-    - [Decoder Modules](#decoder-modules)
-    - [Backbone](#backbone)
-  - [Meta-Learning](#meta-learning)
-  - [Vision Transformer](#vision-transformer)
-  - [Training Setup](#training-setup)
-  - [Training Results](#training-results)
-  - [Loss Functions](#loss-functions)
+    - [General Architecture](#general-architecture)
+    - [U-Models](#u-models)
+        - [Decoder Modules](#decoder-modules)
+        - [Backbone](#backbone)
+    - [Meta-Learning](#meta-learning)
+    - [Vision Transformer](#vision-transformer)
+    - [Training Setup](#training-setup)
+    - [Training Results](#training-results)
+    - [Loss Functions](#loss-functions)
 - [Evaluation](#evaluation)
-  - [Localization Models Scoring](#localization-models-scoring)
-  - [Classification Models Scoring](#classification-models-scoring)
-  - [Test-Time Augment](#test-time-augment)
-  - [Training Results](#training-results-1)
+    - [Localization Models Scoring](#localization-models-scoring)
+    - [Classification Models Scoring](#classification-models-scoring)
+    - [Test-Time Augment](#test-time-augment)
+    - [Training Results](#training-results-1)
 - [Results](#results)
 - [Future Ideas](#future-ideas)
 - [Conclusion and Acknowledgments](#conclusion-and-acknowledgments)
@@ -55,7 +56,19 @@ pip install -r requirements.txt
 
 ### Dataset
 
-We are using the xview2 challenge dataset, namely Xbd, as the dataset for our project. This dataset contains pairs of pre and post-disaster satellite images from 19 natural disasters worldwide, including fires, hurricanes, floods, and earthquakes. Each sample in the dataset consists of a pre-disaster image with its building annotations and a post-disaster image with the same building annotations. However, in the post-disaster building annotations, each building is a damage level of the following: *undamaged*, *minor-damage*, *major damage*, *destroyed*, and *unclassified*. The dataset consists of *train*, *tier3*, *test*, and *hold* subsets. Each subset has an images folder containing pre and post-disaster images stored as 1024\*1024 PNG and a folder named labels containing building annotations and damage labels in JSON format. Some of the post-imagery is slightly shifted from their corresponding pre-image. Also, the dataset has different ground sample distances. We used the *train* and *tier3* subsets for training, the *test* subset for validation, and the *hold* subset for testing. The dataset is highly unbalanced in multiple aspects. The buildings with the *undamaged* label are far more than buildings with other damage types. The number of images varies a lot between different disasters; the same is true for the number of building annotations in each disaster.
+We are using the xview2 challenge dataset, namely Xbd, as the dataset for our project. This dataset contains pairs of
+pre and post-disaster satellite images from 19 natural disasters worldwide, including fires, hurricanes, floods, and
+earthquakes. Each sample in the dataset consists of a pre-disaster image with its building annotations and a
+post-disaster image with the same building annotations. However, in the post-disaster building annotations, each
+building is a damage level of the following: *undamaged*, *minor-damage*, *major damage*, *destroyed*, and *
+unclassified*. The dataset consists of *train*, *tier3*, *test*, and *hold* subsets. Each subset has an images folder
+containing pre and post-disaster images stored as 1024\*1024 PNG and a folder named labels containing building
+annotations and damage labels in JSON format. Some of the post-imagery is slightly shifted from their corresponding
+pre-image. Also, the dataset has different ground sample distances. We used the *train* and *tier3* subsets for
+training, the *test* subset for validation, and the *hold* subset for testing. The dataset is highly unbalanced in
+multiple aspects. The buildings with the *undamaged* label are far more than buildings with other damage types. The
+number of images varies a lot between different disasters; the same is true for the number of building annotations in
+each disaster.
 
 <details>
 <summary>
@@ -95,7 +108,7 @@ from pathlib import Path
 from metadamagenet.dataset import LocalizationDataset, ClassificationDataset
 
 dataset = LocalizationDataset(Path('/path/to/dataset/train'))
-dataset = ClassificationDataset([Path('/path/to/dataset/train'),Path('/path/to/dataset/tier3')])
+dataset = ClassificationDataset([Path('/path/to/dataset/train'), Path('/path/to/dataset/tier3')])
 ```
 
 </details>
@@ -105,8 +118,12 @@ dataset = ClassificationDataset([Path('/path/to/dataset/train'),Path('/path/to/d
 ![an example of data](./res/data.png)
 
 ### Problem Defenition
-We can convert this building annotations (polygons) to a binary mask. We can also convert the damage levels to values 1-4 and use them as the value for all the pixels in their corresponding building, forming a semantic segmentation mask. Thus, we define the building localization task as predicting each pixel's value being zero or non-zero. We also define the damage classification task as predicting the exact value of pixels within each building. We consider the label of an unclassified building as undamaged, as it is the most common label by far.
 
+We can convert this building annotations (polygons) to a binary mask. We can also convert the damage levels to values
+1-4 and use them as the value for all the pixels in their corresponding building, forming a semantic segmentation mask.
+Thus, we define the building localization task as predicting each pixel's value being zero or non-zero. We also define
+the damage classification task as predicting the exact value of pixels within each building. We consider the label of an
+unclassified building as undamaged, as it is the most common label by far.
 
 ### Data Augmentations
 
@@ -117,43 +134,57 @@ Example Usage
 
 ```python
 import torch
-from metadamagenet.augment import Random, VFlip, Rotate90, Shift, RotateAndScale, BestCrop, OneOf, RGBShift, HSVShift, Clahe, GaussianNoise, Blur, Saturation, Brightness, Contrast, ElasticTransform
+from metadamagenet.augment import Random, VFlip, Rotate90, Shift, RotateAndScale, BestCrop, OneOf, RGBShift, HSVShift,\
+    Clahe, GaussianNoise, Blur, Saturation, Brightness, Contrast, ElasticTransform
 
-transform = nn.Sequential(
-        Random(VFlip(), p=0.5),
-        Random(Rotate90(), p=0.95),
-        Random(Shift(y=(.2, .8), x=(.2, .8)), p=.1),
-        Random(RotateAndScale(center_y=(0.3, 0.7), center_x=(0.3, 0.7), angle=(-10., 10.), scale=(.9, 1.1)), p=0.1),
-        BestCrop(samples=5, dsize=(512, 512), size_range=(0.45, 0.55)),
-        Random(RGBShift().only_on('img'), p=0.01),
-        Random(HSVShift().only_on('img'), p=0.01),
-        OneOf(
-            (OneOf(
-                (Clahe().only_on('img'), 0.01),
-                (GaussianNoise().only_on('img'), 0.01),
-                (Blur().only_on('img'), 0.01)), 0.01),
-            (OneOf(
-                (Saturation().only_on('img'), 0.01),
-                (Brightness().only_on('img'), 0.01),
-                (Contrast().only_on('img'), 0.01)), 0.01)
-        ),
-        Random(ElasticTransform(), p=0.001)
-    )
+transform = torch.nn.Sequential(
+    Random(VFlip(), p=0.5),
+    Random(Rotate90(), p=0.95),
+    Random(Shift(y=(.2, .8), x=(.2, .8)), p=.1),
+    Random(RotateAndScale(center_y=(0.3, 0.7), center_x=(0.3, 0.7), angle=(-10., 10.), scale=(.9, 1.1)), p=0.1),
+    BestCrop(samples=5, dsize=(512, 512), size_range=(0.45, 0.55)),
+    Random(RGBShift().only_on('img'), p=0.01),
+    Random(HSVShift().only_on('img'), p=0.01),
+    OneOf(
+        (OneOf(
+            (Clahe().only_on('img'), 0.01),
+            (GaussianNoise().only_on('img'), 0.01),
+            (Blur().only_on('img'), 0.01)), 0.01),
+        (OneOf(
+            (Saturation().only_on('img'), 0.01),
+            (Brightness().only_on('img'), 0.01),
+            (Contrast().only_on('img'), 0.01)), 0.01)
+    ),
+    Random(ElasticTransform(), p=0.001)
+)
 
 inputs = {
-  'img':torch.rand(3,3,100,100),
-  'msk':torch.randint(low=0,high=2,size(3,100,100))
-  }
+    'img': torch.rand(3, 3, 100, 100),
+    'msk': torch.randint(low=0, high=2, size=(3, 100, 100))
+}
 outputs = transform(inputs)
 ```
 
 </details>
 
-Data Augmentation techniques help generate new valid samples from the dataset. Hence, they provide us with more data, help the model train faster, and prevent overfitting. Data Augmentation is vastly used in training computer vision tasks, from image classification to instance segmentation. in most cases, data augmentation is done randomly. This randomness means it is not done on some of the original samples, and the augmentation has some random parameters. Most libraries used for augmentation, like open-cv (cite), do not support image-batch transforms and only perform transforms on the CPU. Kornia (cite) is an open-source differentiable computer vision library for PyTorch; it does support image-batch transforms, and it does support performing these transforms on GPU. We used Kornia and added some parts to it to suit our project requirements.
+Data Augmentation techniques help generate new valid samples from the dataset. Hence, they provide us with more data,
+help the model train faster, and prevent overfitting. Data Augmentation is vastly used in training computer vision
+tasks, from image classification to instance segmentation. in most cases, data augmentation is done randomly. This
+randomness means it is not done on some of the original samples, and the augmentation has some random parameters. Most
+libraries used for augmentation, like open-cv (cite), do not support image-batch transforms and only perform transforms
+on the CPU. Kornia (cite) is an open-source differentiable computer vision library for PyTorch; it does support
+image-batch transforms, and it does support performing these transforms on GPU. We used Kornia and added some parts to
+it to suit our project requirements.
 
-We created a version of each image transformation that supports our needs. Its input is multiple batches of images, and each batch has a name. for example, an input contains a batch of images and a batch of corresponding segmentation masks. In some transformations like resize, the same parameters (in this case, scale) should be used for transforming both images and segmentation masks. In some transformations, like channel shift, the transformation should not be done on the segmentation masks. Another requirement is that the transformation parameters can differ for each image and its corresponding mask in the batch.
-Furthermore, a random augmentation should generate different transformation parameters for each image in the batch. Moreover, it should consider that the transformation does not apply to some images in the batch. Our version of each transformation meets these requirements.
-
+We created a version of each image transformation that supports our needs. Its input is multiple batches of images, and
+each batch has a name. for example, an input contains a batch of images and a batch of corresponding segmentation masks.
+In some transformations like resize, the same parameters (in this case, scale) should be used for transforming both
+images and segmentation masks. In some transformations, like channel shift, the transformation should not be done on the
+segmentation masks. Another requirement is that the transformation parameters can differ for each image and its
+corresponding mask in the batch.
+Furthermore, a random augmentation should generate different transformation parameters for each image in the batch.
+Moreover, it should consider that the transformation does not apply to some images in the batch. Our version of each
+transformation meets these requirements.
 
 ## Methodology
 
@@ -345,15 +376,15 @@ class with minimum distance. These methods are helpful when we have a high numbe
 the number of classes is fixed. Thus, we used a model-agnostic approach. Model agnostic meta-learning algorithms find a
 set of parameters for the model that can be adapted to a new task by training with very few samples.
 We used the MAML algorithm and considered every different disaster a task.
-Since the MAML algorithm consumes lots of memory, and the consumed memory is 
-relative to the model size, we have used models based on EfficientUnetB0 and 
+Since the MAML algorithm consumes lots of memory, and the consumed memory is
+relative to the model size, we have used models based on EfficientUnetB0 and
 only trained it for building localization task.
 
-Since the MAML algorithm trains the model much slower than regular training, 
-and we did not have many hours to train our models, the results were disappointing. 
-We trained EfficientUnetB0-Localizer with MAML with support shots equal to one or five 
-and query shots equal to two or ten, respectively. Other training hyperparameters 
-and evaluation results are available in the results section. 
+Since the MAML algorithm trains the model much slower than regular training,
+and we did not have many hours to train our models, the results were disappointing.
+We trained EfficientUnetB0-Localizer with MAML with support shots equal to one or five
+and query shots equal to two or ten, respectively. Other training hyperparameters
+and evaluation results are available in the results section.
 We utilized the higher library to implement the MAML algorithm.
 
 
@@ -363,51 +394,74 @@ Example Usage
 </summary>
 
 ```python
-from metadamagenet.dataset import discover_directory, group_by_disasters, MetaDataLoader,LocalizationDataset
+from torch import nn
+from torch.optim import Optimizer
+from torch.optim.lr_scheduler import MultiStepLR
+from metadamagenet.dataset import discover_directory, group_by_disasters, MetaDataLoader, LocalizationDataset, ImageData
 from metadamagenet.metrics import xview2
 from metadamagenet.losses import BinaryDiceLoss
-from metadamagenet.runner import MetaTrainer,MetaValidationInTrainingParams
+from metadamagenet.runner import MetaTrainer, MetaValidationInTrainingParams
+from metadamagenet.models import BaseModel
 
 dataset: list[ImageData] = discover_directory
-tasks: List[Tuple[str,List[ImageData]]] = group_by_disasters(dataset)
+tasks: list[tuple[str, list[ImageData]]] = group_by_disasters(dataset)
 
-train = MetaDataLoader(LocalizationDataset,tasks[:-2],task_set_size=17,support_shots=4,query_shots=8,batch_size=1)
-test = MetaDataLoader(LocalizationDataset,tasks[-2:],task_set_size=2,support_shots=4,query_shots=8,batch_size=1)
+train = MetaDataLoader(LocalizationDataset, tasks[:-2], task_set_size=17, support_shots=4, query_shots=8, batch_size=1)
+test = MetaDataLoader(LocalizationDataset, tasks[-2:], task_set_size=2, support_shots=4, query_shots=8, batch_size=1)
 
+model: BaseModel
+version: str
+seed: int
+meta_optimizer: Optimizer
+inner_optimizer: Optimizer
+lr_scheduler: MultiStepLR
 MetaTrainer(
-        model,
-        version,
-        seed,
-        train,
-        nn.Identity(),
-        meta_optimizer,
-        inner_optimizer,
-        lr_scheduler,
-        BinaryDiceLoss(),
-        epochs=50,
-        n_inner_iter=5,
-        score=xview2.localization_score,
-        validation_params=MetaValidationInTrainingParams(
-            meta_dataloader=test,
-            interval=1,
-            transform=None,
-        )
-    ).run()
+    model,
+    version,
+    seed,
+    train,
+    nn.Identity(),
+    meta_optimizer,
+    inner_optimizer,
+    lr_scheduler,
+    BinaryDiceLoss(),
+    epochs=50,
+    n_inner_iter=5,
+    score=xview2.localization_score,
+    validation_params=MetaValidationInTrainingParams(
+        meta_dataloader=test,
+        interval=1,
+        transform=None,
+    )
+).run()
 ```
 
 </details>
 
 ### Vision Transformer
-In recent years, vision transformers have achieved state-of-the-art results in many computer vision tasks, including semantic segmentation. SegFormer is a model designed for efficient semantic segmentation, and it is based on vision transformers. SegFormer is available in different sizes. We only used the smallest size, named SegFormerB0. The SegFormer model consists of a hierarchical Transformer encoder and a lightweight all-MLP decode head.
-In contrast to U-nets, SegFormer models have constant input and output sizes. So inputs and outputs should be interpolated to the correct size. For the localization task, the input image goes through SegFormer, and its outputs go through a SegfFormer decode head.
-However, for the classification task, pre and post-disaster go through the same Segformer model, and their outputs are concatenated channel-wise and then go through a modified SegfFormer decode head. The modification is to double the number of channels for the MLP modules. Of course, both outputs can be merged in successive layers, which decreases the distance function complexity. These other versions of the modified decode head can be created and tested in the future. Moreover, one can experiment with changing the size of the SegFormer input and SegFormer model size.
+
+In recent years, vision transformers have achieved state-of-the-art results in many computer vision tasks, including
+semantic segmentation. SegFormer is a model designed for efficient semantic segmentation, and it is based on vision
+transformers. SegFormer is available in different sizes. We only used the smallest size, named SegFormerB0. The
+SegFormer model consists of a hierarchical Transformer encoder and a lightweight all-MLP decode head.
+In contrast to U-nets, SegFormer models have constant input and output sizes. So inputs and outputs should be
+interpolated to the correct size. For the localization task, the input image goes through SegFormer, and its outputs go
+through a SegfFormer decode head.
+However, for the classification task, pre and post-disaster go through the same Segformer model, and their outputs are
+concatenated channel-wise and then go through a modified SegfFormer decode head. The modification is to double the
+number of channels for the MLP modules. Of course, both outputs can be merged in successive layers, which decreases the
+distance function complexity. These other versions of the modified decode head can be created and tested in the future.
+Moreover, one can experiment with changing the size of the SegFormer input and SegFormer model size.
 
 ### Training Setup
-We trained some models with multiple random seeds (multiple folds) to ensure they have low variance and consistent scores. We trained Localization models only on pre-disaster images; we used post-disaster images in sporadic cases as additional augmentation. We initialized each classification model's feature extractor using weights from the corresponding localization model and fold number. While training both classification and localization models, no weights were frozen.Since the dataset is unbalanced, we use weighted losses with weights relative to the inverse of each class's sample count. We applied morphological dilation with a 5*5 kernel to classification masks as an augmentation. Dilated masks made predictions more "bold";
 
-### Training Results
-Using pre-trained feature extractors from localization models allowed classification models to train much faster and have higher scores. Using dialated masks improved borders accuracy and helped with shifts and different nadirs. The model's classifier module determines each pixel's value based on a distance function between the extracted features from the pre and post-disaster image. In U-models, the classifier module is a 2d convolution, but in SegFormer models, it is a SegFormer decoder head. Hence, U-models learn a much simpler distance function than SegFormer models; the simplicity of the distance function helps them not to overfit but also prevents them from learning some sophisticated patterns. In the end, SegFormer models train much faster before overfitting on the training data, but U-models slowly reach almost the same score. EfficientUnet localization models have shown that they train better without the usage of focal loss. 
-
+We trained some models with multiple random seeds (multiple folds) to ensure they have low variance and consistent
+scores. We trained Localization models only on pre-disaster images; we used post-disaster images in sporadic cases as
+additional augmentation. We initialized each classification model's feature extractor using weights from the
+corresponding localization model and fold number. While training both classification and localization models, no weights
+were frozen.Since the dataset is unbalanced, we use weighted losses with weights relative to the inverse of each class's
+sample count. We applied morphological dilation with a 5*5 kernel to classification masks as an augmentation. Dilated
+masks made predictions more "bold";
 
 ### Loss Functions
 
@@ -547,7 +601,19 @@ $$
 
 ![Test-Time Augment](./res/TTA.png)
 
-While validating a model, we give each piece (or mini-batch) of data to the model and compute a score by comparing the model output and the correct labels. Test-time augment is a technique to enhance the accuracy of the predictions by eliminating the model's bias. For each sample, we use reversible augmentations to generate multiple "transformed samples". The predicted label for the original sample computes as the average of the predicted labels for the "transformed samples". For example, we generate the transformed samples by rotating the original image by 0, 90, 180, and 270 degrees clockwise. Then we get the model predictions for these transformed samples. Afterward, we rotate the predicted masks 0, 90, 180, and 270 degrees counterclockwise and average them. their average counts as the model's prediction for the original sample. Using this technique, we eliminate the model's bias about rotation. By reversible augmentation, we mean that no information should be lost during the process of generating "transformed samples" and aggregating their results. For example, in the case of semantic segmentation, shiting an image does not count as a reversible augmentation because it loses some part of the image. However, this technique usually does not improve the performance of well-trained models much. Because their bias about a simple thing like rotation is tiny. The same was true for our models when we used flipping and 90-degree rotation as test-time augmentation. 
+While validating a model, we give each piece (or mini-batch) of data to the model and compute a score by comparing the
+model output and the correct labels. Test-time augment is a technique to enhance the accuracy of the predictions by
+eliminating the model's bias. For each sample, we use reversible augmentations to generate multiple "transformed
+samples". The predicted label for the original sample computes as the average of the predicted labels for the "
+transformed samples". For example, we generate the transformed samples by rotating the original image by 0, 90, 180, and
+270 degrees clockwise. Then we get the model predictions for these transformed samples. Afterward, we rotate the
+predicted masks 0, 90, 180, and 270 degrees counterclockwise and average them. their average counts as the model's
+prediction for the original sample. Using this technique, we eliminate the model's bias about rotation. By reversible
+augmentation, we mean that no information should be lost during the process of generating "transformed samples" and
+aggregating their results. For example, in the case of semantic segmentation, shiting an image does not count as a
+reversible augmentation because it loses some part of the image. However, this technique usually does not improve the
+performance of well-trained models much. Because their bias about a simple thing like rotation is tiny. The same was
+true for our models when we used flipping and 90-degree rotation as test-time augmentation.
 
 <details>
 <summary>
@@ -555,7 +621,7 @@ Example Usage
 </summary>
 
 ```python
-from metadamagenet.models import FourFlips,FourRotations,BaseModel
+from metadamagenet.models import FourFlips, FourRotations, BaseModel
 
 model: BaseModel
 model_using_test_time_augment = FourRotations(model)
@@ -563,10 +629,47 @@ model_using_test_time_augment = FourRotations(model)
 
 </details>
 
-## Results
+### Results & Discussion
+
+Using pre-trained feature extractors from localization models allowed
+classification models to train much faster and have higher scores.
+Using dilated masks improved borders accuracy and helped with shifts and
+different nadirs. The model's classifier module determines each pixel's value
+based on a distance function between the extracted features from the
+pre- and post-disaster image.
+In U-models, the classifier module is a 2d convolution, but in SegFormer models,
+it is a SegFormer decoder head. Hence, U-models learn a much simpler distance
+function than SegFormer models; the simplicity of the distance function helps
+them not to overfit but also prevents them from learning some sophisticated
+patterns. In the end, SegFormer models train much faster before overfitting o
+n the training data, but U-models slowly reach almost the same score.
+EfficientUnet localization models have shown that they train better without
+the usage of focal loss.
+
 complete results are available at [results.md](./results.md)
 
 ## Future Ideas
+
+The decoder’s number of channels can be looked at as a hyper-parameter
+and it can be changed and tuned.
+Additionally, we can analyze the effect of the size of the backbone in
+the efficient unet by trying efficientnet b5 or b7 as the backbone.
+The layer in which the embedding of the pre- and post-disaster images
+get concatenated dictates the complexity of the distance function in the classifier.
+This effect can also be tested and analyzed.
+Log-cosh-dice and focal-travesky are two loss functions which
+have the best performance in the training of segmentation models [^segmentation-losses].
+We can also try training our models with these two loss functions.
+But in this case, we have to make sure to modify them, so we can assign weights to classes.
+The low performance of the meta learning model may
+not be only due to the small number of training epochs or the small number of shots.
+We can try using first-order MAML like reptile instead of the original MAML algorithm in the model.
+These algorithms use less memory, thus, we can test the effects of other factors and hyper parameters faster. [][].
+Previous research in the realm of meta learning may also help us train a better model for our specific problem. [][]
+
+## Discussion and Conclusion
+
+Detecting building
 
 ## Conclusion and Acknowledgments
 
@@ -574,8 +677,8 @@ Thank you to xView2 team for creating and releasing this amazing dataset and opp
 help to response to the global natural disasters faster. I really hope it will be usefull and the idea will be improved
 further.
 
-
 ## Further Reading
+
 - :book: [Higher Repository](https://github.com/facebookresearch/higher)
 - :link: [Squeeze and Excitation Networks Explained with PyTorch Implementation](https://amaarora.github.io/2020/07/24/SeNet.html)
 - :link: [Building Disaster Damage Assessment in Satellite Imagery with Multi-Temporal Fusion](https://github.com/ethanweber/xview2)
@@ -592,7 +695,6 @@ further.
 - :link: [Understand Deep Residual Networks — a simple, modular learning framework that has redefined state-of-the-art](https://medium.com/@waya.ai/deep-residual-learning-9610bb62c355)
 - :link: [Review: ResNeXt — 1st Runner Up in ILSVRC 2016 (Image Classification)](https://towardsdatascience.com/review-resnext-1st-runner-up-of-ilsvrc-2016-image-classification-15d7f17b42ac)
 - :link: [A Review of Popular Deep Learning Architectures: DenseNet, ResNeXt, MnasNet, and ShuffleNet v2](https://blog.paperspace.com/popular-deep-learning-architectures-densenet-mnasnet-shufflenet/)
-
 
 [^xview2]
 [^first_place_solution]
@@ -622,6 +724,7 @@ further.
 [^cross-entropy]
 
 ## References
+
 [^xbd]: :page_facing_up: [xBD: A Dataset for Assessing Building Damage from Satellite Imagery](https://arxiv.org/abs/1911.09296)
 
 [^xview2]: :link: Competition and Dataset: [Xview2 org.](https://www.xview2.org)
@@ -634,7 +737,7 @@ further.
 
 [^segformer]: :page_facing_up: [SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers](https://arxiv.org/abs/2105.15203)
 
-[^higher]: :page_facing_up: [Generalized Inner Loop Meta-Learning](https://arxiv.org/abs/1910.01727) 
+[^higher]: :page_facing_up: [Generalized Inner Loop Meta-Learning](https://arxiv.org/abs/1910.01727)
 
 [^maml]: :page_facing_up: [Model-Agnostic Meta-Learning for Fast Adaptation of Deep Networks](https://arxiv.org/abs/1703.03400)
 
