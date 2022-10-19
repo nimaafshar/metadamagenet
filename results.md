@@ -207,7 +207,7 @@
     <tr>
         <td rowspan="2">EfficientUnetB4</td>
         <td>Regular</td>
-        <td>--</td>
+        <td>0</td>
         <td>0.7755</td>
         <td>0.7797</td>
         <td>0.7702</td>
@@ -215,7 +215,7 @@
     </tr>
     <tr>
         <td>SCSE</td>
-        <td>--</td>
+        <td>0</td>
         <td>0.7811</td>
         <td>0.7826</td>
         <td>0.7718</td>
@@ -436,6 +436,54 @@ test tasks: `mexico-earthquake`,`joplin-tornado`
         <td>--</td>
         <td>0.6596</td>
         <td>--</td>
+    </tr>
+    <tr>
+        <td rowspan="3">EfficientNetB0</td>
+        <td>Regular</td>
+        <td>0</td>
+        <td>0.7576</td>
+        <td>0.7571</td>
+        <td>0.7606</td>
+        <td>0.7505</td>
+    </tr>
+    <tr>
+        <td>SCSE</td>
+        <td>0</td>
+        <td>0.7591</td>
+        <td>0.7525</td>
+        <td>0.7497</td>
+        <td>0.7399</td>
+    </tr>
+    <tr>
+        <td>Wide-SE</td>
+        <td>0.7726</td>
+        <td>0.7667</td>
+        <td>0.7769</td>
+        <td>0.7737</td>
+    </tr>
+    <tr>
+        <td rowspan="2">EfficientUnetB4</td>
+        <td>Regular</td>
+        <td>0.7732</td>
+        <td>0.7679</td>
+        <td>0.7684</td>
+        <td>0.7589</td>
+    </tr>
+    <tr>
+        <td>SCSE</td>
+        <td>0.7746</td>
+        <td>0.7650</td>
+        <td>0.7740</td>
+        <td>0.7635</td>
+    </tr>
+    <tr>
+        <td>SegFormer</td>
+        <td>Regular</td>
+        <td>0</td>
+        <td>0.7574</td>
+        <td>0.7380</td>
+        <td>0.7385</td>
+        <td>0.6993</td>
     </tr>
 </tbody>
 </table>
