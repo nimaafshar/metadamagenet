@@ -37,16 +37,14 @@ pip install -r requirements.txt
     - [Meta-Learning](#meta-learning)
     - [Vision Transformer](#vision-transformer)
     - [Training Setup](#training-setup)
-    - [Training Results](#training-results)
     - [Loss Functions](#loss-functions)
 - [Evaluation](#evaluation)
     - [Localization Models Scoring](#localization-models-scoring)
     - [Classification Models Scoring](#classification-models-scoring)
     - [Test-Time Augment](#test-time-augment)
-    - [Training Results](#training-results-1)
 - [Results](#results)
+- [Discussion and Conclusion](#discussion-and-conclusion)
 - [Future Ideas](#future-ideas)
-- [Conclusion and Acknowledgments](#conclusion-and-acknowledgments)
 - [Further Reading](#further-reading)
 - [References](#references)
 
@@ -628,7 +626,7 @@ model_using_test_time_augment = FourRotations(model)
 
 </details>
 
-### Results
+## Results
 
 Using pre-trained feature extractors from localization models allowed
 classification models to train much faster and have higher scores.
@@ -641,6 +639,10 @@ it is a SegFormer decoder head. Hence, U-models learn a much simpler distance
 function than SegFormer models; the simplicity of the distance function helps them not to overfit but also prevents them from learning some sophisticated patterns. In the end, SegFormer models train much faster before overfitting on the training data, but U-models slowly reach almost the same score. EfficientUnet localization models have shown that they train better without the usage of focal loss. Softmax dice loss does not perform well in damage classification models training. A combination of sigmoid dice loss for each class (channel), and cross entropy loss gives the best results in training of a classification model. The effect of SCSE in decoder modules and Wide-SE in Encoder Modules of a U-net is very limited; these variations of EfficientUnets performed almost the same as the standard version.
 
 complete results are available at [results.md](./results.md)
+
+## Discussion and Conclusion
+Detecting buildings and their damage level by artificial intelligence can import rescue operations' speed and efficiency after natural disasters. Solving this problem can identify the area of damage on a large scale and prioritize the areas that have been the most affected and damaged by a disaster in rescue operations. We tested different decoders in the U-net modules and utilized different variations of efficient-net as our backbone in our model. Additionally, we fine-tuned SegFormer for our specific task. The result was models with fewer parameters (approximately three million) that performed much better than the previous models. (Damage classification score=0.77). Due to the fewer parameters, these models have a shorter training and inference time. Therefore, they can be trained and used faster and can be easily fine-tuned for new and different natural disasters. Considering damage classification and building localization in each natural disaster as a separate task, we utilized MAML and trained models that can be adapted to a new natural disaster only using a few brand-new samples. These models do not have satisfactory performance, but we hope to build better models of this type in the future.
+
 
 ## Future Ideas
 
@@ -660,9 +662,6 @@ not be only due to the small number of training epochs or the small number of sh
 We can try using first-order MAML like reptile [^reptile] instead of the original MAML algorithm in the model.
 These algorithms use less memory, thus, we can test the effects of other factors and hyper parameters faster.
 Previous research in the realm of meta learning for semantic segmentation may also help us train a better model for our specific problem. [^meta-seg] [^meta-seg-init].
-
-## Discussion and Conclusion
-Detecting buildings and their damage level by artificial intelligence can import rescue operations' speed and efficiency after natural disasters. Solving this problem can identify the area of damage on a large scale and prioritize the areas that have been the most affected and damaged by a disaster in rescue operations. We tested different decoders in the U-net modules and utilized different variations of efficient-net as our backbone in our model. Additionally, we fine-tuned SegFormer for our specific task. The result was models with fewer parameters (approximately three million) that performed much better than the previous models. (Damage classification score=0.77). Due to the fewer parameters, these models have a shorter training and inference time. Therefore, they can be trained and used faster and can be easily fine-tuned for new and different natural disasters. Considering damage classification and building localization in each natural disaster as a separate task, we utilized MAML and trained models that can be adapted to a new natural disaster only using a few brand-new samples. These models do not have satisfactory performance, but we hope to build better models of this type in the future.
 
 
 ## Further Reading
