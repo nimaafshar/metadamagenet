@@ -48,6 +48,7 @@ pip install -r requirements.txt
   - [Evaluation](#evaluation)
     - [Localization Models Scoring](#localization-models-scoring)
     - [Classification Models Scoring](#classification-models-scoring)
+    - [Test-Time Augment](#test-time-augment)
     - [Training Results](#training-results)
   - [Conclusion and Acknowledgments](#conclusion-and-acknowledgments)
 
@@ -424,6 +425,12 @@ $$
 F1_{DC} = 4/(\frac{1}{F1_1 + \epsilon} + \frac{1}{F1_2 + \epsilon} + \frac{1}{F1_3 + \epsilon} + \frac{1}{F1_4 +
 \epsilon})
 $$
+
+### Test-Time Augment
+
+![Test-Time Augment](./res/TTA.png)
+
+While validating a model, we give each piece (or mini-batch) of data to the model and compute a score by comparing the model output and the correct labels. Test-time augment is a technique to enhance the accuracy of the predictions by eliminating the model's bias. For each sample, we use reversible augmentations to generate multiple "transformed samples". The predicted label for the original sample computes as the average of the predicted labels for the "transformed samples". For example, we generate the transformed samples by rotating the original image by 0, 90, 180, and 270 degrees clockwise. Then we get the model predictions for these transformed samples. Afterward, we rotate the predicted masks 0, 90, 180, and 270 degrees counterclockwise and average them. their average counts as the model's prediction for the original sample. Using this technique, we eliminate the model's bias about rotation. By reversible augmentation, we mean that no information should be lost during the process of generating "transformed samples" and aggregating their results. For example, in the case of semantic segmentation, shiting an image does not count as a reversible augmentation because it loses some part of the image. However, this technique usually does not improve the performance of well-trained models much. Because their bias about a simple thing like rotation is tiny. The same was true for our models when we used flipping and 90-degree rotation as test-time augmentation. 
 
 ### Training Results
 
