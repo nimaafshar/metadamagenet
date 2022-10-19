@@ -2,11 +2,12 @@
 
 #### Using Deep Learning To Identify And Classify Damage In Aerial Imagery
 
-This project is my bachelors thesis at AmirKabir University of Technology under supervision of Dr.Amin Gheibi.
-Some ideas of this project is borrowed from
-[xview2 first place solution](https://github.com/vdurnov/xview2_1st_place_solution) [^first_place_solution] repository. I used that repository as a baseline and refactored its code.
-Thus, this code covers models and experiments of the mentioned repo and
-contributes more research into the same problem of damage assessment in aerial imagery.
+This project is my bachelors thesis at AmirKabir University of Technology under the supervision of Dr.Amin Gheibi.
+Some ideas of this project are borrowed from
+[xview2 first place solution](https://github.com/vdurnov/xview2_1st_place_solution) [^first_place_solution] repository. 
+I used the mentioned repository as a baseline and refactored its code.
+Thus, this project covers models and experiments of the mentioned repo and
+contributes more to the same problem of damage assessment in aerial imagery.
 
 **Environment Setup**
 
@@ -111,7 +112,7 @@ dataset = ClassificationDataset([Path('/path/to/dataset/train'), Path('/path/to/
 
 ![an example of data](./res/data.png)
 
-## Problem Defenition
+## Problem Definition
 
 We can convert this building annotations (polygons) to a binary mask. We can also convert the damage levels to values
 1-4 and use them as the value for all the pixels in their corresponding building, forming a semantic segmentation mask.
@@ -163,15 +164,17 @@ outputs = transform(inputs)
 
 Data Augmentation techniques help generate new valid samples from the dataset. Hence, they provide us with more data,
 help the model train faster, and prevent overfitting. Data Augmentation is vastly used in training computer vision
-tasks, from image classification to instance segmentation. in most cases, data augmentation is done randomly. This
-randomness means it is not done on some of the original samples, and the augmentation has some random parameters. Most
+tasks, from image classification to instance segmentation. In most cases, data augmentation is done randomly. This
+randomness means that the augmentation is not done on some of the original samples, and it has some random parameters. Most
 libraries used for augmentation, like open-cv [^open-cv], do not support image-batch transforms and only perform transforms
 on the CPU. Kornia [^kornia] [^kornia-survey] is an open-source differentiable computer vision library for PyTorch[^pytorch]; it does support
 image-batch transforms, and it does support performing these transforms on GPU. We used Kornia and added some parts to
 it to suit our project requirements.
 
-We created a version of each image transformation that supports our needs. Its input is multiple batches of images, and
-each batch has a name. for example, an input contains a batch of images and a batch of corresponding segmentation masks.
+We created a version of each image transformation in order for it to support our needs. 
+Its input is multiple batches of images, and
+each batch has a name. 
+For example, an input contains a batch of images and a batch of corresponding segmentation masks.
 In some transformations like resize, the same parameters (in this case, scale) should be used for transforming both
 images and segmentation masks. In some transformations, like channel shift, the transformation should not be done on the
 segmentation masks. Another requirement is that the transformation parameters can differ for each image and its
@@ -227,9 +230,10 @@ The value 0 indicates that this pixel belongs to no building;
 values 1-4 mean that this pixel belongs to a building and show the damage level in that pixel.
 The classifier module learns a distance function between pre-disaster and post-disaster images
 because the damage level of each facility can be determined by comparing it in the pre- and post-disaster images.
-In many samples, the post-disaster image has a minor shift compared to the pre-disaster image;
+In many samples, the post-disaster image has a minor shift compared to the pre-disaster image. However,
 the segmentation masks are created based on the location of buildings in the pre-disaster image.
-This shift is an issue the model has to overcome. In our models, feature extracting weights are shared between the two images. this helps the model to detect the shift or nadir difference. For models that share a joint feature extractor (like SegFormerB0 Classifier and SegFormerB0 Localizer),
+This shift is an issue the model has to overcome. In our models, feature extracting weights are shared between the two images. 
+this helps the model to detect the shift or nadir difference. For models that share a joint feature extractor (like SegFormerB0 Classifier and SegFormerB0 Localizer),
 we can initialize the feature extractor module in the classification model with the localization model's feature
 extractor.
 Since we do not use the localization model directly for damage assessment, training of the localization model can be
@@ -239,11 +243,11 @@ seen as a pre-training stage for the classification model.
 
 ### U-Models
 
-Some of our models use a U-net [^unet] module as the feature extractor and a superficial 2d Convolutional Layer as the
+Some models in this project use a U-net [^unet] module as the feature extractor and a superficial 2d Convolutional Layer as the
 classifier.
 We call them U-models. Their feature extractor module is a U-net [^unet] with five encoder and five decoder modules.
 Encoder modules are usually a part of a general feature extractor like *Resnet-34* [^resnet].
-in the forward pass of each image through each encoder module, the number of channels may or may not change.
+In the forward pass of each image through each encoder module, the number of channels may or may not change.
 Still, the height and width of the image are divided by two.
 Usually, the five encoder modules combined include all layers of a general feature extractor model (like Resnet34 [^resnet])
 except the classification layer.
@@ -260,11 +264,11 @@ The *Standard* decoder module and the *SCSE* [^SCSE] decoder module.
 The *Standard* decoder module applies a 2d convolution and a *Relu* activation to the input from the previous decoder.
 Then it concatenates the result with the input from the respective encoder module and applies another 2d convolution and
 *ReLU* activation.
-*SCSE* decoder module works the same way but, in the end,
-uses a "Concurrent Spatial and Channel Squeeze & Excitation" [^SCSE] module on the result.
+*SCSE* decoder module works the same way but, in the last step,
+it uses a "Concurrent Spatial and Channel Squeeze & Excitation" [^SCSE] module on the result.
 This SCSE module is supposed to help the model focus on the image's more critical regions and channels.
 Decoder modules in *xview2 first place solution* [^first_place_solution] don't use batch normalization between the convolution and the activation.
-We added this layer to the decoder modules to prevent gradient exploding and to make them more stable.
+We added this layer to the decoder modules to prevent gradient exploding and to make these modules more stable.
 
 ![Decoder Modules](./res/decoder.png)
 
@@ -372,10 +376,10 @@ We can take a similar approach to our problem. We can view building detection an
 general problem and the disaster type (like a flood, hurricane, or wildfire) and the environment of the disaster
 (like a desert, forest, or urban area) as the varying factor. In distance-learning methods, the distance function
 returns a distance between the query sample and each class's sample. Then the query sample is classified into the
-class with minimum distance. These methods are helpful when we have a high number of classes. However, in our case,
+class with the minimum distance. These methods are helpful when we have a high number of classes. However, in our case,
 the number of classes is fixed. Thus, we used a model-agnostic approach. Model agnostic meta-learning [^maml] algorithms find a
 set of parameters for the model that can be adapted to a new task by training with very few samples.
-We used the MAML [^maml] algorithm and considered every different disaster a task.
+We used the MAML [^maml] algorithm and considered every different disaster a separate task.
 Since the MAML algorithm consumes lots of memory, and the consumed memory is
 relative to the model size, we have used models based on EfficientUnetB0 and
 only trained it for building localization task.
@@ -383,7 +387,7 @@ only trained it for building localization task.
 Since the MAML algorithm trains the model much slower than regular training,
 and we did not have many hours to train our models, the results were disappointing.
 We trained EfficientUnetB0-Localizer with MAML with support shots equal to one or five
-and query shots equal to two or ten, respectively. Other training hyperparameters
+and query shots equal to two or ten. Other training hyperparameters
 and evaluation results are available in the results section.
 We utilized the *Higher* [^higher] library to implement the MAML algorithm.
 
@@ -488,7 +492,7 @@ In [^segmentation-losses],
 you can find a comprehensive comparison between popular loss functions for semantic segmentation.
 
 Focal and Dice Loss are loss functions used in the training localization models.
-For Classification models, we tried channelwise-weighted versions of Focal, Dice and Cross-entropy Loss.
+For Classification models, we tried channel-wise-weighted versions of Focal, Dice and Cross-entropy Loss.
 
 **Focal Loss**[^focal-loss]
 
@@ -548,7 +552,7 @@ score = evaluator(preds, targets)
 
 </details>
 
-One of the best and most popular evaluation metrics for classifiers is the f1-score; because it accounts for precision and recall
+One of the most popular evaluation metrics for classifiers is the f1-score; because it accounts for precision and recall
 simultaneously. The macro version of the f1-score is a good evaluation measure for imbalanced datasets. The
 [xview2-scoring](https://github.com/DIUx-xView/xView2_scoring) repository describes what variation of f1-score to use for this problem's scoring. We adapted their
 evaluation metrics. However, we implemented these metrics as a metric for the torchmetrics [^torchmetrics] library. It performs
@@ -564,7 +568,7 @@ $$
 
 ### Localization Models Scoring
 
-The localization score defines as a globally calculated binary f1-score. Sample-wise calculation means calculating the
+The localization score is defined as a globally calculated binary f1-score. Sample-wise calculation means calculating the
 score on each sample (image); then averaging sample scores to get the final score. In global calculation, we use the sum
 of true positives, true negatives, false positives, and false negatives across all samples to calculate the metric.
 
@@ -576,9 +580,9 @@ micro-average is applied too.
 
 The classification score consists of a weighted sum of 2 scores: the localization score and the damage classification
 score. Classification models a label of zero to four for each pixel, indicating no-building, no damage, minor damage,
-major damage, and destroyed, respectively. Since one to four label values show that this pixel belongs to a building, we
+major damage, and destroyed, respectively. Since one to four label values show that a specific pixel belongs to a building, we
 calculate the localization score after converting all values above zero to one. This score determines how good the model
-is at segmenting buildings. We defined the damage classification score as the harmonic mean of the globally computed
+is at segmenting buildings. We define the damage classification score as the harmonic mean of the globally computed
 f1-score for each class from one to four. We calculate the f1-score of each class separately, then use their harmonic
 mean to give each damage level equal importance. Here we prefer the harmonic mean to the arithmetic mean because
 different classes do not have equal support. We compute the damage classification score only on the pixels that have one
@@ -605,11 +609,11 @@ samples". The predicted label for the original sample computes as the average of
 transformed samples". For example, we generate the transformed samples by rotating the original image by 0, 90, 180, and
 270 degrees clockwise. Then we get the model predictions for these transformed samples. Afterward, we rotate the
 predicted masks 0, 90, 180, and 270 degrees counterclockwise and average them. their average counts as the model's
-prediction for the original sample. Using this technique, we eliminate the model's bias about rotation. By reversible
+prediction for the original sample. Using this technique, we eliminate the model's bias of rotation. By reversible
 augmentation, we mean that no information should be lost during the process of generating "transformed samples" and
-aggregating their results. For example, in the case of semantic segmentation, shiting an image does not count as a
+aggregating their results. For example, in the case of semantic segmentation, shifting an image does not count as a
 reversible augmentation because it loses some part of the image. However, this technique usually does not improve the
-performance of well-trained models much. Because their bias about a simple thing like rotation is tiny. The same was
+performance of well-trained models much. Because their bias of a simple thing like rotation is tiny. The same was
 true for our models when we used flipping and 90-degree rotation as test-time augmentation.
 
 <details>
