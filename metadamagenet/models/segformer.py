@@ -1,5 +1,5 @@
 from typing import Dict, Tuple
-import copy
+from typing import Optional
 
 import torch
 import torch.nn.functional as tf
@@ -55,10 +55,13 @@ class SegFormerLocalizer(BaseModel):
 
 
 class SegFormerClassifier(BaseModel):
-    def __init__(self):
+    def __init__(self, segformer: Optional[SegformerModel] = None):
         super().__init__()
         self.config: SegformerConfig = SegformerConfig.from_pretrained("nvidia/segformer-b0-finetuned-ade-512-512")
-        self.segformer: SegformerModel = SegformerModel.from_pretrained("nvidia/segformer-b0-finetuned-ade-512-512")
+        if segformer is not None:
+            self.segformer: SegformerModel = segformer
+        else:
+            self.segformer: SegformerModel = SegformerModel.from_pretrained("nvidia/segformer-b0-finetuned-ade-512-512")
         self.config.num_labels = 5
         self.config.hidden_sizes = [hidden_size * 2 for hidden_size in self.config.hidden_sizes]
         self.decode_head: SegformerDecodeHead = SegformerDecodeHead(self.config)
