@@ -101,9 +101,9 @@ class SegFormerClassifier(BaseModel):
             output_hidden_states=True,  # we need the intermediate hidden states
             return_dict=return_dict,
         )
+        # concat before feed into MLP layers
         concatenated_outputs = [torch.cat([a, b], dim=1)
                                 for a, b in zip(pre_outputs.hidden_states, post_outputs.hidden_states)]
-        print([out.shape for out in concatenated_outputs])
         logits = self.decode_head(concatenated_outputs)
         upsampled_logits = tf.interpolate(logits, size=output_size, mode="bilinear", align_corners=False)
 
