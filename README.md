@@ -33,8 +33,6 @@ pip install -r requirements.txt
     - [examples](#examples)
     - [table of contents](#table-of-contents)
   - [Data](#data)
-    - [Structure](#structure)
-    - [Data Loading and Datasets](#data-loading-and-datasets)
     - [Augmentations](#augmentations)
   - [Methodology](#methodology)
     - [General Architecture](#general-architecture)
@@ -54,9 +52,39 @@ pip install -r requirements.txt
 
 ## Data
 
-### Structure
+![](./res/data.png)
 
-### Data Loading and Datasets
+We are using the xview2 challenge dataset, namely Xbd, as the dataset for our project. This dataset contains pairs of pre and post-disaster satellite images from 19 natural disasters worldwide, including fires, hurricanes, floods, and earthquakes. Each sample in the dataset consists of a pre-disaster image with its building annotations and a post-disaster image with the same building annotations. However, in the post-disaster building annotations, each building is a damage level of the following: undamaged, minor-damage, major damage, destroyed, and unclassified. The dataset consists of train, tier3, test, and hold subsets. Each subset has an images folder containing pre and post-disaster images stored as 1024*1024 PNG and a folder named labels containing building annotations and damage labels in JSON format. We can convert this building (annotated as polygons) to a binary mask. We can also convert the damage levels to values 1-4 and use them as the value for all the pixels in their corresponding building, forming a semantic segmentation mask. Thus, we define the building localization task as predicting each pixel's value being zero or non-zero. We also define the damage classification task as predicting the exact value of pixels within each building. We consider the label of an unclassified building as undamaged, as it is the most common label by far. Some of the post-imagery is slightly shifted from their corresponding pre-image. Also, the dataset has different ground sample distances. We used the train and tier3 subsets for training, the test subset for validation, and the hold subset for testing. The dataset is highly unbalanced in multiple aspects. The buildings with the undamaged label are far more than buildings with other damage types. The number of images varies a lot between different disasters; the same is true for the number of building annotations in each disaster.
+
+<details>
+<summary>
+Folder Structure
+</summary>
+
+```
+dataset
+├── test
+|   └── ... (similar to train)
+├── hold
+|   └── ... (similar to train)
+├── tier3
+|   └── ... (similar to train)
+└── train
+    ├── images
+    │   ├── ...
+    │   ├── {disaster}_{id}_post_disaster.png
+    │   └── {disaster}_{id}_pre_disaster.png
+    ├── labels
+    │   ├── ...
+    │   ├── {disaster}_{id}_post_disaster.json
+    │   └── {disaster}_{id}_pre_disaster.json
+    └── targets
+        ├── ...
+        ├── {disaster}_{id}_post_disaster_target.png
+        └── {disaster}_{id}_pre_disaster_target.png
+```
+
+</details>
 
 ### Augmentations
 
