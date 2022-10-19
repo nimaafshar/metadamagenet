@@ -674,8 +674,8 @@ These algorithms use less memory, thus, we can test the effects of other factors
 Previous research in the realm of meta learning may also help us train a better model for our specific problem. [][]
 
 ## Discussion and Conclusion
+Detecting buildings and their damage level by artificial intelligence can import rescue operations' speed and efficiency after natural disasters. Solving this problem can identify the area of damage on a large scale and prioritize the areas that have been the most affected and damaged by a disaster in rescue operations. We tested different decoders in the U-net modules and utilized different variations of efficient-net as our backbone in our model. Additionally, we fine-tuned SegFormer for our specific task. The result was models with fewer parameters (approximately three million) that performed much better than the previous models. (Damage classification score=0.77). Due to the fewer parameters, these models have a shorter training and inference time. Therefore, they can be trained and used faster and can be easily fine-tuned for new and different natural disasters. Considering damage classification and building localization in each natural disaster as a separate task, we utilized MAML and trained models that can be adapted to a new natural disaster only using a few brand-new samples. These models do not have satisfactory performance, but we hope to build better models of this type in the future.
 
-Detecting building
 
 ## Conclusion and Acknowledgments
 
