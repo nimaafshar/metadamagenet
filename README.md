@@ -60,7 +60,10 @@ pip install -r requirements.txt
 
 ### Augmentations
 
-Example Usage: 
+<details>
+<summary>
+Example Usage
+</summary>
 
 ```python
 import torch
@@ -94,6 +97,8 @@ inputs = {
 outputs = transform(inputs)
 ```
 
+</details>
+
 Data Augmentation techniques help generate new valid samples from the dataset. Hence, they provide us with more data, help the model train faster, and prevent overfitting. Data Augmentation is vastly used in training computer vision tasks, from image classification to instance segmentation. in most cases, data augmentation is done randomly. This randomness means it is not done on some of the original samples, and the augmentation has some random parameters. Most libraries used for augmentation, like open-cv (cite), do not support image-batch transforms and only perform transforms on the CPU. Kornia (cite) is an open-source differentiable computer vision library for PyTorch; it does support image-batch transforms, and it does support performing these transforms on GPU. We used Kornia and added some parts to it to suit our project requirements.
 
 We created a version of each image transformation that supports our needs. Its input is multiple batches of images, and each batch has a name. for example, an input contains a batch of images and a batch of corresponding segmentation masks. In some transformations like resize, the same parameters (in this case, scale) should be used for transforming both images and segmentation masks. In some transformations, like channel shift, the transformation should not be done on the segmentation masks. Another requirement is that the transformation parameters can differ for each image and its corresponding mask in the batch.
@@ -102,7 +107,8 @@ Furthermore, a random augmentation should generate different transformation para
 
 ## Methodology
 
-Example Usage:
+<details>
+<summary>Example Usage</summary>
 
 ```python
 from metadamagenet.models import Localizer
@@ -129,6 +135,8 @@ empty_unet = EfficientUnetB0()
 # load a unet with pretrained backbone
 unet_with_pretrained_backbone = EfficientUnetB0(pretrained_backbone=True)
 ```
+
+</details>
 
 ### General Architecture
 
@@ -298,6 +306,12 @@ and query shots equal to two or ten, respectively. Other training hyperparameter
 and evaluation results are available in the results section. 
 We utilized the higher library to implement the MAML algorithm.
 
+
+<details>
+<summary>
+Example Usage
+</summary>
+
 ```python
 from metadamagenet.dataset import discover_directory, group_by_disasters, MetaDataLoader,LocalizationDataset
 from metadamagenet.metrics import xview2
@@ -331,13 +345,18 @@ MetaTrainer(
     ).run()
 ```
 
+</details>
+
 ### Vision Transformer
 
 ### Training Setup
 
 ### Loss Functions
 
-Example Usage:
+<details>
+<summary>
+Example Usage
+</summary>
 
 ```python
 from metadamagenet.losses import WeightedSum, BinaryDiceLoss, BinaryFocalLoss
@@ -347,6 +366,8 @@ WeightedSum(
     (BinaryFocalLoss(alpha=0.7, gamma=2., reduction='mean'), 6.0)
 )
 ```
+
+</details>
 
 Both Building Localization and Damage Classification are semantic segmentation tasks.
 Because, in both problems, the model's purpose is classification at the pixel level.
@@ -398,7 +419,10 @@ one class to each pixel. It solely is a good loss function for semantic segmenta
 
 ## Evaluation
 
-Example Usage:
+<details>
+<summary>
+Example Usage
+</summary>
 
 ```python
 from torch import Tensor
@@ -410,6 +434,8 @@ preds: Tensor
 targets: Tensor
 score = evaluator(preds, targets)
 ```
+
+</details>
 
 One of the most popular evaluation metrics for classifiers is the f1-score; because it accounts for precision and recall
 simultaneously. The macro version of the f1-score is a good evaluation measure for imbalanced datasets. The
@@ -464,6 +490,20 @@ $$
 ![Test-Time Augment](./res/TTA.png)
 
 While validating a model, we give each piece (or mini-batch) of data to the model and compute a score by comparing the model output and the correct labels. Test-time augment is a technique to enhance the accuracy of the predictions by eliminating the model's bias. For each sample, we use reversible augmentations to generate multiple "transformed samples". The predicted label for the original sample computes as the average of the predicted labels for the "transformed samples". For example, we generate the transformed samples by rotating the original image by 0, 90, 180, and 270 degrees clockwise. Then we get the model predictions for these transformed samples. Afterward, we rotate the predicted masks 0, 90, 180, and 270 degrees counterclockwise and average them. their average counts as the model's prediction for the original sample. Using this technique, we eliminate the model's bias about rotation. By reversible augmentation, we mean that no information should be lost during the process of generating "transformed samples" and aggregating their results. For example, in the case of semantic segmentation, shiting an image does not count as a reversible augmentation because it loses some part of the image. However, this technique usually does not improve the performance of well-trained models much. Because their bias about a simple thing like rotation is tiny. The same was true for our models when we used flipping and 90-degree rotation as test-time augmentation. 
+
+<details>
+<summary>
+Example Usage
+</summary>
+
+```python
+from metadamagenet.models import FourFlips,FourRotations,BaseModel
+
+model: BaseModel
+model_using_test_time_augment = FourRotations(model)
+```
+
+</details>
 
 ### Training Results
 
