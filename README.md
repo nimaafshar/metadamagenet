@@ -57,7 +57,7 @@ earthquakes. Each sample in the dataset consists of a pre-disaster image with it
 post-disaster image with the same building annotations. However, in the post-disaster building annotations, each
 building has a damage level of the following: *undamaged*, *damage*, *major damage*, *destroyed*, and *
 unclassified*. The dataset consists of *train*, *tier3*, *test*, and *hold* subsets. Each subset has an *images* folder
-containing pre and post-disaster images stored as 1024\*1024 PNGs and a folder named labels containing building
+containing pre and post-disaster images stored as 1024\*1024 PNGs and a folder named *labels* containing building
 annotations and damage labels in JSON format. Some of the post-imagery is slightly shifted from their corresponding
 pre-disaster image. Also, the dataset has different ground sample distances. We used the *train* and *tier3* subsets for
 training, the *test* subset for validation, and the *hold* subset for testing. The dataset is highly unbalanced in
@@ -165,10 +165,10 @@ outputs = transform(inputs)
 Data Augmentation techniques help generate new valid samples from the dataset. Hence, they provide us with more data,
 help the model train faster, and prevent overfitting. Data Augmentation is vastly used in training computer vision
 tasks, from image classification to instance segmentation. In most cases, data augmentation is done randomly. This
-randomness means that the augmentation is not done on some of the original samples, and it has some random parameters. Most
-libraries used for augmentation, like open-cv [^open-cv], do not support image-batch transforms and only perform transforms
-on the CPU. Kornia [^kornia] [^kornia-survey] is an open-source differentiable computer vision library for PyTorch[^pytorch]; it does support
-image-batch transforms, and it does support performing these transforms on GPU. We used Kornia and added some parts to
+randomness means that the augmentation is not done on some of the original samples and it has some random parameters. Most
+libraries used for augmentation, like Open-CV [^open-cv], do not support image-batch transforms and only perform transforms
+on the CPU. Kornia [^kornia] [^kornia-survey] is an open-source differentiable computer vision library for PyTorch[^pytorch]; it supports
+image-batch transforms and performs these transforms on GPU. We used Kornia and added some parts to
 it to suit our project requirements.
 
 We created a version of each image transformation in order for it to support our needs. 
@@ -176,7 +176,7 @@ Its input is multiple batches of images, and
 each batch has a name. 
 For example, an input contains a batch of images and a batch of corresponding segmentation masks.
 In some transformations like resize, the same parameters (in this case, scale) should be used for transforming both
-images and segmentation masks. In some transformations, like channel shift, the transformation should not be done on the
+the images and the segmentation masks. In some transformations, like channel shift, the transformation should not be done on the
 segmentation masks. Another requirement is that the transformation parameters can differ for each image and its
 corresponding mask in the batch.
 Furthermore, a random augmentation should generate different transformation parameters for each image in the batch.
@@ -229,11 +229,11 @@ In these models, the classifier module predicts a class between 0 and 4 for each
 The value 0 indicates that this pixel belongs to no building;
 values 1-4 mean that this pixel belongs to a building and show the damage level in that pixel.
 The classifier module learns a distance function between pre-disaster and post-disaster images
-because the damage level of each facility can be determined by comparing it in the pre-, and post-disaster images.
+because the damage level of each facility can be determined by comparing it in the pre- and post-disaster images.
 In many samples, the post-disaster image has a minor shift compared to the pre-disaster image. However,
-the segmentation masks are created based on the location of buildings in the pre-disaster image.
+the segmentation masks are created based on the buildings' location in the pre-disaster image.
 This shift is an issue the model has to overcome. In our models, feature-extracting weights are shared between the two images. 
-this helps the model to detect the shift or nadir difference. For models that share a joint feature extractor (like SegFormerB0 Classifier and SegFormerB0 Localizer),
+This helps the model to detect the shift or nadir difference. For models that share a joint feature extractor (like SegFormerB0 Classifier and SegFormerB0 Localizer),
 we can initialize the feature extractor module in the classification model with the localization model's feature
 extractor.
 Since we do not use the localization model directly for damage assessment, training the localization model can be
@@ -264,7 +264,7 @@ The *Standard* decoder module and the *SCSE* [^SCSE] decoder module.
 The *Standard* decoder module applies a 2D convolution and a *Relu* activation to the input from the previous decoder.
 Then, it concatenates the result with the input from the respective encoder module and applies another 2D convolution, and
 *ReLU* activation.
-*SCSE* decoder module works the same way, but, in the last step,
+*SCSE* decoder module works the same way, but in the last step,
 it uses a "Concurrent Spatial and Channel Squeeze & Excitation" [^SCSE] module on the result.
 This SCSE module is supposed to help the model focus on the image's more critical regions and channels.
 Decoder modules in *xview2 first place solution* [^first_place_solution] don't use batch normalization between the convolution and the activation.
@@ -274,7 +274,7 @@ We added this layer to the decoder modules to prevent gradient exploding and to 
 
 #### Backbone
 
-We pick encoder modules of U-net modules from a general feature extractor model called *the backbone network*.
+We pick encoder modules of U-net modules from a general feature extractor model called *The Backbone Network*.
 The choice of the backbone network is the most crucial point in the performance of a U-net model.
 Plus, most of the parameters of a U-net model are of its backbone network.
 Thus, the choice of the backbone network significantly impacts its size and performance.
@@ -369,7 +369,7 @@ We listed all the used models and their attributes in the table below.
 
 ### Meta-Learning
 
-In meta-learning, a general problem, such as classifying different images (in the *ImageNet* dataset) or classifying
+In meta-learning, a general problem, such as classifying different images (in the *ImageNet* dataset) or
 different letters (in the *Omniglot* [^omniglot] dataset), is seen as a distribution of tasks. In this approach, tasks are generally
 the same problem (like classifying letters) but vary in some parameters (like the script letters belong to).
 We can take a similar approach to our problem. We can view building detection and damage level classification as the
@@ -385,7 +385,7 @@ relative to the model size, we have used models based on EfficientUnetB0 and
 only trained it for the building localization task.
 
 Since the MAML algorithm trains the model much slower than regular training,
-and we did not have many hours to train our models, the results were disappointing.
+and we had limited time to train our models, the results weren't satisfactory.
 We trained EfficientUnetB0-Localizer with MAML with support shots equal to one or five
 and query shots equal to two or ten. Other training hyperparameters
 and evaluation results are available in the results section.
@@ -448,10 +448,10 @@ In recent years, vision transformers [^vit] have achieved state-of-the-art resul
 semantic segmentation. SegFormer [^segformer] is a model designed for efficient semantic segmentation, and it is based on vision
 transformers. SegFormer is available in different sizes. We only used the smallest size, named SegFormerB0. The
 SegFormer model consists of a hierarchical Transformer encoder and a lightweight all-MLP decode head.
-In contrast to U-nets, SegFormer models have constant input and output sizes. So inputs and outputs of the model should be
+In contrast to U-nets, SegFormer models have constant input and output sizes. So, the inputs and outputs of the model should be
 interpolated to the correct size. For the localization task, the input image goes through SegFormer, and its outputs go
 through a SegFormer decode head.
-However, for the classification task, pre and post-disaster go through the same Segformer model, and their outputs are
+However, for the classification task, pre and post-disaster go through the same Segformer model. Next, their outputs are
 concatenated channel-wise and then go through a modified SegfFormer decode head. The modification is to double the
 number of channels for the MLP modules. Of course, both outputs can be merged in successive layers, which decreases the
 distance function complexity. These other versions of the modified decode head can be created and tested in the future.
@@ -462,10 +462,10 @@ Moreover, one can experiment with changing the size of the SegFormer input and S
 We trained some models with multiple random seeds (multiple folds) to ensure they have low variance and consistent
 scores. We trained Localization models only on pre-disaster images because post-disaster images added noise to the data; we used post-disaster images in sporadic cases as
 additional augmentation. We initialized each classification model's feature extractor using weights from the
-corresponding localization model and fold number. While training both classification and localization models, no weights
+corresponding localization model and fold number. In training both classification and localization models, no weights
 were frozen. Since the dataset is unbalanced, we use weighted losses with weights relative to the inverse of each class's
 sample count. We applied morphological dilation with a 5*5 kernel to classification masks as an augmentation. Dilated
-masks made predictions more bold. We also used pytorch [^pytorch] amp for FP-16 [^fp16] training.
+masks made predictions bolder. We also used PyTorch [^pytorch] amp for FP-16 [^fp16] training.
 
 ### Loss Functions
 
@@ -486,7 +486,7 @@ WeightedSum(
 </details>
 
 Both Building Localization and Damage Classification are semantic segmentation tasks.
-Because, in both problems, the model's purpose is classification at the pixel level.
+Because, in both problems, the model's purpose is classification at pixel level.
 We have used a combination of multiple segmentation losses for all models.
 In [^segmentation-losses],
 you can find a comprehensive comparison between popular loss functions for semantic segmentation.
@@ -502,8 +502,8 @@ $$
 
 Focal Loss's usage is to make the model focus on hard-to-classify examples by increasing their loss value. We used it
 because the target distribution was highly skewed. In the building localization task, the number of pixels containing
-buildings was far less than the background pixels. In the damage classification task, too, undamaged building samples
-formed most of the total samples.
+buildings was far less than the background pixels. In the damage classification task, undamaged building samples
+formed most of the total samples, too.
 
 **Dice Loss**[^dice-loss]
 
@@ -552,11 +552,11 @@ score = evaluator(preds, targets)
 
 </details>
 
-One of the most popular evaluation metrics for classifiers is the f1-score because it accounts for precision and recall
-simultaneously. The macro version of the f1-score is a good evaluation measure for imbalanced datasets. The
-[xview2-scoring](https://github.com/DIUx-xView/xView2_scoring) repository describes what variation of f1-score to use for this problem's scoring. We adapted their
+One of the most popular evaluation metrics for classifiers is the F1-score because it accounts for precision and recall
+simultaneously. The macro version of the F1-score is a good evaluation measure for imbalanced datasets. The
+[xview2-scoring](https://github.com/DIUx-xView/xView2_scoring) repository describes what variation of F1-score to use for this problem's scoring. We adapted their
 evaluation metrics. However, we implemented these metrics as a metric in the Torchmetrics [^torchmetrics] library. It performs
-better than computing metrics in NumPy [^numpy] and provides an easy-to-use API. The dice score is a set similarity measure that equals the f1-score.
+better than computing metrics in NumPy [^numpy] and provides an easy-to-use API. The dice score is a set similarity measure that equals the F1-score.
 
 $$
 Dice(P,Q) = 2. \frac{P \cap Q}{P+Q}
@@ -637,33 +637,33 @@ classification models to train much faster and have higher scores.
 Using dilated masks improved accuracy around borders and helped with shifts and
 different nadirs. The model's classifier module determines each pixel's value
 based on a distance function between the extracted features from the
-pre-, and post-disaster images.
+pre- and post-disaster images.
 In U-models, the classifier module is a 2D convolution, but in SegFormer models,
 it is a SegFormer decoder head. Hence, U-models learn a much simpler distance
-function than SegFormer models; the simplicity of the distance function helps them not to overfit but also prevents them from learning some sophisticated patterns. In the end, SegFormer models train much faster before overfitting on the training data, but U-models slowly reach almost the same score. EfficientUnet localization models have shown that they train better without the usage of focal loss. Softmax dice loss does not perform well in the damage classification model's training. A combination of sigmoid dice loss for each class (channel), and cross-entropy loss gives the best results in the training of a classification model. The effect of SCSE in decoder modules and Wide-SE in Encoder Modules of a U-net is very limited; these variations of EfficientUnets performed almost the same as the standard version.
+function than SegFormer models; the simplicity of the distance function helps them not to overfit but also prevents them from learning some sophisticated patterns. In the end, SegFormer models train much faster before overfitting on the training data, but U-models slowly reach almost the same score. EfficientUnet localization models have shown that they train better without using focal loss. Softmax dice loss does not perform well in the damage classification model's training. A combination of sigmoid dice loss for each class (channel), and cross-entropy loss gives the best results in the training of a classification model. The effect of SCSE in decoder modules and Wide-SE in Encoder Modules of a U-net is very limited; these variations of EfficientUnets performed almost the same as the standard version.
 
 complete results are available at [results.md](./results.md)
 
 ## Discussion and Conclusion
-Detecting buildings and their damage level by artificial intelligence can improve rescue operations' speed and efficiency after natural disasters. Solving this problem can identify the area of damage on a large scale and prioritize the areas that have been the most affected and damaged by a disaster in rescue operations. We tested different decoders in the U-net modules and utilized different variations of efficient-net as our backbone in our model. Additionally, we fine-tuned SegFormer for our specific task. The result was models with fewer parameters (approximately three million) that performed much better than the previous models. (Damage classification score=0.77). Due to the fewer parameters, these models have a shorter training and inference time. Therefore, they can be trained and used faster and can be easily fine-tuned for new and different natural disasters. Considering damage classification and building localization in each natural disaster as a separate task, we utilized MAML and trained models that can be adapted to a new natural disaster only using a few brand-new samples. These models do not have satisfactory performance, but we hope to build better models of this type in the future.
+Detecting buildings and their damage level by artificial intelligence can improve rescue operations' speed and efficiency after natural disasters. Solving this problem can identify the area of damage on a large scale and prioritize the areas that have been the most affected and damaged by a disaster in rescue operations. We tested different decoders in the U-net modules and utilized different variations of efficient-net as the backbone in our model. Additionally, we fine-tuned SegFormer for our specific task. The result was models with fewer parameters (approximately three million) that performed much better than the previous models (damage classification score=0.77). Due to the fewer parameters, these models have a shorter training and inference time. Therefore, they can be trained and used faster and easily fine-tuned for new and different natural disasters. Considering damage classification and building localization in each natural disaster as a separate task, we utilized MAML and trained models that can be adapted to a new natural disaster using only a few brand-new samples. These models do not have satisfactory performance, but we hope to build better models of this type in the future.
 
 
 ## Future Ideas
 
 The decoder’s number of channels can be looked at as a hyper-parameter
-and it can be changed and tuned.
+which can be changed and tuned.
 Additionally, we can analyze the effect of the size of the backbone in
 the efficient U-net by trying Efficientnet b5 or b7 as the backbone.
-The layer in which the embedding of the pre-, and post-disaster images
+The layer in which the embedding of the pre- and post-disaster images
 get concatenated dictates the complexity of the distance function in the classifier.
 This effect can also be tested and analyzed.
-*Log-cosh-dice* and *Focal-travesky* are two loss functions that
+*Log-cosh-dice* and *Focal-Travesky* are two loss functions that
 have the best performance in the training of segmentation models [^segmentation-losses].
 We can also try training our models with these two loss functions.
 But in this case, we have to make sure to modify them, so we can assign weights to classes.
 The low performance of the meta learning model may
 not be only due to the small number of training epochs or the small number of shots.
-We can try using first-order MAML like reptile [^reptile] instead of the original MAML algorithm in the model.
+We can try using first-order MAML like Reptile [^reptile] instead of the original MAML algorithm in the model.
 These algorithms use less memory, thus, we can test the effects of other factors and hyperparameters faster.
 Previous research in the realm of meta-learning for semantic segmentation may also help us train a better model for our specific problem. [^meta-seg] [^meta-seg-init].
 
