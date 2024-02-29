@@ -1,17 +1,13 @@
 # MetaDamageNet
 
-#### Using Deep Learning To Identify And Classify Damage In Aerial Imagery
+#### Using Deep Learning To Identify And Classify Building Damage 
 
-This project is my bachelor's thesis at AmirKabir University of Technology under the supervision of Dr.Amin Gheibi.
+This project is my bachelor's thesis at AmirKabir University of Technology.
 Some ideas for this project are borrowed from
 [xview2 first place solution](https://github.com/vdurnov/xview2_1st_place_solution) [^first_place_solution] repository. 
 I used the mentioned repository as a baseline and refactored its code.
 Thus, this project covers models and experiments of the mentioned repo and
-contributes more to the same problem of damage assessment in aerial imagery.
-
-[Slides](./res/presentation.pdf)
-
-[PDF Version](./res/metadamagenet.pdf)
+contributes more to the same problem of damage assessment for buildings.
 
 **Environment Setup**
 
@@ -56,7 +52,7 @@ pip install -r requirements.txt
 ## Dataset
 
 We are using the xview2 [^xview2] challenge dataset, namely Xbd[^xbd], as the dataset for our project. This dataset contains pairs of
-pre and post-disaster satellite images from 19 natural disasters worldwide, including fires, hurricanes, floods, and
+pre and post-disaster images from 19 natural disasters worldwide, including fires, hurricanes, floods, and
 earthquakes. Each sample in the dataset consists of a pre-disaster image with its building annotations and a
 post-disaster image with the same building annotations. However, in the post-disaster building annotations, each
 building has a damage level of the following: *undamaged*, *damage*, *major damage*, *destroyed*, and *
@@ -675,7 +671,7 @@ Previous research in the realm of meta-learning for semantic segmentation may al
 
 - :book: [Higher Repository](https://github.com/facebookresearch/higher)
 - :link: [Squeeze and Excitation Networks Explained with PyTorch Implementation](https://amaarora.github.io/2020/07/24/SeNet.html)
-- :link: [Building Disaster Damage Assessment in Satellite Imagery with Multi-Temporal Fusion](https://github.com/ethanweber/xview2)
+- :link: [Xview2](https://github.com/ethanweber/xview2)
 - :link: [Workshop on Meta-Learning (MetaLearn 2022)](https://meta-learn.github.io/2022/)
 - :link: [Meta-Learning with Implicit Gradients](https://sites.google.com/view/imaml)
 - :link: [Learning About Algorithms That Learn to Learn](https://towardsdatascience.com/learning-about-algorithms-that-learn-to-learn-9022f2fa3dd5)
@@ -694,7 +690,7 @@ Previous research in the realm of meta-learning for semantic segmentation may al
 
 ## References
 
-[^xbd]: :page_facing_up: [xBD: A Dataset for Assessing Building Damage from Satellite Imagery](https://arxiv.org/abs/1911.09296)
+[^xbd]: :page_facing_up: [xBD: A Dataset for Assessing Building Damage](https://arxiv.org/abs/1911.09296)
 
 [^xview2]: :link: Competition and Dataset: [Xview2 org.](https://www.xview2.org)
 
@@ -708,7 +704,7 @@ Previous research in the realm of meta-learning for semantic segmentation may al
 
 [^maml]: :page_facing_up: [Model-Agnostic Meta-Learning for Fast Adaptation of Deep Networks](https://arxiv.org/abs/1703.03400)
 
-[^multi-temporal-fusion]: :page_facing_up: [Building Disaster Damage Assessment in Satellite Imagery with Multi-Temporal Fusion](https://arxiv.org/abs/2004.05525)
+[^multi-temporal-fusion]: :page_facing_up: [Building Disaster Damage Assessment with Multi-Temporal Fusion](https://arxiv.org/abs/2004.05525)
 
 [^SCSE]: :page_facing_up: [Concurrent Spatial and Channel Squeeze & Excitation in Fully Convolutional Networks](https://arxiv.org/abs/1803.02579)
 
