@@ -10,6 +10,7 @@ Thus, this project covers models and experiments of the mentioned repo and
 contributes more to the same problem of damage assessment in aerial imagery.
 
 [Slides](./res/presentation.pdf)
+
 [PDF Version](./res/metadamagenet.pdf)
 
 **Environment Setup**
