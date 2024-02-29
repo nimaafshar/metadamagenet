@@ -10,6 +10,7 @@ Thus, this project covers models and experiments of the mentioned repo and
 contributes more to the same problem of damage assessment in aerial imagery.
 
 [Slides](./res/presentation.pdf)
+[PDF Version](./res/metadamagenet.pdf)
 
 **Environment Setup**
 
@@ -264,8 +265,7 @@ They form a U-like structure, as shown in the figure below.
 There are two variants of decoder modules:
 The *Standard* decoder module and the *SCSE* [^SCSE] decoder module.
 The *Standard* decoder module applies a 2D convolution and a *Relu* activation to the input from the previous decoder.
-Then, it concatenates the result with the input from the respective encoder module and applies another 2D convolution, and
-*ReLU* activation.
+Then, it concatenates the result with the input from the respective encoder module and applies another 2D convolution, and *ReLU* activation.
 *SCSE* decoder module works the same way, but in the last step,
 it uses a "Concurrent Spatial and Channel Squeeze & Excitation" [^SCSE] module on the result.
 This SCSE module is supposed to help the model focus on the image's more critical regions and channels.
